@@ -1,0 +1,1 @@
+Workloads defined as k8s manifests
