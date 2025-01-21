@@ -34,8 +34,11 @@ RUN mkdir ${HF_HOME} && chown ${USER_NAME} ${HF_HOME}
 USER ${USER_UID}:${USER_UID}
 
 ENTRYPOINT ["sh", "-e", "-u", "-c"]
-CMD "\
-echo 'Setting up minio'; \
+CMD [ "echo 'Setting up minio'; \
 mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}; \
+echo 'Downloading the model to the local container'; \
 huggingface-cli download ${MODEL_ID} --local-dir local_models/downloaded-model; \
-mc cp --recursive local_models/downloaded-model minio-host/${TARGET_PATH};"
+echo 'Uploading the model to the bucket'; \
+mc mirror --exclude '.cache/huggingface/*' \
+  --exclude '.gitattributes' \
+  local_models/downloaded-model/ minio-host/${TARGET_PATH};" ]
