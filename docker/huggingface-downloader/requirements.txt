@@ -1,0 +1,5 @@
+argparse
+google-cloud-storage
+minio
+huggingface_hub[cli]
+hf_transfer
