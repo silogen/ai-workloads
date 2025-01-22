@@ -1,1 +1,0 @@
-Workloads defined as kaiwo charts

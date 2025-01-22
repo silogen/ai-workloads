@@ -1,0 +1,1 @@
+Workload defined as [kaiwo](https://github.com/silogen/kaiwo) charts

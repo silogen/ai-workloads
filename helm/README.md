@@ -1,1 +1,0 @@
-Workloads defined as Helm charts
