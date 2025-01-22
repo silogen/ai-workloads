@@ -26,7 +26,8 @@ RUN chown -hR ${USER_NAME} /minio-binaries/ && \
 
 ENV PATH="${PATH}:/minio-binaries/"
 
-RUN mkdir local_models/ && chown ${USER_NAME} local_models/
+RUN mkdir local_models/ && chown ${USER_NAME} local_models/ \
+    && mkdir local_datasets && chown ${USER_NAME} local_datasets/
 
 ENV HF_HOME="/hf_cache/"
 RUN mkdir ${HF_HOME} && chown ${USER_NAME} ${HF_HOME}

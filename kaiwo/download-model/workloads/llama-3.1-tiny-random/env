@@ -1,0 +1,21 @@
+envVars:
+  - name: BUCKET_STORAGE_HOST
+    value: https://storage.googleapis.com
+  # The bucket storage HMAC access key should be available as a secret in the cluster:
+  - fromSecret:
+      name: "BUCKET_STORAGE_ACCESS_KEY"
+      secret: "bucket-storage-credentials"
+      key: "access_key"
+  - fromSecret:
+      name: "BUCKET_STORAGE_SECRET_KEY"
+      secret: "bucket-storage-credentials"
+      key: "secret_key"
+  - name: MODEL_ID
+    value: "yujiepan/llama-3.1-tiny-random"
+  - name: TARGET_PATH
+    value: silogen-dev-data/models/yujiepan_llama-3.1-tiny-random
+  # If the model is private/gated, you need to make the huggingface token available as a secret in the cluster and specify it:
+  #- fromSecret:
+  #    name: "HF_TOKEN"
+  #    secret: "hf-token"
+  #    key: "hf-token"
