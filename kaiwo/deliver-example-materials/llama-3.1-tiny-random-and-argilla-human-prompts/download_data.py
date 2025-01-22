@@ -1,13 +1,3 @@
-echo 'Setting up minio'
-mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
-echo 'Downloading the model to the local container'
-huggingface-cli download yujiepan/llama-3.1-tiny-random --local-dir local_models/yujiepan_llama-3.1-tiny-random
-echo 'Uploading the model to the bucket'
-mc mirror --exclude '.cache/huggingface/*' \
---exclude '.gitattributes' \
-local_models/{{ .Custom.ModelID | replace "/" "_" }} minio-host/{{ .Custom.BucketDir }}/
-echo 'Downloading and processing data'
-python <<EOF
 import datasets
 def _argilla_message_formatter(example, idx):
     # The generation_prompt field seems to have an additional layer of list, so we take the first element.
@@ -26,7 +16,4 @@ hf_id="argilla/10k_prompts_ranked_mistral_large_responses"
 dataset = datasets.load_dataset(hf_id, split="train")
 dataset = dataset.filter(lambda kind: kind == "human", input_columns="kind")
 dataset = dataset.map(_argilla_message_formatter, with_indices=True, remove_columns=dataset.column_names)
-dataset.to_json("argilla-mistral-large-human-prompts.jsonl")
-EOF
-echo 'Uploading data to the bucket'
-mc cp argilla-mistral-large-human-prompts.jsonl minio-host/{{ .Custom.BucketDir }}/
+dataset.to_json("local_datasets/argilla-mistral-large-human-prompts.jsonl")

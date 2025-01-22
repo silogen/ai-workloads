@@ -16,18 +16,18 @@ spec:
       {{- end }}
       containers:
       - name: {{ .Meta.Name }}
-        {{ if .Meta.Image == "ghcr.io/silogen/rocm-ray:v0.4" }}
+        {{- if (eq .Meta.Image "ghcr.io/silogen/rocm-ray:v0.4") }}
         image: europe-west4-docker.pkg.dev/silogen-dev/silogen-dev/huggingface-downloader
-        {{ else }}
+        {{- else }}
         image: {{ .Meta.Image }}
-        {{ end }}
+        {{- end }}
         imagePullPolicy: Always
         {{- if .Workload.Entrypoint }}
         command: 
         - sh
         - -c
         - {{ .Workload.Entrypoint }}
-        {{ else }}
+        {{- else }}
         command:
         - sh
         - -e
@@ -39,12 +39,15 @@ spec:
           mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
           echo 'Downloading the model to the local container'
           huggingface-cli download {{ .Custom.modelID }} --local-dir local_models/downloaded_model
-          echo 'Uploading the model to the bucket, to {{ .Custom.bucketPath | trimSuffix "/" }}'
+          echo 'Uploading the model to the bucket, to {{ .Custom.bucketModelPath | trimSuffix "/" }}'
           mc mirror --exclude '.cache/huggingface/*' \
             --exclude '.gitattributes' \
-            local_models/downloaded_model/ minio-host/{{ .Custom.bucketPath | trimSuffix "/" }}
+            local_models/downloaded_model/ minio-host/{{ .Custom.bucketModelPath | trimSuffix "/" }}
           echo 'Downloading and processing data'
-          # TODO: Run datasets_script and upload
+          python /workload/download_data.py
+          echo 'Uploading data to the bucket, to {{ .Custom.bucketDataDir | trimSuffix "/" }}'
+          mc cp -recursive local_datasets/ minio-host/{{ .Custom.bucketDataDir | trimSuffix "/" }}/
+          echo 'Done'
         {{- end }}
         env:
         {{- if .Meta.EnvVars }}
@@ -104,4 +107,3 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 200Gi
-
