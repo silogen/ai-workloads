@@ -2,17 +2,13 @@
 
 This directory contains all the workloads. Each workload has its own directory, with different formats defined in subdirectories.
 
-To create a new workload, you can either copy the template directory or duplicate an existing workload.
+To create a new workload, you can duplicate an existing workload and adapt as needed.
 
-The definition of different instantiations of a workload depends on the format. For example:
+The files needed to create different instantiations of a workload depends on the format. For reference, see the existing workloads, and the documentation of the respective formats.
 
-- **Helm**: Uses `values.yaml` and its overrides.
-- **Kaiwo**: Uses `config.yaml` and `env` files along with their copies.
-- **K8s**: Uses `deployment.yaml`, `service.yaml`, and other Kubernetes resource files.
+## Kueue
 
-## Submitting to Kueue
-
-To submit a workload to Kueue, label the workload's manifest file with the necessary specifications. For example, in the case of a Kubernetes Job:
+If you are using Kueue to manage quotas and how jobs consume them, you need to add the necessary metadata labels or annotations to your manifest. For example, in the case of a Kubernetes Job, based on the [Kueue documentation](https://kueue.sigs.k8s.io/docs/tasks/run/jobs/), you would have:
 
 ```yaml
 apiVersion: batch/v1
@@ -23,5 +19,6 @@ metadata:
     name: your-workload-name
     namespace: your-namespace
 spec:
+    suspend: true
     ...
 ```
