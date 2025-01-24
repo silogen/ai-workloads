@@ -2,7 +2,7 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY docker/huggingface-downloader/requirements.txt /app/
+COPY docker/logistics/requirements.txt /app/
 
 RUN apt-get update && apt-get install -y curl nano && \
     apt-get clean && \
@@ -33,13 +33,3 @@ ENV HF_HOME="/hf_cache/"
 RUN mkdir ${HF_HOME} && chown ${USER_NAME} ${HF_HOME}
 
 USER ${USER_UID}:${USER_UID}
-
-ENTRYPOINT ["sh", "-e", "-u", "-c"]
-CMD [ "echo 'Setting up minio'; \
-mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}; \
-echo 'Downloading the model to the local container'; \
-huggingface-cli download ${MODEL_ID} --local-dir local_models/downloaded-model; \
-echo 'Uploading the model to the bucket'; \
-mc mirror --exclude '.cache/huggingface/*' \
-  --exclude '.gitattributes' \
-  local_models/downloaded-model/ minio-host/${TARGET_PATH};" ]
