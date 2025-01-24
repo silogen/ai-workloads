@@ -16,4 +16,4 @@ hf_id="argilla/10k_prompts_ranked_mistral_large_responses"
 dataset = datasets.load_dataset(hf_id, split="train")
 dataset = dataset.filter(lambda kind: kind == "human", input_columns="kind")
 dataset = dataset.map(_argilla_message_formatter, with_indices=True, remove_columns=dataset.column_names)
-dataset.to_json("local_datasets/argilla-mistral-large-human-prompts.jsonl")
+dataset.to_json("local_datasets/argilla-mistral-large-human-prompts.jsonl") # Need to save any data files in this specific directory to be uploaded.

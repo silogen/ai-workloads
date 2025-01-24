@@ -17,7 +17,7 @@ spec:
       containers:
       - name: {{ .Meta.Name }}
         {{- if (eq .Meta.Image "ghcr.io/silogen/rocm-ray:v0.4") }}
-        image: europe-west4-docker.pkg.dev/silogen-dev/silogen-dev/huggingface-downloader
+        image: europe-west4-docker.pkg.dev/silogen-dev/silogen-dev/logistics:ai-workloads
         {{- else }}
         image: {{ .Meta.Image }}
         {{- end }}
