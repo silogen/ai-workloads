@@ -1,0 +1,15 @@
+envVars:
+  - name: ACCELERATE_LOG_LEVEL
+    value: info
+  - name: TRANSFORMERS_VERBOSITY
+    value: info
+  - name: BUCKET_STORAGE_HOST
+    value: https://storage.googleapis.com 
+  - fromSecret:
+      name: BUCKET_STORAGE_ACCESS_KEY
+      secret: bucket-storage-credentials
+      key: access_key
+  - fromSecret:
+      name: BUCKET_STORAGE_SECRET_KEY
+      secret: bucket-storage-credentials
+      key: secret_key
