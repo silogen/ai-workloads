@@ -16,11 +16,7 @@ spec:
       {{- end }}
       containers:
       - name: {{ .Meta.Name }}
-        {{- if (eq .Meta.Image "ghcr.io/silogen/rocm-ray:v0.4") }}
-        image: europe-west4-docker.pkg.dev/silogen-dev/silogen-dev/logistics:ai-workloads
-        {{- else }}
-        image: {{ .Meta.Image }}
-        {{- end }}
+        image: ghcr.io/silogen/logistics:v0.1
         imagePullPolicy: Always
         {{- if .Workload.Entrypoint }}
         command: 

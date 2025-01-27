@@ -12,6 +12,9 @@ kaiwo submit \
     --path path-to-your-workload-directory-containing-env \
 ```
 
+## kaiwo version
+This has been tested with [kaiwo v0.0.5](https://github.com/silogen/kaiwo/releases/tag/v.0.0.5).
+
 ## --custom-config YAML file structure
 
 ```yaml
