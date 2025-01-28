@@ -1,0 +1,25 @@
+envVars:
+  # model id
+  - name: MODEL_ID
+    value: meta-llama/Llama-3.1-8B-Instruct
+  # model: which bucket/prefix to download the model from
+  - name: BUCKET_MODEL_PATH
+    value: models
+  # model: where to store the model in the container
+  - name: LOCAL_MODEL_PATH
+    value: /local_models
+  # minio
+  - name: BUCKET_STORAGE_HOST
+    value: https://default-minio-tenant-hl.minio-default-tenant.svc.cluster.local:9000
+  - fromSecret:
+      name: BUCKET_STORAGE_ACCESS_KEY
+      secret: minio-credentials
+      key: minio-access-key
+  - fromSecret:
+      name: BUCKET_STORAGE_SECRET_KEY
+      secret: minio-credentials
+      key: minio-secret-key
+  # - fromSecret:
+  #     name: "HF_TOKEN"
+  #     secret: "hf-token"
+  #     key: "hf-token"

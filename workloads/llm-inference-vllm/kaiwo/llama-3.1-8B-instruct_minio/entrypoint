@@ -1,0 +1,18 @@
+echo 'Installing minio client' && \
+curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+        --create-dirs \
+        -o /minio-binaries/mc && \
+chmod +x /minio-binaries/mc && \
+export PATH="${PATH}:/minio-binaries/" && \
+
+echo 'Downloading the model to the local container' && \
+mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY} && \
+mkdir -p ${LOCAL_MODEL_PATH} && \
+mc cp --recursive minio-host/${BUCKET_MODEL_PATH}/${MODEL_ID}/ ${LOCAL_MODEL_PATH}/${MODEL_ID}/ && \
+
+python3 -m vllm.entrypoints.openai.api_server \
+        --host="0.0.0.0" \
+        --port=8080 \
+        --model=${LOCAL_MODEL_PATH}/${MODEL_ID} \
+        --served-model-name=${MODEL_ID} \
+        --tensor-parallel-size=${NUM_GPUS}
