@@ -20,7 +20,7 @@ spec:
       {{- end }}
       initContainers:
       - name: download
-        image: "europe-west4-docker.pkg.dev/silogen-dev/silogen-dev/logistics:ai-workloads"
+        image: "ghcr.io/silogen/logistics:v0.1"
         imagePullPolicy: IfNotPresent
         command: ["sh", "-e", "-u", "-c"]
         args:
@@ -97,7 +97,7 @@ spec:
           - mountPath: /dev/shm
             name: dshm
       - name: upload
-        image: "europe-west4-docker.pkg.dev/silogen-dev/silogen-dev/logistics:ai-workloads"
+        image: "ghcr.io/silogen/logistics:v0.1"
         imagePullPolicy: IfNotPresent
         restartPolicy: Always
         command: ["bash", "-e", "-u", "-c"]
@@ -106,7 +106,7 @@ spec:
             # Setup MinIO:
             mc alias set bucket-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
             echo "Syncing checkpoint artifacts to bucket...";
-            while [ ! -f /semaphores/done_training ]; do
+            while [ ! -f /signals/done_training ]; do
               # Any existing checkpoints will always produce a 'Failed to perform mirroring' error, filter it out of the logs
               mc mirror /workdir/checkpoints {{ $full_checkpoints_path }} 2> >(grep -v 'Overwrite not allowed for' >&2)
               sleep 15
@@ -119,7 +119,7 @@ spec:
             mc mirror --overwrite /workdir/checkpoints/checkpoint-final {{ $full_checkpoints_path }}/checkpoint-final
             {{- end }}
             echo "Done uploading"
-            touch /semaphores/done_uploading
+            touch /signals/done_uploading
             sleep 10  # Let the main container catch
         resources:
           limits:
@@ -155,8 +155,8 @@ spec:
           - name: checkpoints
             mountPath: /workdir/checkpoints
             readOnly: true
-          - name: semaphores
-            mountPath: /semaphores
+          - name: signals
+            mountPath: /signals
             readOnly: false
         {{- if .Meta.HasConfigMap }}
           - mountPath: /workload
@@ -164,7 +164,7 @@ spec:
         {{- end }}
       containers:
       - name: {{ .Meta.Name }}
-        image: {{ default "europe-west4-docker.pkg.dev/silogen-dev/silogen-dev/rocm-silogen-finetuning-worker:allow-extra-hf-5a1b7af9" .Custom.mainImage }}
+        image: {{ default "ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.1" .Custom.mainImage }}
         imagePullPolicy: Always
         {{- if .Workload.Entrypoint }}
         command: 
@@ -190,9 +190,9 @@ spec:
           # Post process:
           create_vllm_compatible_adapter --training-config /workload/finetuning_config.yaml ./checkpoints/checkpoint-final
           merge_adapter /local_resources/basemodel ./checkpoints/checkpoint-final ./checkpoints/checkpoint-final-merged
-          touch /semaphores/done_training
+          touch /signals/done_training
           echo "Done training, waiting for uploads..."
-          while [ ! -f /semaphores/done_uploading ]; do
+          while [ ! -f /signals/done_uploading ]; do
             sleep 5;
           done
           echo "All done, exiting"
@@ -241,8 +241,8 @@ spec:
           - name: checkpoints 
             mountPath: /workdir/checkpoints 
             readOnly: false
-          - name: semaphores
-            mountPath: /semaphores
+          - name: signals
+            mountPath: /signals
             readOnly: false
         securityContext:
           allowPrivilegeEscalation: false
@@ -278,8 +278,6 @@ spec:
         - name: checkpoints
           emptyDir:
             sizeLimit: "{{ default "256Gi" .Custom.checkpointsSizeLimit }}"
-        - name: semaphores
+        - name: signals
           emptyDir:
             sizeLimit: "1Mi"
-
-

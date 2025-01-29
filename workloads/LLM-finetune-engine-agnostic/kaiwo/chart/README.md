@@ -11,8 +11,8 @@ Example of command to run:
 ```bash
 kaiwo submit \
   --template finetuning.yaml.tmpl \
-  --custom-config ../examples/tiny-random-llama-31-argilla/values.yaml \
-  --path ../examples/tiny-random-llama-31-argilla/ \
+  --custom-config ../examples/meta-llama-3.1-8b-argilla-sft/values.yaml \
+  --path ../examples/meta-llama-3.1-8b-argilla-sft/ \
   --gpus 1
 ```
 
