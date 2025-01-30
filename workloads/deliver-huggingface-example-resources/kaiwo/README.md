@@ -8,12 +8,16 @@ The inputs required:
     - `download_data.py`, a script which downloads and preprocesses the data, saving it into the local directory local_datasets/
     - `env` file contains bucket access secret specification, and potentially huggingface hub token secret spec
 
+## kaiwo version
+This has been tested with [kaiwo v0.0.5](https://github.com/silogen/kaiwo/releases/tag/v.0.0.5).
+
 ## --custom-config file format
 
 ```yaml
 modelID: # Huggingface model ID in the organization/model-name format
 bucketModelPath: # Path where to upload the model, bucket-name/path/in/bucket/ending/in/desired-model-name
 bucketDataDir: # Directory path where all the data files from local_datasets/ are uploaded to
+ephemeralStorageRequest:  # Optionally specify a value of ephemeral storage that you reserve for this job. Can be useful to request enough space if you're downloading a very large model.
 ```
 
 ## llama-3.1-tiny-random-and-argilla-human-prompts
@@ -25,6 +29,5 @@ kaiwo submit \
     --imagepullsecret regcred \
     --template deliver-example-materials.yaml.tmpl \
     --custom-config llama-3.1-tiny-random-and-argilla-human-prompts/values.yaml \
-    --path llama-3.1-tiny-random-and-argilla-human-prompts \
-    --namespace silogen
+    --path llama-3.1-tiny-random-and-argilla-human-prompts
 ```

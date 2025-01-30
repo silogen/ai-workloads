@@ -10,3 +10,8 @@ envVars:
       name: "BUCKET_STORAGE_SECRET_KEY"
       secret: "bucket-storage-credentials"
       key: "secret_key"
+  # If the model is private/gated, you need to make the huggingface token available as a secret in the cluster and specify it:
+  #- fromSecret:
+  #    name: "HF_TOKEN"
+  #    secret: "hf-token"
+  #    key: "hf-token"
