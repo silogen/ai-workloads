@@ -26,7 +26,6 @@ This is an example of the inputfiles required for this workload. These input fil
 Example command to submit via kaiwo:
 ```bash
 kaiwo submit \
-    --imagepullsecret regcred \
     --template deliver-example-materials.yaml.tmpl \
     --custom-config llama-3.1-tiny-random-and-argilla-human-prompts/values.yaml \
     --path llama-3.1-tiny-random-and-argilla-human-prompts
