@@ -1,0 +1,220 @@
+{{- $_ := required "checkpoints_remote is a required value" .Values.checkpoints_remote }}
+{{- $_ := required "basemodel is a required value" .Values.basemodel }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-job"
+  namespace: "{{ .Release.Namespace }}"
+  {{- if .Values.labels_spec }}
+  labels:
+    {{- toYaml .Values.labels_spec | nindent 4 }}
+  {{- end }}
+spec:
+  suspend: true
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      {{- if .Values.extra_template_spec }}
+      {{- toYaml .Values.extra_template_spec | nindent 6 }}
+      {{- end }}
+      initContainers:
+        - name: download
+          image: "{{ .Values.io_image }}"
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "-e", "-u", "-c"]
+          args:
+            - |
+              # Setup MinIO, Download resources:
+              echo "Copying resources to container...";
+              mc alias set minio-host $${MINIO_HOST} $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY}
+              mc cp --recursive \
+                minio-host/{{ .Values.basemodel | trimSuffix "/" }}/ \
+                /local_resources/basemodel
+              {{- range .Values.finetuning_config.data_conf.training_data.datasets }}
+              mc cp \
+                minio-host/{{ .path }} \
+                /local_resources/{{ .path | replace "/" "_" }}
+              {{- end }}
+              {{- if (or (eq .Values.finetuning_config.data_conf.validation_data.type "AUTO_SPLIT" ) (eq .Values.finetuning_config.data_conf.validation_data.type "NONE")) }}
+              {{- range .Values.finetuning_config.data_conf.validation_data.datasets }}
+              mc cp \
+                minio-host/{{ .path }} \
+                /local_resources/{{ .path | replace "/" "_" }}
+              {{- end }}
+              {{- end }}
+              # Sync checkpoints from remote to local
+              if mc mirror minio-host/{{ .Values.checkpoints_remote | trimSuffix "/" }}/ /workdir/checkpoints; then
+                echo "Downloaded checkpoints from {{ .Values.checkpoints_remote}} to /workdir/checkpoints"
+                ls -lah /workdir/checkpoints
+              else
+                echo "No checkpoints found yet"
+              fi
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: 1
+            requests:
+              memory: "1Gi"
+              cpu: 1
+          env:
+            ### MinIO Setup: ###
+            - name: MINIO_HOST
+              value: "{{ .Values.bucket_storage_host }}"
+            - name: MINIO_ACCESS_KEY
+              {{- toYaml .Values.bucket_access_key_env_spec | nindent 14 }}
+            - name: MINIO_SECRET_KEY
+              {{- toYaml .Values.bucket_secret_key_env_spec | nindent 14 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: downloads
+              mountPath: /local_resources
+              readOnly: false
+            - name: checkpoints
+              mountPath: /workdir/checkpoints
+              readOnly: false
+        - name: upload
+          image: "{{ .Values.io_image }}"
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          command: ["bash", "-e", "-u", "-c"]
+          args:
+            - |
+              # Setup MinIO:
+              mc alias set minio-host $${MINIO_HOST} $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY}
+              echo "Syncing checkpoint artifacts to bucket...";
+              while [ ! -f /semaphores/done_training ]; do
+                mc mirror /workdir/checkpoints minio-host/{{ .Values.checkpoints_remote | trimSuffix "/" }}/  2>/dev/null
+                sleep 15
+              done
+              # Once more to ensure everything gets uploaded
+              echo "Training done, syncing once more..."
+              mc mirror /workdir/checkpoints minio-host/{{ .Values.checkpoints_remote | trimSuffix "/" }}/  2>/dev/null
+              # Sync the final checkpoint with overwrite to carry over vLLM-compatibility changes
+              mc mirror --overwrite /workdir/checkpoints/checkpoint-final minio-host/{{ .Values.checkpoints_remote | trimSuffix "/" }}/checkpoint-final/
+              echo "Done uploading"
+              touch /semaphores/done_uploading
+              sleep 10  # Let the main container catch
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: 1
+            requests:
+              memory: "1Gi"
+              cpu: 1
+          env:
+            ### MinIO Setup: ###
+            - name: MINIO_HOST
+              value: "{{ .Values.bucket_storage_host }}"
+            - name: MINIO_ACCESS_KEY
+              {{- toYaml .Values.bucket_access_key_env_spec | nindent 14 }}
+            - name: MINIO_SECRET_KEY
+              {{- toYaml .Values.bucket_secret_key_env_spec | nindent 14 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: checkpoints
+              mountPath: /workdir/checkpoints
+              readOnly: true
+            - name: semaphores
+              mountPath: /semaphores
+              readOnly: false
+      containers:
+        - name: finetuning
+          image: "{{ .Values.finetuning_image }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NCCL_DEBUG
+              value: INFO
+            - name: ACCELERATE_LOG_LEVEL
+              value: info
+            - name: TRANSFORMERS_VERBOSITY
+              value: info
+          command:
+            - /bin/bash
+            - -l
+            - -e
+            - -u
+            - -c
+          args:
+            - |
+              # Print GPU Info:
+              rocm-smi
+              # Run training:
+              accelerate launch \
+                --config_file /configs/accelerate_config.yaml \
+                --no-python \
+                finetuning --num-preprocess-workers 4 {{ .Values.finetuning_config.method }} /configs/finetuning_config.yaml
+              # Post process:
+              create_vllm_compatible_adapter --training-config /configs/finetuning_config.yaml ./checkpoints/checkpoint-final
+              {{- if .Values.merge_adapter }}
+              merge_adapter /local_resources/basemodel ./checkpoints/checkpoint-final ./checkpoints/checkpoint-final-merged
+              {{- end }}
+              touch /semaphores/done_training
+              echo "Done training, waiting for uploads..."
+              while [ ! -f /semaphores/done_uploading ]; do
+                sleep 5;
+              done
+              echo "All done, exiting"
+          resources:
+            limits:
+              memory: "{{ mul .Values.finetuning_gpus 32 }}Gi"
+              cpu: "{{ mul .Values.finetuning_gpus 4 }}"
+              amd.com/gpu: "{{ .Values.finetuning_gpus }}"
+            requests:
+              memory: "{{ mul .Values.finetuning_gpus 32 }}Gi"
+              cpu: "{{ mul .Values.finetuning_gpus 4 }}"
+              amd.com/gpu: "{{ .Values.finetuning_gpus }}"
+          volumeMounts:
+            - name: dshm # Increase SHM size for the container by mounting /dev/shm, for Pytorch parallel processing
+              mountPath: /dev/shm
+            - name: downloads
+              mountPath: /local_resources
+              readOnly: false
+            - name: checkpoints
+              mountPath: /workdir/checkpoints
+              readOnly: false
+            - name: semaphores
+              mountPath: /semaphores
+              readOnly: false
+            - name: configs
+              mountPath: /configs
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory # equivalent to `docker run --shm-size=(total_memory/2)`
+        - name: downloads
+          emptyDir:
+            sizeLimit: "{{ .Values.downloads_reserved_size }}"
+        - name: checkpoints
+          emptyDir:
+            sizeLimit: "{{ .Values.checkpoints_reserved_size }}"
+        - name: semaphores
+          emptyDir:
+            sizeLimit: "1Mi"
+        - name: configs
+          configMap:
+            name: "{{ .Release.Name }}-configs"
