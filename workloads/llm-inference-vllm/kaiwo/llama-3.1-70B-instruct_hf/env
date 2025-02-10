@@ -1,4 +1,7 @@
 envVars:  
+  # model id
+  - name: MODEL_ID
+    value: meta-llama/Llama-3.1-70B-Instruct
   - fromSecret:
       name: "HF_TOKEN"
       secret: "hf-token"

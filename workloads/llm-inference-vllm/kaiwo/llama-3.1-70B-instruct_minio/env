@@ -1,7 +1,7 @@
 envVars:
   # model id
   - name: MODEL_ID
-    value: meta-llama/Llama-3.1-8B-Instruct
+    value: meta-llama/Llama-3.1-70B-Instruct
   # model: which bucket/prefix to download the model from
   - name: BUCKET_MODEL_PATH
     value: models

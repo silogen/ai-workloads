@@ -16,7 +16,7 @@ Follow these steps to deploy the LLM Inference vLLM workload using Kaiwo:
 
 1. **Deploy with Kaiwo**:
     ```bash
-    kaiwo serve --image rocm/vllm-dev:20241205-tuned --path llm-inference-vllm/kawio/llama-3.1-8B-instruct_hf --gpus 1
+    kaiwo serve --image rocm/vllm-dev:20241205-tuned --path kaiwo/llama-3.1-8B-instruct_hf --gpus 1
     ```
 
 2. **Verify Deployment**: Check the deployment status:
