@@ -50,19 +50,26 @@ spec:
           volumeMounts:
             - mountPath: /workload
               name: ephemeral-storage
+            - mountPath: /workload/mounted
+              name: workload-mount
             - mountPath: /dev/shm
               name: dshm
       volumes:
-        - ephemeral:
-            volumeClaimTemplate:
-              spec:
-                accessModes:
-                  - ReadWriteOnce
-                resources:
-                  requests:
-                    storage: {{ .Values.storage.quantity }}
-                storageClassName: {{ .Values.storage.storageClassName }}
+        # - ephemeral:
+        #     volumeClaimTemplate:
+        #       spec:
+        #         accessModes:
+        #           - ReadWriteOnce
+        #         resources:
+        #           requests:
+        #             storage: {{ .Values.storage.quantity }}
+        #         storageClassName: {{ .Values.storage.storageClassName }}
+        #   name: ephemeral-storage
+        - emptyDir: {}
           name: ephemeral-storage
+        - configMap:
+            name: {{ include "dev-openvscode-server.fullname" . }}
+          name: workload-mount
         - emptyDir:
             medium: Memory
             sizeLimit: {{ .Values.dshm.sizeLimit }}

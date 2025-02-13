@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "dev-openvscode-server.fullname" . }}
+data:
+{{- $files := .Files }}
+{{- range $path, $_ := .Files.Glob "mount/*" }}
+  {{ $key := $path | trimPrefix "mount/" | replace "/" "__" }}
+  {{ $key }}: {{ $files.Get $path }}
+{{- end }}
