@@ -1,30 +1,25 @@
 # general
 name: "llm-inference-vllm"
-namespace: "kaiwo"
-username: "kaiwo"
-labels_spec: {}
+labels: {}
+
 # image/model
 image: "rocm/vllm-dev:20241205-tuned"
 model: "meta-llama/Llama-3.1-8B-Instruct"
 gpus: 1
+
 # secrets: bucket storage
-bucket_storage_host: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
-bucket_storage_access_key_env_spec:
-  valueFrom:
-    secretKeyRef:
-      name: minio-credentials
-      key: minio-access-key
-bucket_storage_secret_key_env_spec:
-  valueFrom:
-    secretKeyRef:
-      name: minio-credentials
-      key: minio-secret-key
+bucket_storage:
+  host: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  credentials:
+    secret_name: minio-credentials
+    secret_key_key: minio-secret-key
+    access_key_key: minio-access-key
+
 # secrets: huggingface token
-hf_token_env_spec:
-  valueFrom:
-    secretKeyRef:
-      name: hf-token
-      key: hf-token
+hf_token:
+  secret_name: hf-token
+  key: hf-token
+
 # storage
 storage:
   quantity: "100Gi"

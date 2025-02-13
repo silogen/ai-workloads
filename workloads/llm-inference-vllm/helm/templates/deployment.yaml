@@ -2,9 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "llm-inference-vllm.fullname" . }}
-  namespace: {{ .Values.namespace }}
   labels:
-    kaiwo-cli/username: {{ .Values.username }}
+    {{- if .Values.labels }}
+      {{- toYaml .Values.labels | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
@@ -43,7 +44,22 @@ spec:
             - name: HF_HOME
               value: /workload/.cache/huggingface
             - name: HF_TOKEN
-              {{- toYaml .Values.hf_token_env_spec | nindent 14 }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hf_token.secret_name }}
+                  key: {{ .Values.hf_token.key }}
+            - name: BUCKET_STORAGE_HOST
+              value: {{ .Values.bucket_storage.host }}
+            - name: BUCKET_STORAGE_ACCESS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucket_storage.credentials.secret_name }}
+                  key: {{ .Values.bucket_storage.credentials.access_key_key }}
+            - name: BUCKET_STORAGE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucket_storage.credentials.secret_name }}
+                  key: {{ .Values.bucket_storage.credentials.secret_key_key }}
           ports:
             - containerPort: 8080
           resources:
