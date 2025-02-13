@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "llm-inference-vllm.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    kaiwo-cli/username: {{ .Values.username }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "llm-inference-vllm.fullname" . }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ include "llm-inference-vllm.fullname" . }}
+    spec:
+      # TODO: vLLM requires root user to run now, need to fix this
+      # securityContext:
+      #   fsGroup: 1000
+      #   runAsGroup: 1000
+      #   runAsUser: 1000
+      restartPolicy: Always
+      {{- if .Values.imagePullSecret }}
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecret }}
+      {{- end }}
+      containers:
+        - image: {{ .Values.image }}
+          imagePullPolicy: Always
+          name: {{ include "llm-inference-vllm.name" . }}
+          command: ["sh", "-c"]
+          args:
+            - >
+              python3 -m vllm.entrypoints.openai.api_server
+              --host="0.0.0.0"
+              --port=8080
+              --model="{{ .Values.model }}"
+              --tensor-parallel-size="{{ .Values.gpus }}"
+          env:
+            - name: HF_HOME
+              value: /workload/.cache/huggingface
+            - name: HF_TOKEN
+              {{- toYaml .Values.hf_token_env_spec | nindent 14 }}
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "{{ max (mul .Values.gpus 32) 4 }}Gi"
+              cpu: "{{ max (mul .Values.gpus 4) 1 }}"
+              {{- if .Values.gpus }}
+              amd.com/gpu: "{{ .Values.gpus }}"
+              {{- end }}
+            limits:
+              memory: "{{ max (mul .Values.gpus 32) 4 }}Gi"
+              cpu: "{{ max (mul .Values.gpus 4) 1 }}"
+              {{- if .Values.gpus }}
+              amd.com/gpu: "{{ .Values.gpus }}"
+              {{- end }}
+          volumeMounts:
+            - mountPath: /workload
+              name: ephemeral-storage
+            - mountPath: /dev/shm
+              name: dshm
+      volumes:
+        - ephemeral:
+            volumeClaimTemplate:
+              metadata:
+                creationTimestamp: null
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                storageClassName: {{ .Values.storage.storageClassName }}
+                resources:
+                  requests:
+                    storage: {{ .Values.storage.quantity }}
+          name: ephemeral-storage
+        - emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.dshm.sizeLimit }}
+          name: dshm
