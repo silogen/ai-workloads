@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "dev-openvscode-server.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ include "dev-openvscode-server.name" . }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 3000
+  selector:
+    app: {{ include "dev-openvscode-server.fullname" . }}

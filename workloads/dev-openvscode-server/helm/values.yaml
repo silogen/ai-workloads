@@ -1,0 +1,33 @@
+# general
+image:
+  repository: ghcr.io/silogen/openvscode-server
+  tag: vllm-dev-20250124
+  pullPolicy: Always
+namespace: kaiwo
+labels:
+  - label: kaiwo.silogen.ai/managed
+    value: "true"
+# environment variables
+envVars:
+  bucket_storage_host: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  bucket_storage_access_key_env_spec:
+    valueFrom:
+      secretKeyRef:
+        name: minio-credentials
+        key: minio-access-key
+  bucket_storage_secret_key_env_spec:
+    valueFrom:
+      secretKeyRef:
+        name: minio-credentials
+        key: minio-secret-key
+  hf_token_env_spec:
+    valueFrom:
+      secretKeyRef:
+        key: hf-token
+        name: hf-token
+# storage
+storage:
+  quantity: "100Gi"
+  storageClassName: "longhorn"
+dshm:
+  sizeLimit: "200Gi"
