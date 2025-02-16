@@ -34,13 +34,8 @@ spec:
           name: {{ include "release.name" . }}
           command: ["sh", "-c"]
           args:
-            - >
-              python3 -m vllm.entrypoints.openai.api_server
-              --host="0.0.0.0"
-              --port=8080
-              {{- range $key, $value := .Values.vllm_engine_args }}
-              --{{ $key }}={{ tpl $value $ | quote }}
-              {{- end }}
+            - |
+              {{- include "entrypoint" . | nindent 14 }}
           env:
             - name: HF_HOME
               value: /workload/.cache/huggingface

@@ -4,18 +4,18 @@ labels: {}
 
 # image/model
 image: "rocm/vllm-dev:20241205-tuned"
-model: "meta-llama/Llama-3.1-8B-Instruct"
+model: "s3://default-bucket/meta-llama/Llama-3.1-8B-Instruct"
 gpus: 1
 
-# vllm engine arguments (ref: https://docs.vllm.ai/en/latest/serving/engine_args.html)
+# vllm engine args (ref: https://docs.vllm.ai/en/latest/serving/engine_args.html)
 vllm_engine_args:
-  model: "{{ .Values.model }}"
-  tensor-parallel-size: "{{ .Values.gpus }}"
-  served-model-name: "{{ .Values.model }}"
+  # tensor-parallel-size: "{{ .Values.gpus }}"
+  # model: "{{ .Values.model }}"
+  # served-model-name: "{{ .Values.model }}"
   # enforce-eager: "true"
   # gpu-memory-utilization: 0.9
 
-# env vars
+# vllm env vars (ref: https://docs.vllm.ai/en/latest/serving/env_vars.html)
 env_vars:
   VLLM_DO_NOT_TRACK: 1
 
