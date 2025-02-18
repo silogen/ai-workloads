@@ -38,7 +38,7 @@ spec:
           huggingface-cli download {{ .Custom.modelID }} \
             --exclude '{{ default "original/*"" .Custom.downloadExcludeGlob }}' \
             {{- if .Custom.modelRevision }}
-            --revision {{ .Custom.modelRevision }}
+            --revision {{ .Custom.modelRevision }} \
             {{- end }}
             --local-dir local_models/downloaded_model
           echo 'Uploading the model to the bucket, to {{ .Custom.bucketPath | trimSuffix "/" }}'
