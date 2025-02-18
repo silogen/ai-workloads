@@ -1,38 +1,40 @@
 ### General chart values ### 
-io_image: ghcr.io/silogen/logistics:v0.1
-finetuning_image: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.1
+ioImage: ghcr.io/silogen/logistics:v0.1
+finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.1
 
 # Use these to add e.g. kueue labels
-labels_spec: {}
+labels: []  
+  # Example:
+  # labels:
+  #   - label: kueue.x-k8s.io/queue-name
+  #     value: kaiwo
 
 # Extra annotations such as an imagePullSecrets
-extra_template_spec: {}
+imagePullSecrets: []
+  # Example:
+  # imagePullSecrets:
+  #   - "regcred"
 
 # Configure these to match the credentials in your cluster:
-bucket_storage_host: https://storage.googleapis.com
-bucket_access_key_env_spec:
-  valueFrom:
-    secretKeyRef:
-      name: bucket-storage-credentials
-      key: access_key
-bucket_secret_key_env_spec:
-  valueFrom:
-    secretKeyRef:
-      name: bucket-storage-credentials
-      key: secret_key
+bucketStorageHost: 
+bucketCredentialsSecret:
+  name: bucket-storage-credentials
+  accessKeyKey: access_key
+  secretKeyKey: secret_key
 
 # Resources:
-downloads_reserved_size: 64Gi
-checkpoints_reserved_size: 512Gi
-finetuning_gpus: 1 # 1 or 8, values in between are not robust at the moment
+downloadsReservedSize: 64Gi
+checkpointsReservedSize: 512Gi
+storageClass:  # Optionally set this to use a specific storageClass for the storage.
+finetuningGpus: 1 # 1 or 8, values in between are not robust at the moment
 
 # Runtime configuration:
-distributed_type: "auto-deepspeed-stage1"  # Alternatives: "auto-single-process", "custom-accelerate-config"
-custom_accelerate_config:  # Can contain an accelerate config in YAML format, used with distributed_type: "custom-accelerate-config".
-merge_adapter: true
+distributedType: "auto-deepspeed-stage1"  # Alternatives: "auto-single-process", "custom-accelerate-config"
+customAccelerateConfig:  # Can contain an accelerate config in YAML format, used with distributed_type: "custom-accelerate-config".
+mergeAdapter: true
 
 ### Model input and output, required args ###
-checkpoints_remote:
+checkpointsRemote:
 basemodel:
 
 ### Finetuning config section ###
@@ -65,6 +67,7 @@ finetuning_config:
     quantization_type: no-quantization  # This can also be bitsandbytes
     # If bitsandbytes, you can also set any keys from BitsAndBytesConfig here
   run_conf:
+    model: /local_resources/basemodel
     model_args: {}  # These are HuggingFace model .from_pretrained() kwargs
     resume_from_checkpoint: auto
   sft_args:

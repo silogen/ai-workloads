@@ -20,6 +20,9 @@ This has been tested with [kaiwo v0.0.5](https://github.com/silogen/kaiwo/releas
 ```yaml
 modelID: # Huggingface model id, which is in the format of organization/model-name
 bucketPath: # Path in the bucket storage where this model should be stored. In the format bucket-name/path/separated/by/slashes/name-for-resulting-directory
+modelRevision: # Optional string that specifies which revision of the model should be downloaded.
+downloadExcludeGlob: # Optional string that specifies which files in the huggingface model repository should be excluded from the download, default: 'original/*'
+allowOverwrite: # Optionally set to true to allow overiwriting existing files in the bucket, default false
 ```
 
 ## required variables in env file:

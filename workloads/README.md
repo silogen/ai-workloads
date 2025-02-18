@@ -22,3 +22,5 @@ spec:
     suspend: true
     ...
 ```
+However, note that suspend: true may not be suitable if the Job should work both with kueue as well as without it. Thus, many helm workloads should not specify it in this repository.
+Kaiwo workloads can rely on a kueue existing or being created automatically.

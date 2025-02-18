@@ -6,7 +6,8 @@ metadata:
   labels:
     kueue.x-k8s.io/queue-name: {{ .WorkloadMeta.Queue }}
 spec:
-  ttlSecondsAfterFinished: 3600 
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
   template:
     spec:
       restartPolicy: "Never"
@@ -34,10 +35,18 @@ spec:
           echo 'Setting up minio'
           mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
           echo 'Downloading the model to the local container'
-          huggingface-cli download {{ .Custom.modelID }} --local-dir local_models/downloaded_model
+          huggingface-cli download {{ .Custom.modelID }} \
+            --exclude '{{ default "original/*"" .Custom.downloadExcludeGlob }}' \
+            {{- if .Custom.modelRevision }}
+            --revision {{ .Custom.modelRevision }}
+            {{- end }}
+            --local-dir local_models/downloaded_model
           echo 'Uploading the model to the bucket, to {{ .Custom.bucketPath | trimSuffix "/" }}'
           mc mirror --exclude '.cache/huggingface/*' \
             --exclude '.gitattributes' \
+            {{- if .Custom.allowOverwrite }}
+            --overwrite \
+            {{- end }}
             local_models/downloaded_model/ minio-host/{{ .Custom.bucketPath | trimSuffix "/" }}
         {{- end }}
         env:

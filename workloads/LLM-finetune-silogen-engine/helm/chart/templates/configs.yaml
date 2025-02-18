@@ -5,7 +5,7 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
 data:
   accelerate_config.yaml: |
-    {{- if (eq .Values.distributed_type "auto-deepspeed-stage1" ) }}
+    {{- if (eq .Values.distributedType "auto-deepspeed-stage1" ) }}
     compute_environment: LOCAL_MACHINE
     deepspeed_config:
       zero_stage: 1
@@ -18,9 +18,9 @@ data:
     main_process_port: null
     mixed_precision: bf16
     num_machines: 1
-    num_processes: {{ .Values.finetuning_gpus }}
+    num_processes: {{ .Values.finetuningGpus }}
     use_cpu: false
-    {{- else if (eq .Values.distributed_type "auto-single-process") }}
+    {{- else if (eq .Values.distributedType "auto-single-process") }}
     compute_environment: LOCAL_MACHINE
     distributed_type: NO
     fsdp_config: {}
@@ -29,10 +29,10 @@ data:
     main_process_port: null
     mixed_precision: bf16
     num_machines: 1
-    num_processes: {{ .Values.finetuning_gpus }}
+    num_processes: {{ .Values.finetuningGpus }}
     use_cpu: false
-    {{- else if (eq .Values.distributed_type "custom-accelerate-config") }}
-    {{- toYaml .Values.custom_accelerate_config | nindent 4 }}
+    {{- else if (eq .Values.distributedType "custom-accelerate-config") }}
+    {{- toYaml .Values.customAccelerateConfig | nindent 4 }}
     {{- end }}
   finetuning_config.yaml: |
     {{- with .Values.finetuning_config }}

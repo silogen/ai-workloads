@@ -1,10 +1,17 @@
 # Use these to add e.g. kueue labels
-labels_spec:
-  kueue.x-k8s.io/queue-name: kaiwo
+labels:
+  - label: kueue.x-k8s.io/queue-name 
+    value: kaiwo
+
+# Bucket storage inputs
+bucketStorageHost: "https://storage.googleapis.com"
+
+# Resource configuration:
+# storageClass: longhorn
 
 ### Model input and output, required args ###
-checkpoints_remote: "workspace/experiments/finetuning/llama-31-tiny-random-deepspeed"
-basemodel: "workspace/models/llama-31-tiny-random"
+checkpointsRemote: "silogen-dev-data/experiments/finetuning/llama-31-tiny-random-deepspeed"
+basemodel: "silogen-dev-data/models/yujiepan_llama-3.1-tiny-random"
 
 ### Finetuning config section ###
 finetuning_config:
@@ -13,7 +20,7 @@ finetuning_config:
     training_data:
       type: CONCATENATION
       datasets:
-        - path: "workspace/data/finetuning/datasets/argilla-10k-mistral-large-human-prompts.train.jsonl"
+        - path: "silogen-dev-data/finetuning/datasets/argilla-mistral-large-human-prompts.jsonl"
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1

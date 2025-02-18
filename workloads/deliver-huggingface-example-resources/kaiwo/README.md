@@ -18,6 +18,9 @@ modelID: # Huggingface model ID in the organization/model-name format
 bucketModelPath: # Path where to upload the model, bucket-name/path/in/bucket/ending/in/desired-model-name
 bucketDataDir: # Directory path where all the data files from local_datasets/ are uploaded to
 ephemeralStorageRequest:  # Optionally specify a value of ephemeral storage that you reserve for this job. Can be useful to request enough space if you're downloading a very large model.
+modelRevision: # Optional string that specifies which revision of the model should be downloaded.
+downloadExcludeGlob: # Optional string that specifies which files in the huggingface model repository should be excluded from the download, default: 'original/*'
+allowOverwrite: # Optionally set to true to allow overiwriting existing files in the bucket, default false
 ```
 
 ## llama-3.1-tiny-random-and-argilla-human-prompts

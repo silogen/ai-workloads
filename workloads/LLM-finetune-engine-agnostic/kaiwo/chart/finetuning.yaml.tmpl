@@ -10,7 +10,9 @@ metadata:
     kueue.x-k8s.io/queue-name: {{ .WorkloadMeta.Queue }}
     kaiwo-cli/username: {{ .Meta.User }}
 spec:
+  suspend: true
   ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
   template:
     spec:
       restartPolicy: "Never"
@@ -21,7 +23,7 @@ spec:
       initContainers:
       - name: download
         image: "ghcr.io/silogen/logistics:v0.1"
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         command: ["sh", "-e", "-u", "-c"]
         args:
           - |
@@ -98,7 +100,7 @@ spec:
             name: dshm
       - name: upload
         image: "ghcr.io/silogen/logistics:v0.1"
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         restartPolicy: Always
         command: ["bash", "-e", "-u", "-c"]
         args:
