@@ -4,7 +4,8 @@ labels: {}
 
 # image/model
 image: "rocm/vllm-dev:20241205-tuned"
-model: "s3://default-bucket/meta-llama/Llama-3.1-8B-Instruct"
+#model: "s3://models/meta-llama/Llama-3.1-8B-Instruct"
+model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 gpus: 1
 
 # vllm engine args (ref: https://docs.vllm.ai/en/latest/serving/engine_args.html)
