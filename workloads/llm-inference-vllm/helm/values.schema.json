@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "labels": {
+      "type": "object"
+    },
+    "image": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "gpus": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "vllm_engine_args": {
+      "type": "object"
+    },
+    "env_vars": {
+      "type": "object"
+    },
+    "bucket_storage": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "credentials": {
+          "type": "object",
+          "properties": {
+            "secret_name": {
+              "type": "string"
+            },
+            "secret_key_key": {
+              "type": "string"
+            },
+            "access_key_key": {
+              "type": "string"
+            }
+          },
+          "required": ["secret_name", "secret_key_key", "access_key_key"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["host", "credentials"],
+      "additionalProperties": false
+    },
+    "hf_token": {
+      "type": "object",
+      "properties": {
+        "secret_name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": ["secret_name", "key"],
+      "additionalProperties": false
+    },
+    "storage": {
+      "type": "object",
+      "properties": {
+        "quantity": {
+          "type": "string"
+        },
+        "storageClassName": {
+          "type": "string"
+        }
+      },
+      "required": ["quantity", "storageClassName"],
+      "additionalProperties": false
+    },
+    "dshm": {
+      "type": "object",
+      "properties": {
+        "sizeLimit": {
+          "type": "string"
+        }
+      },
+      "required": ["sizeLimit"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["name", "image", "model", "gpus", "env_vars", "bucket_storage", "hf_token", "storage", "dshm"],
+  "additionalProperties": false
+}
