@@ -3,8 +3,8 @@ kind: Deployment
 metadata:
   name: {{ include "release.fullname" . }}
   labels:
-    {{- if .Values.labels }}
-      {{- toYaml .Values.labels_spec | nindent 4 }}
+    {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:
   replicas: 1
@@ -17,12 +17,12 @@ spec:
       creationTimestamp: null
       labels:
         app: {{ include "release.fullname" . }}
-    spec:
       # TODO: vLLM requires root user to run now, need to fix this
       # securityContext:
       #   fsGroup: 1000
       #   runAsGroup: 1000
       #   runAsUser: 1000
+    spec:
       restartPolicy: Always
       {{- if .Values.imagePullSecret }}
       imagePullSecrets:

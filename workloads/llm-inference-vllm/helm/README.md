@@ -20,7 +20,7 @@ It is recommended to use `helm template` and pipe the result to `kubectl create`
 To deploy a specific model along with its settings, use the following command from the `helm` directory:
 
 ```bash
-helm template . -f overrides/values-model-tinyllama_tinyllama-1.1b-chat-v1.0.yaml | kubectl create -f -
+helm template . -f overrides/models/tinyllama_tinyllama-1.1b-chat-v1.0.yaml | kubectl apply -f -
 ```
 
 ### Alternative 2: Override the Model
@@ -28,7 +28,7 @@ helm template . -f overrides/values-model-tinyllama_tinyllama-1.1b-chat-v1.0.yam
 You can also override the model on the command line:
 
 ```bash
-helm template . --set model=Qwen/Qwen2-0.5B-Instruct | kubectl create -f -
+helm template . --set model=Qwen/Qwen2-0.5B-Instruct | kubectl apply -f -
 ```
 
 ### Alternative 3: Deploy a Model from Bucket Storage
@@ -36,7 +36,7 @@ helm template . --set model=Qwen/Qwen2-0.5B-Instruct | kubectl create -f -
 If you have downloaded your model to bucket storage, use:
 
 ```bash
-helm template . --set model=s3://models/Qwen/Qwen2-0.5B-Instruct | kubectl create -f -
+helm template . --set model=s3://models/Qwen/Qwen2-0.5B-Instruct | kubectl apply -f -
 ```
 
 The model will be automatically downloaded before starting the inference server.
