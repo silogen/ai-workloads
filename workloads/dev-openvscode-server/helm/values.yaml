@@ -27,3 +27,8 @@ storage:
 
 gpus: 1
 port: 3000
+entrypoint: |
+  bash /workload/mounted/install_kubectl.sh
+  exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server \
+    --host 0.0.0.0 \
+    --without-connection-token

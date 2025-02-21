@@ -23,6 +23,11 @@ spec:
           image: {{ .Values.image | quote}}
           imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
           name: {{ .Chart.Name }}
+          {{- if .Values.entrypoint }}
+          command: ["sh", "-c"]
+          args:
+          - | {{- .Values.entrypoint | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.port }}
           resources:
