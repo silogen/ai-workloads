@@ -11,11 +11,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "release.name" . }}
+      app: {{ include "release.fullname" . }}
   template:
     metadata:
       labels:
-        app: {{ include "release.name" . }}
+        app: {{ include "release.fullname" . }}
     spec:
       containers:
         - env:
