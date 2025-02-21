@@ -100,10 +100,16 @@
       "type": "integer",
       "description": "Number of GPUs"
     },
-    "port": {
-      "type": "integer",
-      "description": "Port for the service"
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "description": "Port for the service"
+        }
+      },
+      "required": ["port"]
     }
   },
-  "required": ["metadata", "image", "imagePullPolicy", "env_vars", "storage", "gpus", "port"]
+  "required": ["metadata", "image", "imagePullPolicy", "env_vars", "storage", "gpus", "deployment"]
 }

@@ -25,8 +25,10 @@ storage:
   dshm:
     sizeLimit: 32Gi
 
+deployment:
+  port: 3000
+
 gpus: 1
-port: 3000
 entrypoint: |
   bash /workload/mounted/install_kubectl.sh
   exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server \

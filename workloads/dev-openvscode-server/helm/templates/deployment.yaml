@@ -29,7 +29,7 @@ spec:
           - | {{- .Values.entrypoint | nindent 12 }}
           {{- end }}
           ports:
-            - containerPort: {{ .Values.port }}
+            - containerPort: {{ .Values.deployment.port }}
           resources:
             {{- include "container.resources" . | nindent 12 }}
           volumeMounts:
