@@ -2,156 +2,108 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "image": {
+    "metadata": {
       "type": "object",
       "properties": {
-        "repository": {
-          "type": "string",
-          "description": "Image repository"
-        },
-        "tag": {
-          "type": "string",
-          "description": "Image tag"
-        },
-        "pullPolicy": {
-          "type": "string",
-          "description": "Image pull policy",
-          "enum": ["Always", "IfNotPresent", "Never"]
+        "labels": {
+          "type": "object",
+          "description": "Metadata labels"
         }
       },
-      "required": ["repository", "tag", "pullPolicy"]
+      "required": ["labels"]
     },
-    "namespace": {
+    "image": {
       "type": "string",
-      "description": "Namespace for the service"
+      "description": "Image repository and tag"
     },
-    "labels": {
-      "type": "array",
-      "description": "Labels for the deployment",
-      "items": {
-        "type": "object",
-        "properties": {
-          "label": {
-            "type": "string",
-            "description": "Label key"
-          },
-          "value": {
-            "type": "string",
-            "description": "Label value"
-          }
-        },
-        "required": ["label", "value"]
-      }
+    "imagePullPolicy": {
+      "type": "string",
+      "description": "Image pull policy",
+      "enum": ["Always", "IfNotPresent", "Never"]
     },
-    "envVars": {
+    "env_vars": {
       "type": "object",
       "properties": {
-        "bucket_storage_host": {
+        "BUCKET_STORAGE_HOST": {
           "type": "string",
           "description": "Bucket storage host URL"
         },
-        "bucket_storage_access_key_env_spec": {
+        "BUCKET_STORAGE_ACCESS_KEY": {
           "type": "object",
-          "description": "Bucket storage access key environment variable specification",
           "properties": {
-            "valueFrom": {
-              "type": "object",
-              "properties": {
-                "secretKeyRef": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["name", "key"]
-                }
-              },
-              "required": ["secretKeyRef"]
+            "name": {
+              "type": "string",
+              "description": "Name of the secret containing the bucket storage access key"
+            },
+            "key": {
+              "type": "string",
+              "description": "Key of the bucket storage access key in the secret"
             }
           },
-          "required": ["valueFrom"]
+          "required": ["name", "key"]
         },
-        "bucket_storage_secret_key_env_spec": {
+        "BUCKET_STORAGE_SECRET_KEY": {
           "type": "object",
-          "description": "Bucket storage secret key environment variable specification",
           "properties": {
-            "valueFrom": {
-              "type": "object",
-              "properties": {
-                "secretKeyRef": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["name", "key"]
-                }
-              },
-              "required": ["secretKeyRef"]
+            "name": {
+              "type": "string",
+              "description": "Name of the secret containing the bucket storage secret key"
+            },
+            "key": {
+              "type": "string",
+              "description": "Key of the bucket storage secret key in the secret"
             }
           },
-          "required": ["valueFrom"]
-        },
-        "hf_token_env_spec": {
-          "type": "object",
-          "description": "Hugging Face token environment variable specification",
-          "properties": {
-            "valueFrom": {
-              "type": "object",
-              "properties": {
-                "secretKeyRef": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["name", "key"]
-                }
-              },
-              "required": ["secretKeyRef"]
-            }
-          },
-          "required": ["valueFrom"]
+          "required": ["name", "key"]
         }
       },
-      "required": ["bucket_storage_host", "bucket_storage_access_key_env_spec", "bucket_storage_secret_key_env_spec", "hf_token_env_spec"]
+      "required": ["BUCKET_STORAGE_HOST", "BUCKET_STORAGE_ACCESS_KEY", "BUCKET_STORAGE_SECRET_KEY"]
     },
     "storage": {
       "type": "object",
       "properties": {
-        "quantity": {
-          "type": "string",
-          "description": "Storage quantity"
+        "ephemeral": {
+          "type": "object",
+          "properties": {
+            "quantity": {
+              "type": "string",
+              "description": "Ephemeral storage quantity"
+            },
+            "storageClassName": {
+              "type": "string",
+              "description": "Ephemeral storage class name"
+            },
+            "accessModes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Ephemeral storage access modes"
+            }
+          },
+          "required": ["quantity", "storageClassName", "accessModes"]
         },
-        "storageClassName": {
-          "type": "string",
-          "description": "Storage class name"
+        "dshm": {
+          "type": "object",
+          "properties": {
+            "sizeLimit": {
+              "type": "string",
+              "description": "Size limit for /dev/shm"
+            }
+          },
+          "required": ["sizeLimit"]
         }
       },
-      "required": ["quantity", "storageClassName"]
+      "required": ["ephemeral", "dshm"]
     },
-    "dshm": {
-      "type": "object",
-      "properties": {
-        "sizeLimit": {
-          "type": "string",
-          "description": "Size limit for /dev/shm"
-        }
-      },
-      "required": ["sizeLimit"]
+    "gpus": {
+      "type": "integer",
+      "description": "Number of GPUs"
+    },
+    "port": {
+      "type": "integer",
+      "description": "Port for the service"
     }
   },
-  "required": ["image", "namespace", "labels", "envVars", "storage", "dshm"]
+  "required": ["metadata", "image", "imagePullPolicy", "env_vars", "storage", "gpus", "port"]
 }

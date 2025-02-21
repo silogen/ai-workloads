@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "dev-openvscode-server.fullname" . }}
+  name: {{ include "release.fullname" . }}
   labels:
-    app: {{ include "dev-openvscode-server.name" . }}
+    app: {{ include "release.name" . }}
     {{- range .Values.labels }}
     {{ .label }}: {{ .value | quote}}
     {{- end }}
@@ -11,66 +11,23 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "dev-openvscode-server.name" . }}
+      app: {{ include "release.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "dev-openvscode-server.name" . }}
+        app: {{ include "release.name" . }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - env:
+            {{- include "container.env" . | nindent 12 }}
+          image: {{ .Values.image | quote}}
+          imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
+          name: {{ .Chart.Name }}
           ports:
-            - containerPort: 3000
+            - containerPort: {{ .Values.port }}
           resources:
-            requests:
-              memory: "{{ max (mul .Values.gpus 32) 4 }}Gi"
-              cpu: "{{ max (mul .Values.gpus 4) 1 }}"
-              {{- if .Values.gpus }}
-              amd.com/gpu: "{{ .Values.gpus }}"
-              {{- end }}
-            limits:
-              memory: "{{ max (mul .Values.gpus 32) 4 }}Gi"
-              cpu: "{{ max (mul .Values.gpus 4) 1 }}"
-              {{- if .Values.gpus }}
-              amd.com/gpu: "{{ .Values.gpus }}"
-              {{- end }}
-          env:
-            - name: HF_HOME
-              value: /workload/.cache/huggingface
-            - name: BUCKET_STORAGE_HOST
-              value: {{ .Values.envVars.bucket_storage_host }}
-            - name: BUCKET_STORAGE_ACCESS_KEY
-              {{- toYaml .Values.envVars.bucket_storage_access_key_env_spec | nindent 14 }}
-            - name: BUCKET_STORAGE_SECRET_KEY
-              {{- toYaml .Values.envVars.bucket_storage_secret_key_env_spec | nindent 14 }}
-            - name: HF_TOKEN
-              {{- toYaml .Values.envVars.hf_token_env_spec | nindent 14 }}
+            {{- include "container.resources" . | nindent 12 }}
           volumeMounts:
-            - mountPath: /workload
-              name: ephemeral-storage
-            - mountPath: /workload/mounted
-              name: workload-mount
-            - mountPath: /dev/shm
-              name: dshm
+            {{- include "container.volumeMounts" . | nindent 12 }}
       volumes:
-        # - ephemeral:
-        #     volumeClaimTemplate:
-        #       spec:
-        #         accessModes:
-        #           - ReadWriteOnce
-        #         resources:
-        #           requests:
-        #             storage: {{ .Values.storage.quantity }}
-        #         storageClassName: {{ .Values.storage.storageClassName }}
-        #   name: ephemeral-storage
-        - emptyDir: {}
-          name: ephemeral-storage
-        - configMap:
-            name: {{ include "dev-openvscode-server.fullname" . }}
-          name: workload-mount
-        - emptyDir:
-            medium: Memory
-            sizeLimit: {{ .Values.dshm.sizeLimit }}
-          name: dshm
+        {{- include "container.volumes" . | nindent 8 }}

@@ -14,20 +14,24 @@ helm template my-release ./helm | kubectl apply -f -
 
 The following table lists the configurable parameters of the `dev-openvscode-server` chart and their default values.
 
-| Parameter                          | Description                                            | Default                                                    |
-|------------------------------------|--------------------------------------------------------|------------------------------------------------------------|
-| `image.repository`                 | Image repository                                       | `ghcr.io/silogen/openvscode-server`                        |
-| `image.tag`                        | Image tag                                              | `vllm-dev-20250124`                                        |
-| `image.pullPolicy`                 | Image pull policy                                      | `Always`                                                   |
-| `namespace`                        | Namespace for the service                              | `kaiwo`                                                    |
-| `labels`                           | Labels for the deployment                              | `[ { label: "kaiwo.silogen.ai/managed", value: "true" } ]` |
-| `envVars.bucket_storage_host`      | Bucket storage host URL                                | `https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000` |
-| `envVars.bucket_storage_access_key_env_spec` | Bucket storage access key environment variable specification | `{ valueFrom: { secretKeyRef: { name: "minio-credentials", key: "minio-access-key" } } }` |
-| `envVars.bucket_storage_secret_key_env_spec` | Bucket storage secret key environment variable specification | `{ valueFrom: { secretKeyRef: { name: "minio-credentials", key: "minio-secret-key" } } }` |
-| `envVars.hf_token_env_spec`        | Hugging Face token environment variable specification  | `{ valueFrom: { secretKeyRef: { name: "hf-token", key: "hf-token" } } }` |
-| `storage.quantity`                 | Storage quantity                                       | `100Gi`                                                    |
-| `storage.storageClassName`         | Storage class name                                     | `longhorn`                                                 |
-| `dshm.sizeLimit`                   | Size limit for /dev/shm                                | `200Gi`                                                    |
+| Parameter                                      | Description                                                                 | Default                                                                                       |
+|------------------------------------------------|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `image.repository`                             | Image repository                                                            | `ghcr.io/silogen/openvscode-server`                                                           |
+| `image.tag`                                    | Image tag                                                                   | `vllm-dev-20250124`                                                                           |
+| `image.pullPolicy`                             | Image pull policy                                                           | `Always`                                                                                      |
+| `env_vars.BUCKET_STORAGE_HOST`                 | Bucket storage host URL                                                     | `https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000`                 |
+| `env_vars.BUCKET_STORAGE_ACCESS_KEY.name`      | Name of the secret containing the bucket storage access key                 | `minio-credentials`                                                                           |
+| `env_vars.BUCKET_STORAGE_ACCESS_KEY.key`       | Key of the bucket storage access key in the secret                          | `minio-access-key`                                                                            |
+| `env_vars.BUCKET_STORAGE_SECRET_KEY.name`      | Name of the secret containing the bucket storage secret key                 | `minio-credentials`                                                                           |
+| `env_vars.BUCKET_STORAGE_SECRET_KEY.key`       | Key of the bucket storage secret key in the secret                          | `minio-access-key`                                                                            |
+| `storage.ephemeral.quantity`                   | Ephemeral storage quantity                                                  | `100Gi`                                                                                       |
+| `storage.ephemeral.storageClassName`           | Ephemeral storage class name                                                | `mlstorage`                                                                                   |
+| `storage.ephemeral.accessModes`                | Ephemeral storage access modes                                              | `[ "ReadWriteOnce" ]`                                                                         |
+| `storage.dshm.sizeLimit`                       | Size limit for /dev/shm                                                     | `32Gi`                                                                                        |
+| `gpus`                                         | Number of GPUs                                                              | `1`                                                                                           |
+| `port`                                         | Port for the service                                                        | `3000`                                                                                        |
+
+For more details see `values.yaml` file.
 
 ## Example
 
