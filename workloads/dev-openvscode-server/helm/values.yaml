@@ -11,7 +11,7 @@ env_vars:
     key: minio-access-key
   BUCKET_STORAGE_SECRET_KEY:
     name: minio-credentials
-    key: minio-access-key
+    key: minio-secret-key
   # HF_TOKEN:
   #   key: hf-token
   #   name: hf-token
@@ -31,6 +31,7 @@ deployment:
 gpus: 1
 entrypoint: |
   bash /workload/mounted/install_kubectl.sh
+  mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
   exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server \
     --host 0.0.0.0 \
     --without-connection-token
