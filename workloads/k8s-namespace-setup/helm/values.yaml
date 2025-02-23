@@ -13,3 +13,6 @@ external_secret:
 kueue:
   enabled: false
   local_queue_name: "kaiwo"
+
+roles:
+  enabled: false
