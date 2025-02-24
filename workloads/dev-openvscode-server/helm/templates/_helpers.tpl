@@ -20,14 +20,14 @@
 # Container resources helper
 {{- define "container.resources" -}}
 requests:
-  memory: "{{ max (mul .Values.gpus 32) 4 }}Gi"
-  cpu: "{{ max (mul .Values.gpus 4) 1 }}"
+  memory: "{{ max (mul .Values.gpus .Values.memory_per_gpu) 4 }}Gi"
+  cpu: "{{ max (mul .Values.gpus .Values.cpu_per_gpu) 1 }}"
   {{- if .Values.gpus }}
   amd.com/gpu: "{{ .Values.gpus }}"
   {{- end }}
 limits:
-  memory: "{{ max (mul .Values.gpus 32) 4 }}Gi"
-  cpu: "{{ max (mul .Values.gpus 4) 1 }}"
+  memory: "{{ max (mul .Values.gpus .Values.memory_per_gpu) 4 }}Gi"
+  cpu: "{{ max (mul .Values.gpus .Values.cpu_per_gpu) 1 }}"
   {{- if .Values.gpus }}
   amd.com/gpu: "{{ .Values.gpus }}"
   {{- end }}

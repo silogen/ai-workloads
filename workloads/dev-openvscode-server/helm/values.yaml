@@ -29,8 +29,11 @@ deployment:
   port: 3000
 
 gpus: 1
+memory_per_gpu: 64  # Gi
+cpu_per_gpu: 4
 entrypoint: |
   bash /workload/mounted/install_kubectl.sh
+  bash /workload/mounted/install_helm.sh
   mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
   exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server \
     --host 0.0.0.0 \

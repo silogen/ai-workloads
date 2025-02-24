@@ -100,6 +100,18 @@
       "type": "integer",
       "description": "Number of GPUs"
     },
+    "memory_per_gpu": {
+      "type": "integer",
+      "description": "Memory per GPU in Gi"
+    },
+    "cpu_per_gpu": {
+      "type": "integer",
+      "description": "CPU per GPU"
+    },
+    "entrypoint": {
+      "type": "string",
+      "description": "Entrypoint script"
+    },
     "deployment": {
       "type": "object",
       "properties": {
@@ -111,5 +123,5 @@
       "required": ["port"]
     }
   },
-  "required": ["metadata", "image", "imagePullPolicy", "env_vars", "storage", "gpus", "deployment"]
+  "required": ["metadata", "image", "imagePullPolicy", "env_vars", "storage", "gpus", "memory_per_gpu", "cpu_per_gpu", "entrypoint", "deployment"]
 }
