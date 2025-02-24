@@ -3,11 +3,10 @@ ioImage: ghcr.io/silogen/logistics:v0.1
 finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.1
 
 # Use these to add e.g. kueue labels
-labels: []  
+labels: {}
   # Example:
   # labels:
-  #   - label: kueue.x-k8s.io/queue-name
-  #     value: kaiwo
+  #   kueue.x-k8s.io/queue-name: kaiwo
 
 # Extra annotations such as an imagePullSecrets
 imagePullSecrets: []

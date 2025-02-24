@@ -51,17 +51,24 @@
       "additionalProperties": false
     },
     "hf_token": {
-      "type": "object",
-      "properties": {
-        "secret_name": {
-          "type": "string"
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "secret_name": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "required": ["secret_name", "key"],
+          "additionalProperties": false
         },
-        "key": {
-          "type": "string"
+        {
+          "type": "null"
         }
-      },
-      "required": ["secret_name", "key"],
-      "additionalProperties": false
+      ]
     },
     "storage": {
       "type": "object",
@@ -87,6 +94,6 @@
       "additionalProperties": false
     }
   },
-  "required": ["name", "image", "model", "gpus", "env_vars", "bucket_storage", "hf_token", "storage", "dshm"],
+  "required": ["name", "image", "model", "gpus", "env_vars", "bucket_storage", "storage", "dshm"],
   "additionalProperties": false
 }

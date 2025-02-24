@@ -37,7 +37,7 @@
 {{- define "vllm.start" -}}
   {{- $modelPath := .Values.model -}}
   {{- if (hasPrefix "s3://" .Values.model) -}}
-    {{- $modelPath := printf "/workload/%s" (trimPrefix "s3://" .Values.model | trimSuffix "/") -}}
+    {{- $modelPath = printf "/workload/%s" (trimPrefix "s3://" .Values.model | trimSuffix "/") -}}
   {{- end -}}
   echo '--------------------------------------------'
   echo 'Starting vLLM'

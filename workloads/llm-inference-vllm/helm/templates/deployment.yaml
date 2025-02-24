@@ -39,11 +39,13 @@ spec:
           env:
             - name: HF_HOME
               value: /workload/.cache/huggingface
+            {{- if .Values.hf_token }}
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.hf_token.secret_name }}
                   key: {{ .Values.hf_token.key }}
+            {{- end }}
             - name: BUCKET_STORAGE_HOST
               value: {{ .Values.bucket_storage.host }}
             - name: BUCKET_STORAGE_ACCESS_KEY

@@ -5,8 +5,8 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
   {{- if .Values.labels }}
   labels:
-    {{- range .Values.labels }}
-    {{ .label }}: {{ .value }}
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value }}
     {{- end }}
   {{- end }}
 spec:
@@ -21,139 +21,25 @@ spec:
         - name: {{ . }}
         {{- end }}
       {{- end }}
-      initContainers:
-        - name: download
-          image: "{{ .Values.ioImage }}"
-          imagePullPolicy: Always
-          command: ["bash", "-e", "-u", "-c"]
-          args:
-            - |
-              # Setup MinIO, Download resources:
-              echo "Copying resources to container...";
-              mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY}
-              mc cp --recursive \
-                minio-host/{{ .Values.basemodel | trimSuffix "/" }}/ \
-                /local_resources/basemodel
-              {{- range .Values.finetuning_config.data_conf.training_data.datasets }}
-              mc cp \
-                minio-host/{{ .path }} \
-                /local_resources/{{ .path | replace "/" "_" }}
-              {{- end }}
-              {{- if (or (eq .Values.finetuning_config.data_conf.validation_data.type "AUTO_SPLIT" ) (eq .Values.finetuning_config.data_conf.validation_data.type "NONE")) }}
-              {{- range .Values.finetuning_config.data_conf.validation_data.datasets }}
-              mc cp \
-                minio-host/{{ .path }} \
-                /local_resources/{{ .path | replace "/" "_" }}
-              {{- end }}
-              {{- end }}
-              # Sync checkpoints from remote to local
-              if mc mirror minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ /workdir/checkpoints 2>/dev/null; then
-                echo "Downloaded checkpoints from {{ .Values.checkpointsRemote}} to /workdir/checkpoints"
-                ls -lah /workdir/checkpoints
-              else
-                echo "No checkpoints found yet"
-              fi
-          resources:
-            limits:
-              memory: "1Gi"
-              cpu: 1
-            requests:
-              memory: "1Gi"
-              cpu: 1
-          env:
-            ### MinIO Setup: ###
-          - name: BUCKET_STORAGE_HOST
-            value: {{ .Values.bucketStorageHost }}
-          - name: BUCKET_STORAGE_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.bucketCredentialsSecret.name }}
-                key: {{ .Values.bucketCredentialsSecret.accessKeyKey }}
-          - name: BUCKET_STORAGE_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.bucketCredentialsSecret.name }}
-                key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsNonRoot: true
-            runAsUser: 1000
-            seccompProfile:
-              type: RuntimeDefault
-            capabilities:
-              drop: ["ALL"]
-          volumeMounts:
-            - name: downloads
-              mountPath: /local_resources
-              readOnly: false
-            - name: checkpoints
-              mountPath: /workdir/checkpoints
-              readOnly: false
-        - name: upload
-          image: "{{ .Values.ioImage }}"
-          imagePullPolicy: Always
-          restartPolicy: Always
-          command: ["bash", "-e", "-u", "-c"]
-          args:
-            - |
-              # Setup MinIO:
-              mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY}
-              echo "Syncing checkpoint artifacts to bucket...";
-              while [ ! -f /semaphores/done_training ]; do
-                mc mirror /workdir/checkpoints minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/  2>/dev/null
-                sleep 15
-              done
-              # Once more to ensure everything gets uploaded
-              echo "Training done, syncing once more..."
-              mc mirror /workdir/checkpoints minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/  2>/dev/null
-              # Sync the final checkpoint with overwrite to carry over vLLM-compatibility changes
-              mc mirror --overwrite /workdir/checkpoints/checkpoint-final minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/checkpoint-final/
-              echo "Done uploading"
-              touch /semaphores/done_uploading
-              sleep 10  # Let the main container catch
-          resources:
-            limits:
-              memory: "1Gi"
-              cpu: 1
-            requests:
-              memory: "1Gi"
-              cpu: 1
-          env:
-            ### MinIO Setup: ###
-          - name: BUCKET_STORAGE_HOST
-            value: {{ .Values.bucketStorageHost }}
-          - name: BUCKET_STORAGE_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.bucketCredentialsSecret.name }}
-                key: {{ .Values.bucketCredentialsSecret.accessKeyKey }}
-          - name: BUCKET_STORAGE_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.bucketCredentialsSecret.name }}
-                key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsNonRoot: true
-            runAsUser: 1000
-            seccompProfile:
-              type: RuntimeDefault
-            capabilities:
-              drop: ["ALL"]
-          volumeMounts:
-            - name: checkpoints
-              mountPath: /workdir/checkpoints
-              readOnly: true
-            - name: semaphores
-              mountPath: /semaphores
-              readOnly: false
       containers:
         - name: finetuning
           image: "{{ .Values.finetuningImage }}"
           imagePullPolicy: Always
           env:
-            - name: NCCL_DEBUG
-              value: INFO
+            # download
+            - name: BUCKET_STORAGE_HOST
+              value: {{ .Values.bucketStorageHost }}
+            - name: BUCKET_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.accessKeyKey }}
+            - name: BUCKET_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
+            # finetuning
             - name: ACCELERATE_LOG_LEVEL
               value: info
             - name: TRANSFORMERS_VERBOSITY
@@ -166,31 +52,17 @@ spec:
             - -c
           args:
             - |
-              # Print GPU Info:
-              rocm-smi
-              # Run training:
-              accelerate launch \
-                --config_file /configs/accelerate_config.yaml \
-                --no-python \
-                finetuning --num-preprocess-workers 4 {{ .Values.finetuning_config.method }} /configs/finetuning_config.yaml
-              # Post process:
-              create_vllm_compatible_adapter --training-config /configs/finetuning_config.yaml ./checkpoints/checkpoint-final
-              {{- if .Values.mergeAdapter }}
-              merge_adapter /local_resources/basemodel ./checkpoints/checkpoint-final ./checkpoints/checkpoint-final-merged
-              {{- end }}
-              touch /semaphores/done_training
-              echo "Done training, waiting for uploads..."
-              while [ ! -f /semaphores/done_uploading ]; do
-                sleep 5;
-              done
-              echo "All done, exiting"
+              echo '===== Download ====='
+              {{- include "downloadEntrypoint" . | nindent 14 }}
+              echo '===== Finetuning and Checkpoint Upload ====='
+              {{- include "finetuningAndUploadEntrypoint" . | nindent 14 }}
           resources:
             limits:
-              memory: "{{ mul .Values.finetuningGpus 32 }}Gi"
+              memory: "{{ mul .Values.finetuningGpus 30 }}Gi"
               cpu: "{{ mul .Values.finetuningGpus 4 }}"
               amd.com/gpu: "{{ .Values.finetuningGpus }}"
             requests:
-              memory: "{{ mul .Values.finetuningGpus 32 }}Gi"
+              memory: "{{ mul .Values.finetuningGpus 30 }}Gi"
               cpu: "{{ mul .Values.finetuningGpus 4 }}"
               amd.com/gpu: "{{ .Values.finetuningGpus }}"
           volumeMounts:
@@ -227,7 +99,7 @@ spec:
           ephemeral:
             volumeClaimTemplate:
               spec:
-                accessModes: [ "ReadWriteMany" ]
+                accessModes: [ "ReadWriteOnce" ]
                 storageClassName: {{ .Values.storageClass }}
                 resources:
                   requests:
@@ -236,7 +108,7 @@ spec:
           ephemeral:
             volumeClaimTemplate:
               spec:
-                accessModes: [ "ReadWriteMany" ]
+                accessModes: [ "ReadWriteOnce" ]
                 storageClassName: {{ .Values.storageClass }}
                 resources:
                   requests:
@@ -252,7 +124,7 @@ spec:
         - name: semaphores
           emptyDir:
             medium: Memory
-            sizeLimit: "1Mi"
+            sizeLimit: "10Mi"
         - name: configs
           configMap:
             name: "{{ .Release.Name }}-configs"
