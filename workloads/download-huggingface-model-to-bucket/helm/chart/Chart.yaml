@@ -1,0 +1,3 @@
+version: 0.0.0
+name: download-hf-model-to-bucket
+apiVersion: v2
