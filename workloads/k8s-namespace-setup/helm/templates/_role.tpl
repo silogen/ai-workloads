@@ -1,5 +1,5 @@
-{{- define "namespace-setup.roles" }}
-{{- if .Values.roles.enabled }}
+{{- define "namespace-setup.role" }}
+{{- if .Values.role.setup }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:

@@ -1,5 +1,5 @@
 external_secret:
-  enabled: false
+  setup: false
   src:
     secret_store_name: "k8s-secret-store"
     remote_secret_name: "default-user"
@@ -11,8 +11,14 @@ external_secret:
     secret_key_name: "minio-secret-key"
 
 kueue:
-  enabled: false
+  setup: false
   local_queue_name: "kaiwo"
 
-roles:
-  enabled: false
+role:
+  setup: false
+  name: "default-role"
+  bindingName: "default-role-binding"
+  rules:
+    - apiGroups: ["", "apps", "batch"]
+      resources: ["*"]
+      verbs: ["*"]

@@ -1,5 +1,5 @@
-{{- define "namespace-setup.external-secrets" }}
-{{- if .Values.external_secret.enabled }}
+{{- define "namespace-setup.external-secret" }}
+{{- if .Values.external_secret.setup }}
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
