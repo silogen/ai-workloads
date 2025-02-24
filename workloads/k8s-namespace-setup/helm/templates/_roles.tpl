@@ -3,25 +3,22 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: default-reader
+  name: default-role
 rules:
-- apiGroups: [""]
-  resources: ["pods", "services"]
-  verbs: ["get", "list"]
-- apiGroups: ["batch"]
-  resources: ["jobs"]
-  verbs: ["create", "delete", "get", "list"]
+- apiGroups: ["", "apps", "batch"]
+  resources: ["*"]
+  verbs: ["*"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: default-reader-binding
+  name: default-role-binding
 subjects:
 - kind: ServiceAccount
   name: default
 roleRef:
   kind: Role
-  name: default-reader
+  name: default-role
   apiGroup: rbac.authorization.k8s.io
 ---
 {{- end }}
