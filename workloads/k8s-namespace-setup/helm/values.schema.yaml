@@ -6,6 +6,8 @@ properties:
     properties:
       setup:
         type: boolean
+      external_secret_name:
+        type: string
       src:
         type: object
         properties:

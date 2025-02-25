@@ -1,5 +1,6 @@
 external_secret:
   setup: false
+  external_secret_name: "minio-credentials-fetcher"
   src:
     secret_store_name: "k8s-secret-store"
     remote_secret_name: "default-user"

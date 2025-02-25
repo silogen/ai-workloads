@@ -3,7 +3,7 @@
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: minio-credentials-fetcher
+  name: {{ .Values.external_secret.external_secret_name }}
 spec:
   refreshInterval: 1h
   secretStoreRef:
