@@ -1,22 +1,28 @@
 # k8s-namespace-setup
 
-A Helm chart for Kubernetes namespace setup.
+A Helm chart for setting up Kubernetes namespaces. This chart allows you to configure the following components in a namespace:
+
+- **External Secrets**: Pull in secrets from within or outside the cluster, such as bucket storage credentials or Hugging Face tokens.
+- **Kueue**: Set up a local queue for Kueue in the namespace to submit jobs.
+- **Role / Role Binding**: Configure permissions for service accounts, like the default service account, to access the Kubernetes API from within a container.
+
+If you are not sure if you need any of these, then this workload is probably not needed for you.
 
 ## Installation
 
-Given a particular configuration for your namespace, e.g. `overrides/rename-secret-names.yaml`, you can apply it to the active namespace using the command:
+To apply a configuration to the active namespace, use:
 
 ```sh
 helm template . -f overrides/rename-secret-names.yaml | kubectl apply -f -
 ```
 
-Optionally, you can specify another namespace on the command line:
+To specify a different namespace:
 
 ```sh
 helm template . -f overrides/rename-secret-names.yaml | kubectl apply -n <NAMESPACE> -f -
 ```
 
-You can control which parts to set up using command line parameters:
+Control which components to set up using command line parameters:
 
 ```sh
 helm template . --set kueue.setup=true --set role.setup=true | kubectl apply -f -
@@ -45,7 +51,7 @@ The following table lists the configurable parameters of the `k8s-namespace-setu
 | Parameter                                      | Description                                      | Default                        |
 |------------------------------------------------|--------------------------------------------------|--------------------------------|
 | `kueue.setup`                                  | Enable kueue                                     | `false`                        |
-| `kueue.local_queue_name`                       | Local queue name                                 | `kaiwo`                        |
+| `kueue.cluster_queue_name`                     | Cluster queue name                               | `kaiwo`                        |
 
 ### Roles
 

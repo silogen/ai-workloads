@@ -3,22 +3,24 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: default-role
+  name: {{ .Values.role.name }}
 rules:
-- apiGroups: ["", "apps", "batch"]
-  resources: ["*"]
-  verbs: ["*"]
+{{- range .Values.role.rules }}
+- apiGroups: {{ .apiGroups | toJson }}
+  resources: {{ .resources | toJson }}
+  verbs: {{ .verbs | toJson }}
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: default-role-binding
+  name: {{ .Values.role.bindingName }}
 subjects:
 - kind: ServiceAccount
   name: default
 roleRef:
   kind: Role
-  name: default-role
+  name: {{ .Values.role.name }}
   apiGroup: rbac.authorization.k8s.io
 ---
 {{- end }}

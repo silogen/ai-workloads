@@ -5,7 +5,7 @@ kind: LocalQueue
 metadata:
   name: kaiwo
 spec:
-  clusterQueue: {{ .Values.kueue.local_queue_name }}
+  clusterQueue: {{ .Values.kueue.cluster_queue_name }}
 ---
 {{- end }}
 {{- end }}

@@ -13,7 +13,7 @@ external_secret:
 
 kueue:
   setup: false
-  local_queue_name: "kaiwo"
+  cluster_queue_name: "kaiwo"
 
 role:
   setup: false
