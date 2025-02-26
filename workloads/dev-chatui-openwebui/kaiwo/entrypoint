@@ -1,0 +1,3 @@
+pip install kubernetes; \
+export OPENAI_API_BASE_URLS=`python /workload/get_openai_api_base_urls.py`; \
+bash start.sh

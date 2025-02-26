@@ -1,0 +1,18 @@
+envVars:
+  - name: SCARF_NO_ANALYTICS
+    value: "true"
+  - name: ANONYMIZED_TELEMETRY
+    value: "false"
+  - name: DO_NOT_TRACK
+    value: "true"
+  - name: ENABLE_SIGNUP
+    value: "false"
+  - name: WEBUI_AUTH
+    value: "false"
+  - name: ENABLE_OLLAMA_API
+    value: "false"
+  - name: ENABLE_OPENAI_API
+    value: "true"
+  - name: OPENAI_API_KEY
+    value: "NULL"
+

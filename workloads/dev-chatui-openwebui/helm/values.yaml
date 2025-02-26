@@ -1,0 +1,36 @@
+metadata:
+  labels: {}
+
+image: "ghcr.io/open-webui/open-webui:main"
+imagePullPolicy: Always
+
+# Use `helm template --dry-run=server` to enable client-side automatic service discovery.
+# This will add to OPENAI_API_BASE_URLS with all services named llm-inference-* in the current namespace.
+openai_api_base_urls: '{{- include "env.openai_api_base_urls" . -}}'
+
+env_vars:
+  OPENAI_API_BASE_URLS: ""
+  ANONYMIZED_TELEMETRY: "false"
+  DO_NOT_TRACK: "true"
+  ENABLE_OLLAMA_API: "false"
+  ENABLE_OPENAI_API: "true"
+  ENABLE_SIGNUP: "false"
+  SCARF_NO_ANALYTICS: "true"
+  WEBUI_AUTH: "false"
+
+storage:
+  ephemeral:
+    quantity: 20Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+deployment:
+  port: 8080
+
+entrypoint: |
+  pip install kubernetes
+  export OPENAI_API_BASE_URLS=`python /workload/mount/get_openai_api_base_urls.py`
+  bash start.sh
