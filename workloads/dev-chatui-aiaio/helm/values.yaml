@@ -1,0 +1,21 @@
+metadata:
+  labels: {}
+
+image: ghcr.io/silogen/aiaio:v20250221
+imagePullPolicy: Always
+
+env_vars: {}
+
+storage:
+  ephemeral:
+    quantity: 1Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 1Gi
+
+deployment:
+  port: 9000
+
+entrypoint: ""
