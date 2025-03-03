@@ -1,0 +1,18 @@
+
+echo 'Setting up minio' && \
+curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+    --create-dirs \
+    -o /tmp/mc && \
+chmod +x /tmp/mc && \
+export PATH="${PATH}:/tmp/" && \
+mc alias set minio-host ${MINIO_HOST} ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY} && \
+
+echo 'Downloading the model to the local container' && \
+mkdir -p ${LOCAL_MODEL_PATH} && \
+huggingface-cli download ${MODEL_ID} --exclude ${DOWNLOAD_EXCLUDE_GLOB} --local-dir ${LOCAL_MODEL_PATH}/${MODEL_ID}/ && \
+
+echo 'Uploading the model to the bucket' && \
+mc mirror \
+    --exclude '.cache/huggingface/*' \
+    --exclude '.gitattributes' \
+    ${LOCAL_MODEL_PATH}/${MODEL_ID}/ minio-host/${BUCKET_MODEL_PATH}/${MODEL_ID}/
