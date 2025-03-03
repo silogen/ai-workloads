@@ -23,7 +23,7 @@ def get_services(separator=";"):
     filtered_services = [
         f"http://{svc.metadata.name}/v1"
         for svc in services.items
-        if svc.metadata.name.startwith("llm-inference")
+        if svc.metadata.name.startswith("llm-inference")
     ]
     filtered_services = [
         url
