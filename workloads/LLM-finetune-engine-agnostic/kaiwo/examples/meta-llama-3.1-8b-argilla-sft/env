@@ -4,7 +4,7 @@ envVars:
   - name: TRANSFORMERS_VERBOSITY
     value: info
   - name: BUCKET_STORAGE_HOST
-    value: https://storage.googleapis.com 
+    value: https://storage.googleapis.com
   - fromSecret:
       name: BUCKET_STORAGE_ACCESS_KEY
       secret: bucket-storage-credentials

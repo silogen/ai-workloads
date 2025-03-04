@@ -21,4 +21,3 @@ curl http://localhost:8080/v1/chat/completions \
             {"role": "user", "content": "Who won the world series in 2020?"}
         ]
     }'
-

@@ -21,7 +21,7 @@ At least curl and often jq too are commonly installed in many distributions out 
 ### Additional cluster setup
 Additional cluster setup. This does the following:
 - Adds a namespace, where we will conduct all our work. We will use the `silo` namespace.
-- Adds an External Secret to get the credentials to access the MinIO storage from our namespace. 
+- Adds an External Secret to get the credentials to access the MinIO storage from our namespace.
     - This depends on a ClusterSecretStore called `k8s-secret-store` being already setup by a cluster admin, which the Silo cluster should have.
 - Adds a LocalQueue so that our Jobs schedule intelligently.
     - This references the ClusterQueue `kaiwo` which should already be setup by a cluster admin. This should be the case in the Silo cluster.
@@ -65,7 +65,7 @@ helm template ../../workloads/deliver-huggingface-example-resources/helm/chart \
 The [logs](#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload, then data download, preprocessing, and upload.
 
 ## 3. Scaling finetuning: Hyperparameter tuning with parallel Jobs
-At the hyperparameter tuning stage, we run many parallel Jobs while varying a hyperparameter to find the best configuration. 
+At the hyperparameter tuning stage, we run many parallel Jobs while varying a hyperparameter to find the best configuration.
 Here we are going to look for the best rank parameter `r` for [LoRA](https://arxiv.org/pdf/2106.09685).
 
 To define the finetuning workload, we will use the helm chart in `../../workloads/LLM-finetune-silogen-engine/helm/chart`.

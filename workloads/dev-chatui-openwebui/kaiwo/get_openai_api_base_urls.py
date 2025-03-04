@@ -21,9 +21,7 @@ def get_services(separator=";"):
     namespace = open("/var/run/secrets/kubernetes.io/serviceaccount/namespace").read()
     services = v1.list_namespaced_service(namespace)
     filtered_services = [
-        f"http://{svc.metadata.name}/v1"
-        for svc in services.items
-        if "llm-inference" in svc.metadata.name
+        f"http://{svc.metadata.name}/v1" for svc in services.items if "llm-inference" in svc.metadata.name
     ]
     filtered_services = [
         url

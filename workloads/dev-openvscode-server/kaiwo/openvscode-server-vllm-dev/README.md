@@ -1,6 +1,6 @@
 # Open VS Code Server
 
-> [! NOTE]  
+> [! NOTE]
 > This guide demonstrates how to deploy a VS Code workload with [Kaiwo](https://github.com/silogen/kaiwo), a Kubernetes-native AI Workload Orchestrator designed to accelerate GPU workloads, and has been tested to work with Kaiwo v0.0.5.
 
 ## Prerequisites

@@ -20,7 +20,7 @@ spec:
         image: ghcr.io/silogen/logistics:v0.1
         imagePullPolicy: Always
         {{- if .Workload.Entrypoint }}
-        command: 
+        command:
         - sh
         - -c
         - {{ .Workload.Entrypoint }}

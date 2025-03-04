@@ -1,4 +1,6 @@
 import datasets
+
+
 def _argilla_message_formatter(example, idx):
     # The generation_prompt field seems to have an additional layer of list, so we take the first element.
     # Also note that this always includes an empty system prompt.
@@ -12,8 +14,12 @@ def _argilla_message_formatter(example, idx):
         "id": f"argilla-10k-mistral-large-human-prompts_{idx}",
         "messages": messages,
     }
-hf_id="argilla/10k_prompts_ranked_mistral_large_responses"
+
+
+hf_id = "argilla/10k_prompts_ranked_mistral_large_responses"
 dataset = datasets.load_dataset(hf_id, split="train")
 dataset = dataset.filter(lambda kind: kind == "human", input_columns="kind")
 dataset = dataset.map(_argilla_message_formatter, with_indices=True, remove_columns=dataset.column_names)
-dataset.to_json("local_datasets/argilla-mistral-large-human-prompts.jsonl") # Need to save any data files in this specific directory to be uploaded.
+dataset.to_json(
+    "local_datasets/argilla-mistral-large-human-prompts.jsonl"
+)  # Need to save any data files in this specific directory to be uploaded.

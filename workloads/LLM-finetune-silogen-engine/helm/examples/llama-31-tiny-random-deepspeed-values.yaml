@@ -1,6 +1,6 @@
 # Use these to add e.g. kueue labels
 labels:
-  - label: kueue.x-k8s.io/queue-name 
+  - label: kueue.x-k8s.io/queue-name
     value: kaiwo
 
 # Bucket storage inputs

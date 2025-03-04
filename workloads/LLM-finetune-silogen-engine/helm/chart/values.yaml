@@ -1,4 +1,4 @@
-### General chart values ### 
+### General chart values ###
 ioImage: ghcr.io/silogen/logistics:v0.1
 finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.1
 
@@ -15,7 +15,7 @@ imagePullSecrets: []
   #   - "regcred"
 
 # Configure these to match the credentials in your cluster:
-bucketStorageHost: 
+bucketStorageHost:
 bucketCredentialsSecret:
   name: bucket-storage-credentials
   accessKeyKey: access_key
@@ -42,7 +42,7 @@ finetuning_config:
   data_conf:
     training_data:
       type: CONCATENATION # Alternative: PRECOMPUTE_WEIGHTED_MIX
-      datasets: [] 
+      datasets: []
     validation_data:
       type: AUTO_SPLIT # Alternatives: CONCATENATION, NONE
       ratio: 0.1

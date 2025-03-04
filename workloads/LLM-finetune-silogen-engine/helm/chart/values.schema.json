@@ -14,7 +14,6 @@
         "type": "object",
         "description": "Any labels to add for the manifest, recommended: kueue",
         "additionalProperties": true
-        }
       },
       "imagePullSecrets": {
         "type": "array",

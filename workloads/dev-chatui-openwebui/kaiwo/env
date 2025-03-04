@@ -15,4 +15,3 @@ envVars:
     value: "true"
   - name: OPENAI_API_KEY
     value: "NULL"
-

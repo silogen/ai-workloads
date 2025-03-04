@@ -45,4 +45,3 @@ bucketCredentialsSecret:
 # Storage configuration:
 storageClass: mlstorage
 storageQuantity: "10Gi"
-

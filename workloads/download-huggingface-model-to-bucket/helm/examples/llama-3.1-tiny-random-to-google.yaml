@@ -9,5 +9,5 @@ bucketStorageHost: "https://storage.googleapis.com"
 modelID: "yujiepan/llama-3.1-tiny-random"
 bucketPath: "silogen-dev-data/models/yujiepan_llama-3.1-tiny-random"
 storageQuantity: 5Gi
-storageClass: mlstorage 
+storageClass: mlstorage
 allowOverwrite: true

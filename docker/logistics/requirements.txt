@@ -1,6 +1,6 @@
 argparse
-google-cloud-storage
-minio
-huggingface_hub[cli]
 datasets
+google-cloud-storage
 hf_transfer
+huggingface_hub[cli]
+minio

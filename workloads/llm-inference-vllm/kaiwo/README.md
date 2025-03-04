@@ -1,6 +1,6 @@
 # LLM Inference with vLLM
 
-> [!NOTE]  
+> [!NOTE]
 > This guide demonstrates how to deploy the LLM Inference vLLM workload using [Kaiwo](https://github.com/silogen/kaiwo), a Kubernetes-native AI Workload Orchestrator designed to accelerate GPU workloads, and has been tested to work with Kaiwo v0.0.5.
 
 ## Prerequisites

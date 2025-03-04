@@ -21,7 +21,7 @@ Note that the --image for kaiwo is ignored with this template.
 ## Format of --custom-config
 
 ```yaml
-mainImage: # Use this to specify your own image, or don't specify to use the Silogen Huggingface finetuning engine. 
+mainImage: # Use this to specify your own image, or don't specify to use the Silogen Huggingface finetuning engine.
 baseModel: # Directory path to your basemodel in bucket storage, downloaded to /local_resources/basemodel
 dataDownloads: # List of data to download, in the following format:
   - bucketPath: # Path to file or directory in the bucket
@@ -39,16 +39,16 @@ If not specifying a custom entrypoint, the following additional files are requir
     The Silogen finetuning engine config YAML file. Note that this needs to reference
     the data and the basemodel with downloads paths under /local\_resources/
 - accelerate\_config.yaml
-    The HuggingFace accelerate config YAML file. Note that this should specify the 
+    The HuggingFace accelerate config YAML file. Note that this should specify the
     correct number of processes (usually matching the number of GPUs you request).
 
 ## Env file
-You must specify the following envVars in the env file: BUCKET\_STORAGE\_HOST, 
+You must specify the following envVars in the env file: BUCKET\_STORAGE\_HOST,
 BUCKET\_STORAGE\_ACCESS\_KEY, BUCKET\_STORAGE\_SECRET\_KEY. For example:
 
 ```yaml
 - name: BUCKET_STORAGE_HOST
-  value: https://storage.googleapis.com 
+  value: https://storage.googleapis.com
 - fromSecret:
     name: BUCKET_STORAGE_ACCESS_KEY
     secret: bucket-storage-credentials
@@ -61,7 +61,7 @@ BUCKET\_STORAGE\_ACCESS\_KEY, BUCKET\_STORAGE\_SECRET\_KEY. For example:
 
 ## Other finetuning engines
 
-Other finetuning engines may be used with this template by setting `mainImage: ...` in the `--custom-config`, 
+Other finetuning engines may be used with this template by setting `mainImage: ...` in the `--custom-config`,
 and providing a matching entrypoint file in the workload inputfiles path.
 
 To use the download and upload containers take note of the following:

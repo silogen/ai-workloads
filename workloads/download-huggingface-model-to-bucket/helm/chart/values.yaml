@@ -2,7 +2,7 @@
 image: ghcr.io/silogen/logistics:v0.1
 
 # Use these to add e.g. kueue labels
-labels: {}  
+labels: {}
   # Example:
   # labels:
   #   kueue.x-k8s.io/queue-name: kaiwo
@@ -14,14 +14,14 @@ imagePullSecrets: []
   #   - "regcred"
 
 # Configure these to match the credentials in your cluster:
-bucketStorageHost: 
+bucketStorageHost:
 bucketCredentialsSecret:
   name: bucket-storage-credentials
   accessKeyKey: access_key
   secretKeyKey: secret_key
 hfTokenSecret: {} # Optional secret reference that contains the Huggingface token
 # Example:
-# hfTokenSecret: 
+# hfTokenSecret:
 #   name: hf-token
 #   key: hf-token
 

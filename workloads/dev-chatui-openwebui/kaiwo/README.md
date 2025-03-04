@@ -13,7 +13,7 @@ kaiwo serve -p kaiwo  # GPU not required.
 Forward port 8080 for local access:
 
 ```bash
-kubectl port-forward deployments/open-webui-main 8080:8080 -n kaiwo    
+kubectl port-forward deployments/open-webui-main 8080:8080 -n kaiwo
 ```
 
 Access the WebUI locally at [http://localhost:8080/](http://localhost:8080/)

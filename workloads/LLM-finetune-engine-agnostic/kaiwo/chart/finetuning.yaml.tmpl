@@ -169,7 +169,7 @@ spec:
         image: {{ default "ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.1" .Custom.mainImage }}
         imagePullPolicy: Always
         {{- if .Workload.Entrypoint }}
-        command: 
+        command:
         - sh
         - -c
         - {{ .Workload.Entrypoint }}
@@ -240,8 +240,8 @@ spec:
           - name: downloads
             mountPath: /local_resources
             readOnly: false
-          - name: checkpoints 
-            mountPath: /workdir/checkpoints 
+          - name: checkpoints
+            mountPath: /workdir/checkpoints
             readOnly: false
           - name: signals
             mountPath: /signals
