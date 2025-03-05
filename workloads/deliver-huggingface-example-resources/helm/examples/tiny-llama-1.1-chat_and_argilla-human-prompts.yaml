@@ -45,4 +45,3 @@ bucketCredentialsSecret:
 # Storage configuration:
 storageClass: longhorn
 storageQuantity: "10Gi"
-

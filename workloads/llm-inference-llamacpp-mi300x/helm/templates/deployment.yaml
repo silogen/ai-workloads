@@ -20,7 +20,7 @@ spec:
       containers:
         - env:
           {{- include "container.env" . | nindent 12 }}
-          
+
           image: {{ .Values.image | quote}}
           imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
           name: {{ .Chart.Name }}
