@@ -16,17 +16,17 @@ Ensure the following prerequisites are met before deploying any workloads:
 It is recommended to use `helm template` and pipe the result to `kubectl create` , rather than using `helm install`. Generally, a command looks as follows
 
 ```bash
-helm template [optional-release-name] <helm-dir> -f <overrides/xyz.yaml> --set <name>=<value> | kubectl apply -n <namespace> -f -
+helm template [optional-release-name] <helm-dir> -f <overrides/xyz.yaml> --set <name>=<value> | kubectl apply -f -
 ```
 
 The chart provides three main ways to deploy models, detailed below.
 
 ### Alternative 1: Deploy a Specific Model Configuration
 
-To deploy a specific model along with its settings to a namespace `silo`, use the following command from the `helm` directory:
+To deploy a specific model along with its settings, use the following command from the `helm` directory:
 
 ```bash
-helm template tiny-llama . -f overrides/models/tinyllama_tinyllama-1.1b-chat-v1.0.yaml | kubectl apply -n silo -f -
+helm template tiny-llama . -f overrides/models/tinyllama_tinyllama-1.1b-chat-v1.0.yaml | kubectl apply -f -
 ```
 
 ### Alternative 2: Override the Model
@@ -34,7 +34,7 @@ helm template tiny-llama . -f overrides/models/tinyllama_tinyllama-1.1b-chat-v1.
 You can also override the model on the command line:
 
 ```bash
-helm template qwen2-0-5b . --set model=Qwen/Qwen2-0.5B-Instruct | kubectl apply -n silo -f -
+helm template qwen2-0-5b . --set model=Qwen/Qwen2-0.5B-Instruct | kubectl apply -f -
 ```
 
 ### Alternative 3: Deploy a Model from Bucket Storage
@@ -42,7 +42,7 @@ helm template qwen2-0-5b . --set model=Qwen/Qwen2-0.5B-Instruct | kubectl apply 
 If you have downloaded your model to bucket storage, use:
 
 ```bash
-helm template qwen2-0-5b . --set model=s3://models/Qwen/Qwen2-0.5B-Instruct | kubectl apply -n silo -f -
+helm template qwen2-0-5b . --set model=s3://models/Qwen/Qwen2-0.5B-Instruct | kubectl apply -f -
 ```
 
 The model will be automatically downloaded before starting the inference server.
@@ -58,7 +58,7 @@ Refer to the `values.yaml` file for the user input values you can provide, along
 Check the deployment status:
 
 ```bash
-kubectl get deployment -n silo
+kubectl get deployment
 ```
 
 ### Port Forwarding
@@ -66,7 +66,7 @@ kubectl get deployment -n silo
 Forward the port to access the service (assuming the deployment is named `llm-inference-vllm-tiny-llama` ):
 
 ```bash
-kubectl port-forward deployments/llm-inference-vllm-tiny-llama 8080:8080 -n silo
+kubectl port-forward deployments/llm-inference-vllm-tiny-llama 8080:8080
 ```
 
 ### Test the Deployment

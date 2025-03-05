@@ -1,6 +1,6 @@
-# Finetuning with the Silogen finetuning engine
+# Finetuning with the SiloGen finetuning engine
 
-This is a Helm Chart for finetuning Jobs based on the Silogen finetuning engine.
+This is a Helm Chart for finetuning Jobs based on the SiloGen finetuning engine.
 The chart integrates the finetuning config as part of the values.yaml input.
 
 See the values.yaml file for the general structure (more documentation coming soon).

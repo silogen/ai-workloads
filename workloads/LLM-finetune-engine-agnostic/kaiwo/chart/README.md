@@ -1,4 +1,4 @@
-# Engine agnostic finetuning workload / Silogen HuggingFace finetuning as default
+# Engine agnostic finetuning workload / SiloGen HuggingFace finetuning as default
 
 This kaiwo template comes with a default entrypoint which runs LLM SFT
 built on using HuggingFace libraries and distributed using accelerate,
@@ -30,13 +30,13 @@ dataDownloads: # List of data to download, in the following format:
 checkpointsBucketPath: # Path in the bucket where checkpoints get uploaded
 downloadsSizeLimit: # Hard disk space requrest for the downloads, defaults to 128Gi
 checkpointsSizeLimit: # Hard disk space request for the checkpoints, defaults 256Gi
-method: # Optional parameter, if using the Silogen finetuning engine, to specify the finetuning method, defaults to "sft", "dpo" is also supported.
+method: # Optional parameter, if using the SiloGen finetuning engine, to specify the finetuning method, defaults to "sft", "dpo" is also supported.
 ```
 
 ## Input files in the workload directory
 If not specifying a custom entrypoint, the following additional files are required:
 - finetuning\_config.yaml
-    The Silogen finetuning engine config YAML file. Note that this needs to reference
+    The SiloGen finetuning engine config YAML file. Note that this needs to reference
     the data and the basemodel with downloads paths under /local\_resources/
 - accelerate\_config.yaml
     The HuggingFace accelerate config YAML file. Note that this should specify the

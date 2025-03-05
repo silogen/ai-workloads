@@ -348,7 +348,7 @@ Supervised fine-tuning arguments
 
 ## SilogenTrainingArguments
 
-HuggingFace TrainingArguments as Config with additional Silogen conventions
+HuggingFace TrainingArguments as Config with additional SiloGen conventions
 
 The list of training arguments is best available online (the version might not be up-to-date here):
 https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.TrainingArguments

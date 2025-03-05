@@ -1,4 +1,4 @@
-# LLM Benchmark using GuideLLM
+# Open WebUI for LLM Services
 
 This Helm Chart deploys a WebUI for aggregating deployed LLM services within the cluster.
 
@@ -9,7 +9,7 @@ Basic configurations are defined in the `values.yaml` file.
 To deploy the service, run the following command within the Helm folder:
 
 ```bash
-helm template release-name . | kubectl apply -f -
+helm template <release-name> . | kubectl apply -f -
 ```
 
 ### Automatic Discovery of LLM services
@@ -25,7 +25,7 @@ Additionally, client-side automatic discovery can be enabled by setting the `--d
 To enable client-side automatic discovery, use the following command for example:
 
 ```bash
-helm template release-name . \
+helm template <release-name> . \
     --set env_vars.OPENAI_API_BASE_URLS="http://example-open-ai-api-server.com/v1/" \
     --dry-run=server |\
     kubectl apply -f -

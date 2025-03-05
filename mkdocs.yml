@@ -1,0 +1,97 @@
+site_name: SiloGen AI Workloads
+site_description: Documentation for SiloGen AI Workloads Development
+repo_url: https://github.com/silogen/ai-workloads
+docs_dir: .
+edit_uri: https://github.dev/silogen/ai-workloads/blob/main
+
+theme:
+  icon: material/developer-board
+  name: material
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      primary: black
+      accent: black
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: black
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+
+plugins:
+  - same-dir
+  - multirepo
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed
+  - pymdownx.snippets:
+      base_path: !relative $docs_dir
+  - admonition
+  - footnotes
+  - attr_list
+  - toc:
+      permalink: true
+
+nav:
+  - Home: README.md
+  - Getting Started: docs/getting-started.md
+  - Tutorials:
+    - Overview: docs/tutorials.md
+    - Tutorials:
+      - Deliver Resources and Finetune: docs/tutorials/deliver-resources-and-finetune.md
+  - Workloads:
+    - Overview: docs/workloads.md
+    - Workloads:
+      # - deliver-huggingface-example-resources: MISSING README.md
+      - dev-chatui-aiaio: workloads/dev-chatui-aiaio/helm/README.md
+      - dev-chatui-openwebui: workloads/dev-chatui-openwebui/helm/README.md
+      - dev-openvscode-server: workloads/dev-openvscode-server/helm/README.md
+      - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/chart/README.md
+      - k8s-namespace-setup: workloads/k8s-namespace-setup/helm/README.md
+      # - llm-benchmark-vllm-mad: MISSING Helm version of workload
+      # - LLM-finetune-engine-agnostic: MISSING Helm version of workload
+      - LLM-finetune-silogen-engine:
+        - Overview: workloads/LLM-finetune-silogen-engine/helm/chart/README.md
+        - Finetuning Config: workloads/LLM-finetune-silogen-engine/silogen_finetuning_config_readme.md
+      - llm-inference-llamacpp-mi300x: workloads/llm-inference-llamacpp-mi300x/helm/README.md
+      - llm-inference-sglang: workloads/llm-inference-sglang/helm/README.md
+      - llm-inference-vllm: workloads/llm-inference-vllm/helm/README.md
+  - Contributing: docs/contributing.md
+
+#extra_css:
+#  - docs/stylesheets/extra.css
+
+# list files that are not expected to be included in nav
+not_in_nav: |
+  **/mount/README.md
+  **/kaiwo/**/README.md
