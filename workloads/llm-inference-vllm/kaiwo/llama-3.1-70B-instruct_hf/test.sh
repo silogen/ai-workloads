@@ -3,7 +3,7 @@
 # 0. ASSUMPTION: workload has been deployed
 # 1. ASSUMPTION: port-forward is set up, e.g. (assuming deployment with this name)
 #
-#       kubectl port-forward deployments/ubuntu-llama-3-1-70b-instruct-hf  8080:8080 -n kaiwo
+#       kubectl port-forward deployments/ubuntu-llama-3-1-70b-instruct-hf  8080:8080
 #
 # 2. run this script using
 #

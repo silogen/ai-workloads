@@ -1,12 +1,13 @@
-# general
-name: "llm-inference-vllm"
-labels: {}
+metadata:
+  labels: {}
 
-# image/model
 image: "rocm/vllm-dev:20241205-tuned"
-#model: "s3://models/meta-llama/Llama-3.1-8B-Instruct"
+imagePullPolicy: Always
+
 model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 gpus: 1
+memory_per_gpu: 64  # Gi
+cpu_per_gpu: 4
 
 # vllm engine args (ref: https://docs.vllm.ai/en/latest/serving/engine_args.html)
 vllm_engine_args: {}
@@ -16,26 +17,29 @@ vllm_engine_args: {}
   # enforce-eager: "true"
   # gpu-memory-utilization: 0.9
 
-# vllm env vars (ref: https://docs.vllm.ai/en/latest/serving/env_vars.html)
+# env vars (vllm ref: https://docs.vllm.ai/en/latest/serving/env_vars.html)
 env_vars:
   VLLM_DO_NOT_TRACK: "1"
+  BUCKET_STORAGE_HOST: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  HF_HOME: /workload/.cache/huggingface
+  # HF_TOKEN:
+  #   key: hf-token
+  #   name: hf-token
 
-# secrets: bucket storage
-bucket_storage:
-  host: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
-  credentials:
-    secret_name: minio-credentials
-    secret_key_key: minio-secret-key
-    access_key_key: minio-access-key
-
-# secrets: huggingface token
-hf_token:
-  secret_name: hf-token
-  key: hf-token
-
-# storage
 storage:
-  quantity: "100Gi"
-  storageClassName: "longhorn"
-dshm:
-  sizeLimit: "32Gi"
+  ephemeral:
+    quantity: 100Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+deployment:
+  port: 8080

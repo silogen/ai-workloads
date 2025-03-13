@@ -25,5 +25,5 @@ kaiwo serve -i ghcr.io/silogen/openvscode-server:vllm-dev-20250124 -g 1 -p kaiwo
 2. **Port Forwarding**: Forward the port to access the service (assuming the deployment is named `ubuntu-kaiwo`):
 
 ``bash
-kubectl port-forward deployments/ubuntu-kaiwo 3000:3000 -n kaiwo
+kubectl port-forward deployments/ubuntu-kaiwo 3000:3000
 ```

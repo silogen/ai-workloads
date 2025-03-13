@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: {{ include "release.fullname" . }}
   labels:
-    app: {{ include "release.name" . }}
+    app: {{ include "release.fullname" . }}
 spec:
   type: ClusterIP
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: {{ .Values.deployment.port }}
   selector:
     app: {{ include "release.fullname" . }}

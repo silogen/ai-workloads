@@ -21,12 +21,12 @@ Follow these steps to deploy the LLM Inference vLLM workload using Kaiwo:
 
 2. **Verify Deployment**: Check the deployment status:
     ```bash
-    kubectl get deployment -n kaiwo
+    kubectl get deployment
     ```
 
 3. **Port Forwarding**: Forward the port to access the service (assuming the deployment is named `ubuntu-kaiwo`):
     ```bash
-    kubectl port-forward deployments/ubuntu-kaiwo 8080:8080 -n kaiwo
+    kubectl port-forward deployments/ubuntu-kaiwo 8080:8080
     ```
 
 4. **Test the Deployment**: Send a test request to verify the service:

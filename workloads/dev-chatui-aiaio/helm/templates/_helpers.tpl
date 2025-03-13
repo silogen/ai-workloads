@@ -53,7 +53,7 @@ limits:
 {{- define "container.volumeMounts" -}}
 - mountPath: /workload
   name: ephemeral-storage
-- mountPath: /workload/mounted
+- mountPath: /workload/mount
   name: workload-mount
 - mountPath: /dev/shm
   name: dshm

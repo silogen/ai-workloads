@@ -2,98 +2,153 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "name": {
-      "type": "string"
-    },
-    "labels": {
-      "type": "object"
+    "metadata": {
+      "type": "object",
+      "description": "Metadata for the deployment",
+      "properties": {
+        "labels": {
+          "type": "object",
+          "description": "Labels to apply to the deployment",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["labels"]
     },
     "image": {
-      "type": "string"
+      "type": "string",
+      "description": "Docker image to use for the deployment"
+    },
+    "imagePullPolicy": {
+      "type": "string",
+      "description": "Image pull policy",
+      "enum": ["Always", "IfNotPresent", "Never"]
     },
     "model": {
-      "type": "string"
+      "type": "string",
+      "description": "Model to use for inference"
     },
     "gpus": {
       "type": "integer",
+      "description": "Number of GPUs to allocate",
+      "minimum": 1
+    },
+    "memory_per_gpu": {
+      "type": "integer",
+      "description": "Memory per GPU in Gi",
+      "minimum": 1
+    },
+    "cpu_per_gpu": {
+      "type": "integer",
+      "description": "CPU cores per GPU",
       "minimum": 1
     },
     "vllm_engine_args": {
-      "type": "object"
+      "type": "object",
+      "description": "Arguments for the vllm engine",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "env_vars": {
-      "type": "object"
-    },
-    "bucket_storage": {
       "type": "object",
+      "description": "Environment variables for the deployment",
       "properties": {
-        "host": {
-          "type": "string"
+        "BUCKET_STORAGE_HOST": {
+          "type": "string",
+          "description": "Bucket storage host URL",
+          "format": "uri"
         },
-        "credentials": {
+        "BUCKET_STORAGE_ACCESS_KEY": {
           "type": "object",
+          "description": "Access key for bucket storage",
           "properties": {
-            "secret_name": {
-              "type": "string"
-            },
-            "secret_key_key": {
-              "type": "string"
-            },
-            "access_key_key": {
-              "type": "string"
-            }
-          },
-          "required": ["secret_name", "secret_key_key", "access_key_key"],
-          "additionalProperties": false
-        }
-      },
-      "required": ["host", "credentials"],
-      "additionalProperties": false
-    },
-    "hf_token": {
-      "oneOf": [
-        {
-          "type": "object",
-          "properties": {
-            "secret_name": {
-              "type": "string"
+            "name": {
+              "type": "string",
+              "description": "Name of the secret containing the access key"
             },
             "key": {
-              "type": "string"
+              "type": "string",
+              "description": "Key in the secret containing the access key"
             }
           },
-          "required": ["secret_name", "key"],
-          "additionalProperties": false
+          "required": ["name", "key"]
         },
-        {
-          "type": "null"
+        "BUCKET_STORAGE_SECRET_KEY": {
+          "type": "object",
+          "description": "Secret key for bucket storage",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the secret containing the secret key"
+            },
+            "key": {
+              "type": "string",
+              "description": "Key in the secret containing the secret key"
+            }
+          },
+          "required": ["name", "key"]
+        },
+        "HF_HOME": {
+          "type": "string",
+          "description": "Home directory for Hugging Face"
         }
-      ]
+      },
+      "required": ["BUCKET_STORAGE_HOST", "BUCKET_STORAGE_ACCESS_KEY", "BUCKET_STORAGE_SECRET_KEY", "HF_HOME"]
     },
     "storage": {
       "type": "object",
+      "description": "Storage configuration",
       "properties": {
-        "quantity": {
-          "type": "string"
+        "ephemeral": {
+          "type": "object",
+          "description": "Ephemeral storage configuration",
+          "properties": {
+            "quantity": {
+              "type": "string",
+              "description": "Quantity of ephemeral storage"
+            },
+            "storageClassName": {
+              "type": "string",
+              "description": "Storage class name for ephemeral storage"
+            },
+            "accessModes": {
+              "type": "array",
+              "description": "Access modes for ephemeral storage",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["quantity", "storageClassName", "accessModes"]
         },
-        "storageClassName": {
-          "type": "string"
+        "dshm": {
+          "type": "object",
+          "description": "Shared memory configuration",
+          "properties": {
+            "sizeLimit": {
+              "type": "string",
+              "description": "Size limit for shared memory"
+            }
+          },
+          "required": ["sizeLimit"]
         }
       },
-      "required": ["quantity", "storageClassName"],
-      "additionalProperties": false
+      "required": ["ephemeral", "dshm"]
     },
-    "dshm": {
+    "deployment": {
       "type": "object",
+      "description": "Deployment configuration",
       "properties": {
-        "sizeLimit": {
-          "type": "string"
+        "port": {
+          "type": "integer",
+          "description": "Port for the deployment"
         }
       },
-      "required": ["sizeLimit"],
-      "additionalProperties": false
+      "required": ["port"]
     }
   },
-  "required": ["name", "image", "model", "gpus", "env_vars", "bucket_storage", "storage", "dshm"],
+  "required": ["metadata", "image", "imagePullPolicy", "model", "gpus", "memory_per_gpu", "cpu_per_gpu", "vllm_engine_args", "env_vars", "storage", "deployment"],
   "additionalProperties": false
 }

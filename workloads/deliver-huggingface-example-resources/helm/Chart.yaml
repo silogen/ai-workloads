@@ -1,0 +1,4 @@
+apiVersion: v2
+name: deliver-huggingface-example-resources
+description: A Helm chart for delivering HuggingFace resources
+version: 0.0.1

@@ -31,7 +31,7 @@ The following table lists the configurable parameters of the `dev-openvscode-ser
 | `gpus`                                         | Number of GPUs                                                              | `1`                                                                                           |
 | `memory_per_gpu`                               | Memory per GPU                                                              | `64Gi`                                                                                        |
 | `cpu_per_gpu`                                  | CPU per GPU                                                                 | `4`                                                                                           |
-| `entrypoint`                                   | Entrypoint script                                                           | `bash /workload/mounted/install_kubectl.sh \ bash /workload/mounted/install_helm.sh \ mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY} \ exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server --host 0.0.0.0 --without-connection-token` |
+| `entrypoint`                                   | Entrypoint script                                                           | `bash /workload/mount/install_kubectl.sh \ bash /workload/mount/install_helm.sh \ mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY} \ exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server --host 0.0.0.0 --without-connection-token` |
 
 For more details see `values.yaml` file.
 

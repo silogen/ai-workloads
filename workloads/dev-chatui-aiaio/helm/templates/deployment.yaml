@@ -5,7 +5,7 @@ metadata:
   labels:
     app: {{ include "release.fullname" . }}
     {{- range $key, $value := .Values.metadata.labels }}
-    {{ $key }}: {{ $value | quote}}
+    {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:
   replicas: 1

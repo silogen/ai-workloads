@@ -19,7 +19,7 @@ helm template . -f overrides/rename-secret-names.yaml | kubectl apply -f -
 To specify a different namespace:
 
 ```sh
-helm template . -f overrides/rename-secret-names.yaml | kubectl apply -n <NAMESPACE> -f -
+helm template . -f overrides/rename-secret-names.yaml | kubectl apply -n <namespace> -f -
 ```
 
 Control which components to set up using command line parameters:

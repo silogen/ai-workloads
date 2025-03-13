@@ -76,13 +76,12 @@ nav:
       - dev-chatui-aiaio: workloads/dev-chatui-aiaio/helm/README.md
       - dev-chatui-openwebui: workloads/dev-chatui-openwebui/helm/README.md
       - dev-openvscode-server: workloads/dev-openvscode-server/helm/README.md
-      - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/chart/README.md
+      - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/README.md
       - k8s-namespace-setup: workloads/k8s-namespace-setup/helm/README.md
-      # - llm-benchmark-vllm-mad: MISSING Helm version of workload
-      # - LLM-finetune-engine-agnostic: MISSING Helm version of workload
-      - LLM-finetune-silogen-engine:
-        - Overview: workloads/LLM-finetune-silogen-engine/helm/chart/README.md
-        - Finetuning Config: workloads/LLM-finetune-silogen-engine/silogen_finetuning_config_readme.md
+      # - llm-finetune-engine-agnostic: MISSING Helm version of workload
+      - llm-finetune-silogen-engine:
+        - Overview: workloads/llm-finetune-silogen-engine/helm/README.md
+        - Finetuning Config: workloads/llm-finetune-silogen-engine/silogen_finetuning_config_readme.md
       - llm-inference-llamacpp-mi300x: workloads/llm-inference-llamacpp-mi300x/helm/README.md
       - llm-inference-sglang: workloads/llm-inference-sglang/helm/README.md
       - llm-inference-vllm: workloads/llm-inference-vllm/helm/README.md

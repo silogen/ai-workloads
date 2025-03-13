@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: {{ include "release.fullname" . }}
   labels:
-    {{- range $key, $value := .Values.labels }}
+    app: {{ include "release.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:
@@ -11,91 +12,26 @@ spec:
   selector:
     matchLabels:
       app: {{ include "release.fullname" . }}
-  strategy: {}
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: {{ include "release.fullname" . }}
-      # TODO: vLLM requires root user to run now, need to fix this
-      # securityContext:
-      #   fsGroup: 1000
-      #   runAsGroup: 1000
-      #   runAsUser: 1000
     spec:
-      restartPolicy: Always
-      {{- if .Values.imagePullSecret }}
-      imagePullSecrets:
-      - name: {{ .Values.imagePullSecret }}
-      {{- end }}
       containers:
-        - image: {{ .Values.image }}
-          imagePullPolicy: Always
-          name: {{ include "release.name" . }}
-          command: ["sh", "-c"]
-          args:
+        - args:
             - |
               {{- include "entrypoint" . | nindent 14 }}
+          command: ["sh", "-c"]
           env:
-            - name: HF_HOME
-              value: /workload/.cache/huggingface
-            {{- if .Values.hf_token }}
-            - name: HF_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.hf_token.secret_name }}
-                  key: {{ .Values.hf_token.key }}
-            {{- end }}
-            - name: BUCKET_STORAGE_HOST
-              value: {{ .Values.bucket_storage.host }}
-            - name: BUCKET_STORAGE_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.bucket_storage.credentials.secret_name }}
-                  key: {{ .Values.bucket_storage.credentials.access_key_key }}
-            - name: BUCKET_STORAGE_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.bucket_storage.credentials.secret_name }}
-                  key: {{ .Values.bucket_storage.credentials.secret_key_key }}
-            {{- range $key, $value := .Values.env_vars }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
-            {{- end }}
+            {{- include "container.env" . | nindent 12 }}
+          image: {{ .Values.image | quote}}
+          imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
+          name: {{ .Chart.Name }}
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.deployment.port }}
           resources:
-            requests:
-              memory: "{{ max (mul .Values.gpus 32) 4 }}Gi"
-              cpu: "{{ max (mul .Values.gpus 4) 1 }}"
-              {{- if .Values.gpus }}
-              amd.com/gpu: "{{ .Values.gpus }}"
-              {{- end }}
-            limits:
-              memory: "{{ max (mul .Values.gpus 32) 4 }}Gi"
-              cpu: "{{ max (mul .Values.gpus 4) 1 }}"
-              {{- if .Values.gpus }}
-              amd.com/gpu: "{{ .Values.gpus }}"
-              {{- end }}
+            {{- include "container.resources" . | nindent 12 }}
           volumeMounts:
-            - mountPath: /workload
-              name: ephemeral-storage
-            - mountPath: /dev/shm
-              name: dshm
+            {{- include "container.volumeMounts" . | nindent 12 }}
       volumes:
-        - ephemeral:
-            volumeClaimTemplate:
-              metadata:
-                creationTimestamp: null
-              spec:
-                accessModes:
-                  - ReadWriteOnce
-                storageClassName: {{ .Values.storage.storageClassName }}
-                resources:
-                  requests:
-                    storage: {{ .Values.storage.quantity }}
-          name: ephemeral-storage
-        - emptyDir:
-            medium: Memory
-            sizeLimit: {{ .Values.dshm.sizeLimit }}
-          name: dshm
+        {{- include "container.volumes" . | nindent 8 }}

@@ -20,7 +20,7 @@ mc cp --recursive {{$minioModel -}}/ {{$localModel -}}/
 {{- define "sglang.start" -}}
 {{- $modelPath := .Values.model -}}
 {{- if (hasPrefix "s3://" .Values.model) -}}
-  {{- $modelPath := printf "/workload/%s" (trimPrefix "s3://" .Values.model | trimSuffix "/") -}}
+  {{- $modelPath = printf "/workload/%s" (trimPrefix "s3://" .Values.model | trimSuffix "/") -}}
 {{- end -}}
 echo '--------------------------------------------'
 echo 'Starting SGLang'
@@ -36,8 +36,8 @@ python3 -m sglang.launch_server \
 {{- end -}}
 
 {{ define "entrypoint" -}}
-  {{- if (hasPrefix "s3://" .Values.model) -}}
-    {{- include "minio.setup" . -}}
-  {{- end }}
-  {{- include "sglang.start" . -}}
+{{- if (hasPrefix "s3://" .Values.model) -}}
+{{- include "minio.setup" . -}}
+{{- end }}
+{{ include "sglang.start" . -}}
 {{- end -}}

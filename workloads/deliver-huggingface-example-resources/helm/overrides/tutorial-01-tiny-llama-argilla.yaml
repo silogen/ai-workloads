@@ -1,6 +1,6 @@
-# Use e.g. for Kueue labels,
+# Use to add labels to the metadata of the resources created by this workload.
 labels:
-  kueue.x-k8s.io/queue-name: kaiwo
+  kaiwo.silogen.ai/managed: "true"
 
 # Which model to download
 modelID: TinyLlama/TinyLlama-1.1B-Chat-v1.0
@@ -39,8 +39,8 @@ allowOverwrite: false
 # Bucket credentials from a secret:
 bucketCredentialsSecret:
   name: minio-credentials
-  accessKeyKey: API_ACCESS_KEY
-  secretKeyKey: API_SECRET_KEY
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
 
 # Storage configuration:
 storageClass: mlstorage
