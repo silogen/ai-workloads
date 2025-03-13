@@ -1,0 +1,40 @@
+metadata:
+  labels: {}
+
+image: "rocm/vllm-dev:20250205_aiter"
+imagePullPolicy: Always
+gpus: 1
+memory_per_gpu: 256
+cpu_per_gpu: 16
+
+env_vars:
+  MODEL: "unsloth/DeepSeek-R1-GGUF:DeepSeek-R1-UD-IQ1_M"
+  ROCM_ARCH: gfx942
+  GPU_LAYERS: "62"
+  TEMP: "0.5"
+  CTX_SIZE: "4096"
+
+  BUCKET_STORAGE_HOST: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  BIN_PATH: default-bucket/build/llama.cpp/
+  NCPU: "16"
+
+storage:
+  ephemeral:
+    quantity: 400Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 256Gi
+
+deployment:
+  port: 8080
+
+entrypoint: |
+  bash /workload/mount/entrypoint.sh
