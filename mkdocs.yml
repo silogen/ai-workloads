@@ -68,7 +68,7 @@ nav:
   - Tutorials:
     - Overview: docs/tutorials.md
     - Tutorials:
-      - Deliver Resources and Finetune: docs/tutorials/deliver-resources-and-finetune.md
+      - Deliver Resources and Finetune: docs/tutorials/tutorial-01-deliver-resources-and-finetune.md
   - Workloads:
     - Overview: docs/workloads.md
     - Workloads:
