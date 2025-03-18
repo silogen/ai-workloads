@@ -1,0 +1,26 @@
+metadata:
+  labels: {}
+
+image: "rocm/dev-ubuntu-22.04:6.2.4"
+
+imagePullPolicy: Always
+gpus: 1
+cpu_per_gpu: 16
+memory_per_gpu: 128
+
+env_vars: {}
+
+storage:
+  ephemeral:
+    quantity: 200Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+deployment:
+  port: 8188
+
+entrypoint: |
+  bash /workload/mount/comfyui.sh
