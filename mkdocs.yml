@@ -76,6 +76,7 @@ nav:
       - dev-chatui-aiaio: workloads/dev-chatui-aiaio/helm/README.md
       - dev-chatui-openwebui: workloads/dev-chatui-openwebui/helm/README.md
       - dev-openvscode-server: workloads/dev-openvscode-server/helm/README.md
+      - dev-text2image-comfyui: workloads/dev-text2image-comfyui/helm/README.md
       - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/README.md
       - k8s-namespace-setup: workloads/k8s-namespace-setup/helm/README.md
       # - llm-finetune-engine-agnostic: MISSING Helm version of workload

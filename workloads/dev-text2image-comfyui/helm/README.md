@@ -6,13 +6,13 @@ This Helm Chart deploys a [ComfyUI](https://github.com/comfyanonymous/ComfyUI) w
 
 Basic configurations are defined in the `values.yaml` file.
 
-To deploy the service, run the following command within the Helm folder:
+To deploy the service, run the following command within the `helm` folder:
 
 ```bash
 helm template . | kubectl apply -f -
 ```
 
-## Interacting with the Deployed Model
+## Interacting with the Workload
 
 ### Verify Deployment
 
@@ -33,4 +33,4 @@ The service exposes HTTP on port 80 (the deployment uses port 8188 by default).
 kubectl port-forward services/dev-text2image-comfyui 8080:80
 ```
 
-You can access ComfyUI ([Manager](https://github.com/ltdrdata/ComfyUI-Manager) also included) at `http://localhost:8080` using a web browser.
+Now, you can access ComfyUI ([Manager](https://github.com/ltdrdata/ComfyUI-Manager) also included) at [http://localhost:8080](http://localhost:8080) using a web browser.
