@@ -1,10 +1,14 @@
 # Tutorial 01: Deliver model and data to cluster MinIO, then run finetune
 
-This walk-through shows how to download a model and some data from HuggingFace Hub to a cluster-internal MinIO storage server, and then launch finetuning Jobs that use those resources. The checkpoints are also synced into the same cluster-internal MinIO storage. Finally, an inference workload is spawned to make it possible to discuss with the newly finetuned model.
+This tutorial shows how to download a model and some data from HuggingFace Hub to a cluster-internal MinIO storage server, and then launch finetuning Jobs that use those resources. The checkpoints are also synced into the same cluster-internal MinIO storage. Finally, an inference workload is spawned to make it possible to discuss with the newly finetuned model. At the end of the tutorial, there are some instructions on changing the model and the data.
 
-We should have a working cluster, setup by a cluster administrator. The access to that cluster is provided with a suitable Kubeconfig file. We don't require administrator permissions to run through this walk-through.
+The finetuning work in this tutorial is meant for demonstration purposes, small enough to be run live. We're starting from Tiny-Llama 1.1B Chat, a small LLM. This is already a chat-finetuned model.
+We're training it with some additional instruction data in the form of single prompt-and-answer pairs. The prompts in this data were gathered from real human prompts to LLMs, mostly ones that were shared on the now deprecated sharegpt.com site. The answers to those human prompts were generated with the [Mistral Large model](https://huggingface.co/mistralai/Mistral-Large-Instruct-2407). So in essence, training on this data makes our model respond more like Mistral Large. And there's another thing that this training accomplishes, which is to change the chat template, meaning the way the input to the model is formatted. More specifically, this adds special tokens that signal the start and end of message. Our experience is that such special tokens make the inference time message end signaling and message formatting a bit more robust.
+
 
 ## 1: Setup for the walk-through, programs used, instructions for monitoring
+
+As a prerequisite, we should have a working cluster, setup by a cluster administrator. The access to that cluster is provided with a suitable Kubeconfig file. We don't require administrator permissions to run through this walk-through.
 
 ### Required program installs
 
@@ -192,7 +196,113 @@ curl http://localhost:8080/v1/chat/completions \
 We can test the limits of the model with our own questions. Since this is a model with a relatively limited capacity, its answers are often delightful nonsense.
 
 When we want to stop port-forwarding, we can just run:
-
 ```bash
 kill $portforwardPID
 ```
+
+
+## Next Steps: How to use your own model and data
+
+This tutorial has shown the basic steps in running finetuning and chatting with the resulting model.
+For many, the next step may be to use our own models and data.
+This section should get us started, but ultimately, this opens the whole topic of how to do finetuning, which is too large to cover here.
+One more comprehensive view point is provided by the [Tülü 3 paper](https://arxiv.org/pdf/2411.15124).
+
+### Preparing your own model and data
+
+The workload `workloads/deliver-huggingface-example-resources/helm` delivers [HuggingFace Hub](https://huggingface.co/) resources. To get resources from elsewhere, we may for instance do it manually by downloading them to our own computers and uploading to our bucket storage from there. Technically the dataScript approach (below) can be used to deliver data that originates anywhere.
+
+The bucket storage used in this tutorial is a MinIO server hosted inside the cluster itself. To use some other S3-compatible bucket storage, we need to change the `bucketStorageHost` field, add our credentials (HMAC keys) as a Secret in our namespace (this is generally achieved via an External Secret that in turn fetches the info from some secret store that we have access to), and then refer to that bucket storage credentials Secret in the `bucketCredentialsSecret` nested fields.
+
+To prepare our own model and data, we create values file that is like `workloads/deliver-huggingface-example-resources/helm/overrides/tutorial-01-tiny-llama-argilla.yaml`.
+The key fields are `dataScript` and `modelID`, which define what data is prepared and which model is downloaded. These fields have the counterparts `bucketDataDir` and `bucketModelPath`,
+which determine where the data and model are stored in the bucket storage.
+
+#### Data
+The `dataScript` is a script instead of just a dataset identifier, because the datasets on HuggingFace hub don't have a standard format that can be always directly passed to our finetuning engine. The
+data script should format the data into the format that the silogen finetuning engine expects. For supervised finetuning, this is JSON lines, where each line has a JSON dictionary formatted as follows:
+```json
+{
+  "messages": [
+    {"role": "user", "content": "This is a user message"},
+    {"role": "assistant", "content": "The is an assistant answer"}
+  ]
+}
+```
+There can be an arbitrary number of messages. Additionally, each dictionary can contain a `dataset` field that has the dataset identifier, and an `id` field that identifies the data point uniquely.
+For [Direct Preference Optimization](https://arxiv.org/pdf/2305.18290), the data format is as follows:
+```json
+{
+  "prompt_messages": [
+    {"role": "user", "content": "This is a user message"},
+  ],
+  "chosen_messages": [
+    {"role": "assistant", "content": "This is a preferred answer"}
+  ],
+  "rejected_messages": [
+    {"role": "assistant", "content": "This is a rejected answer"}
+  ]
+}
+```
+
+The JSON lines output of the data script should be saved to the `/downloads/datasets/`. This is easy with the approach taken in the tutorial file:
+```python
+dataset.to_json("/downloads/datasets/<name of your dataset file.jsonl>")
+```
+The dataset is uploaded to the directory pointed to by `bucketDataDir`, with the same filename as it had under `/downloads/datasets`.
+
+#### Model
+Preparing a model is simple than data. We simply set the `modelID` to the HuggingFace Hub ID of the model (in the `Organization/ModelName` format). The model is the uploaded to
+the path pointed to by `bucketModelPath`.
+
+### Setting finetuning parameters
+
+For finetuning, we create a values file that is similar to `workloads/llm-finetune-silogen-engine/helm/overrides/tutorial-01-finetune-lora.yaml` (for LoRA adapter training)
+or `workloads/llm-finetune-silogen-engine/overrides/tutorial-01-finetune-full-param.yaml` (for full parameter training). We'll want to inject our data in the field:
+```yaml
+finetuning_config:
+  data_conf:
+    training_data:
+      datasets:
+        - path: "bucketName/path/to/file.jsonl
+```
+The datasets array can contain any number of datasets, and they're concatenated in training.
+
+The model is set in the top level field `basemodel`, where the value should be a name of a bucket followed by the path to the model directory in the bucket, formatted like:
+```yaml
+basemodel: bucketName/path/to/modelDir
+```
+
+All finetuning configurations are not sensible with all models, and some settings might even fail for unsupported models.
+Ultimately we need to understand the particular model we're using to set the parameters correctly. Suitable hyperparameters also depend on the data.
+
+One key model compatibility parameter to look at is the chat template, which is set by
+```yaml
+finetuning_config:
+  data_conf:
+    chat_template_name: "<name of template>"
+```
+If the model we start from already has a chat template, we should usually set this to `"keep-original"`. 
+Otherwise, `"chat-ml"` is usually a reasonable choice.
+Another set of parameters that often needs to be changed between models is the set of PEFT target layers, if doing LoRA training.
+These are set in the following field:
+```yaml
+finetuning_config:
+  peft_conf:
+    peft_kwargs:
+      target_modules:
+        - q_proj
+        - k_proj
+        - v_proj
+        - o_proj
+        - up_proj
+        - down_proj
+```
+One setting that can be used is
+```yaml
+finetuning_config:
+  peft_conf:
+    peft_kwargs:
+      target_modules: "all-linear"
+```
+which targets all linear layers on the model and doesn't require knowing the names of the layers.
