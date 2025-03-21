@@ -16,7 +16,7 @@ The default model is 1.73-bit quantized [DeepSeek-R1-UD-IQ1_M](https://huggingfa
 For example: run the following command within the `helm/` folder to deploy the service:
 
 ```bash
-helm template . --set env_vars.TEMP:"0.8" | kubectl apply -f -
+helm template . --set env_vars.TEMP="0.8" | kubectl apply -f -
 ```
 
 **Note**: Compiling llama.cpp executables and downloading/merging the GGUF files of DeepSeek R1 (~200GB) from HuggingFace can take a significant amount of time. The deployment process may take over 30 minutes before the LLM inference service is ready.
