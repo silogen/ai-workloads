@@ -1,3 +1,0 @@
-modelID: "yujiepan/llama-3.1-tiny-random"
-bucketModelPath: "silogen-dev-data/models/yujiepan_llama-3.1-tiny-random"
-bucketDataDir: "silogen-dev-data/finetuning/datasets/"

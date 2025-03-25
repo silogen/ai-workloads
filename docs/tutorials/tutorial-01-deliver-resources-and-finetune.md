@@ -73,20 +73,25 @@ Choose a Job using `arrow keys` and `Enter` to see the Pod that it spawned, then
 
 Return from any regular `k9s` view with `Esc` .
 
-## 2. Run a workload to deliver data + model
+## 2. Run workloads to deliver data and a model
 
-We will use the helm chart in `workloads/deliver-huggingface-example-resources/helm` . We will use it to deliver a Tiny-Llama 1.1B parameter model, and an Argilla single-turn response supervised finetuning dataset.
+We will use the helm charts in `workloads/download-huggingface-model-to-bucket/helm` and `workloads/download-data-to-bucket/helm`. We will use them to deliver a Tiny-Llama 1.1B parameter model, and an Argilla single-turn response supervised finetuning dataset, respectively.
 
-Our user input file is `workloads/deliver-huggingface-example-resources/helm/overrides/tutorial-01-tiny-llama-argilla.yaml`, we can change the `modelID` and the `dataScript` to use different models and data.
+Our user input files are in `workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-01-tiny-llama-to-minio.yaml`, and `workloads/download-data-to-bucket/helm/overrides/tutorial-01-argilla-to-minio.yaml`.
 ```bash
-helm template workloads/deliver-huggingface-example-resources/helm \
-  --values workloads/deliver-huggingface-example-resources/helm/overrides/tutorial-01-tiny-llama-argilla.yaml \
-  --name-template "deliver-tiny-llama-and-argilla" \
+helm template workloads/download-huggingface-model-to-bucket/helm \
+  --values workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-01-tiny-llama-to-minio.yaml \
+  --name-template "deliver-tiny-llama-model" \
+  --namespace "silo" \
+  | kubectl apply -f -
+helm template workloads/download-data-to-bucket/helm \
+  --values workloads/download-data-to-bucket/helm/overrides/tutorial-01-argilla-to-minio.yaml \
+  --name-template "deliver-argilla-data" \
   --namespace "silo" \
   | kubectl apply -f -
 ```
 
-The [logs](#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload, then data download, preprocessing, and upload.
+The [logs](#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload for the model delivery workload, and data download, preprocessing, and upload for the data delivery.
 
 ## 3. Scaling finetuning: Hyperparameter tuning with parallel Jobs
 
@@ -210,13 +215,15 @@ One more comprehensive view point is provided by the [Tülü 3 paper](https://ar
 
 ### Preparing your own model and data
 
-The workload `workloads/deliver-huggingface-example-resources/helm` delivers [HuggingFace Hub](https://huggingface.co/) resources. To get resources from elsewhere, we may for instance do it manually by downloading them to our own computers and uploading to our bucket storage from there. Technically the dataScript approach (below) can be used to deliver data that originates anywhere.
+The workload `workloads/download-huggingface-model-to-bucket/helm` delivers [HuggingFace Hub](https://huggingface.co/) models. To get models from elsewhere, we may for instance do it manually by downloading them to our own computers and uploading to our bucket storage from there. The data delivery workload `workloads/download-data-to-bucket/helm` uses a free script to download and preprocess the data, so it is more flexible in this regard. 
 
 The bucket storage used in this tutorial is a MinIO server hosted inside the cluster itself. To use some other S3-compatible bucket storage, we need to change the `bucketStorageHost` field, add our credentials (HMAC keys) as a Secret in our namespace (this is generally achieved via an External Secret that in turn fetches the info from some secret store that we have access to), and then refer to that bucket storage credentials Secret in the `bucketCredentialsSecret` nested fields.
 
-To prepare our own model and data, we create values file that is like `workloads/deliver-huggingface-example-resources/helm/overrides/tutorial-01-tiny-llama-argilla.yaml`.
-The key fields are `dataScript` and `modelID`, which define what data is prepared and which model is downloaded. These fields have the counterparts `bucketDataDir` and `bucketModelPath`,
-which determine where the data and model are stored in the bucket storage.
+To prepare our own model, we create a values file that is similar to `workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-01-tiny-llama-to-minio.yaml`. .
+The key field is `modelID`, which defins which model is downloaded. The field `bucketModelPath`
+determines where the model is stored in the bucket storage.
+
+To prepare our own data, we structure our values file like `workloads/download-data-to-bucket/helm/overrides/tutorial-01-argilla-to-minio.yaml`. It may be easiest to write a Python script separately, potentially test it locally, and then put the script as a block text value for `dataScript`. The dataset upload location is set with the `bucketDataDir` field.
 
 #### Data
 The `dataScript` is a script instead of just a dataset identifier, because the datasets on HuggingFace hub don't have a standard format that can be always directly passed to our finetuning engine. The

@@ -23,7 +23,7 @@ spec:
       {{- end }}
       containers:
       - name: hf-to-bucket
-        image: {{ .Values.image}}
+        image: {{ .Values.image }}
         imagePullPolicy: Always
         workingDir: /app
         command:
