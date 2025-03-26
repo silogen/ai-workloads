@@ -6,7 +6,7 @@ labels:
 modelID: TinyLlama/TinyLlama-1.1B-Chat-v1.0
 
 # Where the resources should be stored:
-bucketPath: default-bucket/models/tiny-llama_tinyllama-1.1b-chat-v1.0
+bucketPath: default-bucket/models/tiny-llama/tinyllama-1.1b-chat-v1.0
 bucketStorageHost: https://minio.minio-tenant-default.svc.cluster.local:443
 
 # Download & Upload configuration:

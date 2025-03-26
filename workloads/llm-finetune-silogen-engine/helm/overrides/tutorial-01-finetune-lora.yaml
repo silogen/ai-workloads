@@ -24,7 +24,7 @@ mergeAdapter: false
 
 ### Model input and output, required args ###
 checkpointsRemote: "default-bucket/experiments/tinyllama-1.1b-chat-v1.0_argilla_alpha"
-basemodel: "default-bucket/models/tiny-llama_tinyllama-1.1b-chat-v1.0"
+basemodel: "default-bucket/models/tiny-llama/tinyllama-1.1b-chat-v1.0"
 
 ### Finetuning config section ###
 finetuning_config:
