@@ -129,7 +129,7 @@ Let's launch an 8GPU run of full-parameter finetuning:
 ```bash
 name="tiny-llama-argilla-v1"
 helm template workloads/llm-finetune-silogen-engine/helm \
-  --values workloads/llm-finetune-silogen-engine/overrides/tutorial-01-finetune-full-param.yaml \
+  --values workloads/llm-finetune-silogen-engine/helm/overrides/tutorial-01-finetune-full-param.yaml \
   --name-template $name \
   --namespace "silo" \
   --set "checkpointsRemote=default-bucket/experiments/$name" \
@@ -151,7 +151,7 @@ helm template workloads/llm-finetune-silogen-engine/helm \
   --namespace "silo" \
   --set "checkpointsRemote=default-bucket/experiments/$name" \
   --set "finetuningGpus=1" \
-  | kubectl apply -
+  | kubectl apply -f -
 ```
 
 The training steps for this single-GPU run take around 340 seconds.
@@ -203,6 +203,11 @@ We can test the limits of the model with our own questions. Since this is a mode
 When we want to stop port-forwarding, we can just run:
 ```bash
 kill $portforwardPID
+```
+and to stop the deployment, we run:
+```bash
+name="tiny-llama-argilla-v1"
+kubectl delete deployments/llm-inference-vllm-$name -n silo
 ```
 
 
