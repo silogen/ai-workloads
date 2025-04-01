@@ -23,7 +23,7 @@ dataScript: |
 
 # Where the resources should be stored:
 bucketDataDir: default-bucket/datasets/
-bucketStorageHost: https://minio.minio-tenant-default.svc.cluster.local:443
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
 
 # Bucket credentials from a secret:
 bucketCredentialsSecret:
