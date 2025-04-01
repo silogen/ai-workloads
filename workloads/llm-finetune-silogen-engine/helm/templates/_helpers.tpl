@@ -6,6 +6,11 @@ mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $$
 mc cp --recursive \
   minio-host/{{ .Values.basemodel | trimSuffix "/" }}/ \
   /local_resources/basemodel
+{{- if $.Values.trainingData }}
+mc cp \
+  minio-host/{{ $.Values.trainingData }} \
+  /local_resources/{{ $.Values.trainingData | replace "/" "_" }}
+{{- else }}
 {{- range .Values.finetuning_config.data_conf.training_data.datasets }}
 mc cp \
   minio-host/{{ .path }} \
@@ -16,6 +21,7 @@ mc cp \
 mc cp \
   minio-host/{{ .path }} \
   /local_resources/{{ .path | replace "/" "_" }}
+{{- end }}
 {{- end }}
 {{- end }}
 # Sync checkpoints from remote to local
@@ -32,7 +38,10 @@ fi
 # Print GPU Info:
 rocm-smi
 echo "Starting checkpoint sync process"
-mc mirror --watch /workdir/checkpoints minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ &
+mc mirror \
+  --watch \
+  /workdir/checkpoints \
+  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ 2>/dev/null &
 uploadPID=$!
 # Run training:
 echo "Starting training process"
@@ -51,8 +60,13 @@ merge_adapter /local_resources/basemodel ./checkpoints/checkpoint-final ./checkp
 {{- end }}
 # Once more to ensure everything gets uploaded
 echo 'Training done, syncing once more...'
-mc mirror /workdir/checkpoints minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/  2>/dev/null
+mc mirror \
+  /workdir/checkpoints \
+  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ 2>/dev/null
 # Sync the final checkpoint with overwrite to carry over vLLM-compatibility changes
-mc mirror --overwrite /workdir/checkpoints/checkpoint-final minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/checkpoint-final/
+mc mirror \
+  --overwrite \
+  /workdir/checkpoints/checkpoint-final \
+  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/checkpoint-final/
 echo 'All done, exiting'
 {{- end }}

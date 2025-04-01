@@ -1,16 +1,26 @@
-# Use to add labels to the metadata of the resources created by this workload.
-labels:
-  kaiwo.silogen.ai/managed: "true"
-
 # Bucket storage inputs
-bucketStorageHost: "https://storage.googleapis.com"
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+# Bucket credentials from a secret:
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
 
 # Resource configuration:
-# storageClass: mlstorage
+finetuningGpus: 1 # 1 or 8, values in between are not robust at the moment
+storageClass: mlstorage
+
+# Resources:
+downloadsReservedSize: 50Gi
+checkpointsReservedSize: 50Gi
+
+# Run configuration:
+mergeAdapter: false
 
 ### Model input and output, required args ###
-checkpointsRemote: "silogen-dev-data/experiments/finetuning/llama-31-tiny-random-deepspeed"
-basemodel: "silogen-dev-data/models/yujiepan/llama-3.1-tiny-random"
+checkpointsRemote: "default-bucket/experiments/finetuning/llama-31-tiny-random-deepspeed"
+basemodel: "default-bucket/models/yujiepan/llama-3.1-tiny-random"
 
 ### Finetuning config section ###
 finetuning_config:
@@ -19,7 +29,7 @@ finetuning_config:
     training_data:
       type: CONCATENATION
       datasets:
-        - path: "silogen-dev-data/finetuning/datasets/argilla-mistral-large-human-prompts.jsonl"
+        - path: "default-bucket/datasets/argilla-mistral-large-human-prompts.jsonl"
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1

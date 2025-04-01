@@ -1,3 +1,4 @@
+{{- define "job" -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -128,3 +129,21 @@ spec:
         - name: configs
           configMap:
             name: "{{ .Release.Name }}-configs"
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: "{{ .Release.Name }}-job"
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  job:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

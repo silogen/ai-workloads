@@ -294,7 +294,7 @@ finetuning_config:
   data_conf:
     chat_template_name: "<name of template>"
 ```
-If the model we start from already has a chat template, we should usually set this to `"keep-original"`. 
+If the model we start from already has a chat template, we should usually set this to `"keep-original"`.
 Otherwise, `"chat-ml"` is usually a reasonable choice.
 Another set of parameters that often needs to be changed between models is the set of PEFT target layers, if doing LoRA training.
 These are set in the following field:

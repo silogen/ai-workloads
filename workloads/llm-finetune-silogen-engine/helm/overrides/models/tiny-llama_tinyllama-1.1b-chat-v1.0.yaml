@@ -1,27 +1,11 @@
-# Bucket storage inputs
-bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
-
-# Bucket credentials from a secret:
-bucketCredentialsSecret:
-  name: minio-credentials
-  accessKeyKey: minio-access-key
-  secretKeyKey: minio-secret-key
-
-# Resource configuration:
-finetuningGpus: 8 # 1 or 8, values in between are not robust at the moment
-storageClass: mlstorage
-
 # Resources:
 downloadsReservedSize: 64Gi
 checkpointsReservedSize: 128Gi
+finetuningGpus: 1
 
 # Run configuration:
 distributedType: "auto-deepspeed-stage1"
 mergeAdapter: false
-
-### Model input and output, required args ###
-checkpointsRemote: "default-bucket/experiments/tinyllama-1.1b-chat-v1.0_argilla_alpha"
-basemodel: "default-bucket/models/tiny-llama/tinyllama-1.1b-chat-v1.0"
 
 ### Finetuning config section ###
 finetuning_config:
@@ -30,7 +14,7 @@ finetuning_config:
     training_data:
       type: CONCATENATION
       datasets:
-        - path: "default-bucket/datasets/argilla-mistral-large-human-prompts.jsonl"
+        - path: "PLACEHOLDER"
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1

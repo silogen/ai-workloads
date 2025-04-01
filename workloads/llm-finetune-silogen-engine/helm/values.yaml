@@ -1,12 +1,12 @@
 ### General chart values ###
-ioImage: ghcr.io/silogen/logistics:v0.1
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.1
+finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.3
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
 
 # Use to add labels to the metadata of the resources created by this workload.
 labels: {}
-  # Example:
-  # labels:
-  #   kaiwo.silogen.ai/managed: "true"
 
 # Extra annotations such as an imagePullSecrets
 imagePullSecrets: []
@@ -15,7 +15,7 @@ imagePullSecrets: []
   #   - "regcred"
 
 # Configure these to match the credentials in your cluster:
-bucketStorageHost:
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
 bucketCredentialsSecret:
   name: minio-credentials
   accessKeyKey: minio-access-key
@@ -24,7 +24,7 @@ bucketCredentialsSecret:
 # Resources:
 downloadsReservedSize: 64Gi
 checkpointsReservedSize: 512Gi
-storageClass:  # Optionally set this to use a specific storageClass for the storage.
+storageClass: mlstorage # set this to use a specific storageClass for the storage.
 finetuningGpus: 1 # 1 or 8, values in between are not robust at the moment
 
 # Runtime configuration:
@@ -33,8 +33,8 @@ customAccelerateConfig:  # Can contain an accelerate config in YAML format, used
 mergeAdapter: true
 
 ### Model input and output, required args ###
-checkpointsRemote:
-basemodel:
+checkpointsRemote:  # Path where to sync checkpoints in bucket storage
+basemodel:  # Path to basemodel directory in the bucket storage
 
 ### Finetuning config section ###
 finetuning_config:
@@ -53,6 +53,9 @@ finetuning_config:
     # - Do not set output_dir, the checkpoints should be saved to the default location to be uploaded
     # - Do not set per_device_train_batch_size nor gradient_accumulation, they are automatically set
     #   based on the batchsize_conf (below)
+  overrides:
+    lr_multiplier: 1.0
+    lr_batch_size_scaling: "none"
   batchsize_conf:
     total_train_batch_size:  # By default, this gets set to the number of GPUs
     max_per_device_train_batch_size: 1
@@ -68,7 +71,6 @@ finetuning_config:
       # This can also be bitsandbytes
       # If bitsandbytes, you can also set any keys from BitsAndBytesConfig here
   run_conf:
-    model: /local_resources/basemodel
     model_args: {}  # These are HuggingFace model .from_pretrained() kwargs
     resume_from_checkpoint: auto
   sft_args:
