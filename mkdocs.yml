@@ -86,6 +86,7 @@ nav:
       - llm-inference-llamacpp-mi300x: workloads/llm-inference-llamacpp-mi300x/helm/README.md
       - llm-inference-sglang: workloads/llm-inference-sglang/helm/README.md
       - llm-inference-vllm: workloads/llm-inference-vllm/helm/README.md
+      - llm-inference-vllm-benchmark-mad: workloads/llm-inference-vllm-benchmark-mad/helm/README.md
   - Contributing: docs/contributing.md
 
 #extra_css:
