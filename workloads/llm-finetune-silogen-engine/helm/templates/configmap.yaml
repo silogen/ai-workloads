@@ -80,8 +80,7 @@ data:
     training_args:
       {{- toYaml .training_args | nindent 6 }}
     overrides:
-      lr_multiplier: {{ $.Values.learningRateMultiplier }}
-      lr_batch_size_scaling: {{ .overrides.lr_batch_size_scaling }}
+      {{- toYaml .overrides | nindent 6 }}
     batchsize_conf:
       total_train_batch_size: {{ default $.Values.finetuningGpus .batchsize_conf.total_train_batch_size }}
       max_per_device_train_batch_size: {{ .batchsize_conf.max_per_device_train_batch_size }}
