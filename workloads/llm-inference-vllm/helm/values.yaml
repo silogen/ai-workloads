@@ -20,7 +20,7 @@ vllm_engine_args: {}
 # env vars (vllm ref: https://docs.vllm.ai/en/latest/serving/env_vars.html)
 env_vars:
   VLLM_DO_NOT_TRACK: "1"
-  BUCKET_STORAGE_HOST: http://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
   BUCKET_STORAGE_ACCESS_KEY:
     name: minio-credentials
     key: minio-access-key

@@ -14,7 +14,7 @@ imagePullSecrets: []
   #   - "regcred"
 
 # Configure these to match the credentials in your cluster:
-bucketStorageHost: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
 bucketCredentialsSecret:
   name: minio-credentials
   accessKeyKey: minio-access-key

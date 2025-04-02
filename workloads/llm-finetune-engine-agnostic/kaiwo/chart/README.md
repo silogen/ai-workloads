@@ -48,7 +48,7 @@ BUCKET\_STORAGE\_ACCESS\_KEY, BUCKET\_STORAGE\_SECRET\_KEY. For example:
 
 ```yaml
 - name: BUCKET_STORAGE_HOST
-  value: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  value: http://minio.minio-tenant-default.svc.cluster.local:80
 - fromSecret:
     name: BUCKET_STORAGE_ACCESS_KEY
     secret: minio-credentials

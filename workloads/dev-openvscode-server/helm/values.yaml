@@ -5,7 +5,7 @@ image: ghcr.io/silogen/openvscode-server:vllm-dev-20250124
 imagePullPolicy: Always
 
 env_vars:
-  BUCKET_STORAGE_HOST: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
   BUCKET_STORAGE_ACCESS_KEY:
     name: minio-credentials
     key: minio-access-key

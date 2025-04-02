@@ -14,7 +14,7 @@ env_vars:
   TEMP: "0.5"
   CTX_SIZE: "4096"
 
-  BUCKET_STORAGE_HOST: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
   BUCKET_STORAGE_ACCESS_KEY:
     name: minio-credentials
     key: minio-access-key
