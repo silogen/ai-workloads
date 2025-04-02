@@ -56,7 +56,11 @@ wait $uploadPID || true
 echo "Running post-processing"
 create_vllm_compatible_adapter --training-config /configs/finetuning_config.yaml ./checkpoints/checkpoint-final
 {{- if (and .Values.mergeAdapter (not (eq .Values.finetuning_config.peft_conf.peft_type "NO_PEFT" ))) }}
-merge_adapter /local_resources/basemodel ./checkpoints/checkpoint-final ./checkpoints/checkpoint-final-merged
+merge_base=/local_resources/basemodel
+if [ -d ./checkpoints/checkpoint-new-basemodel ]; then
+  merge_base=./checkpoints/checkpoint-new-basemodel
+fi
+merge_adapter $merge_base ./checkpoints/checkpoint-final ./checkpoints/checkpoint-final-merged
 {{- end }}
 # Once more to ensure everything gets uploaded
 echo 'Training done, syncing once more...'
