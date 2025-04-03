@@ -12,6 +12,7 @@ See the various sub-configs for their options. Additional properties are not all
 | method | `const` |  | `sft` | `"sft"` |  |
 | data_conf | `object` | ✅ | [ChatTrainValidConfig](#chattrainvalidconfig) |  | The data input config |
 | training_args | `object` | ✅ | [SilogenTrainingArguments](#silogentrainingarguments) |  | Transformer TrainingArguments with some restrictions |
+| overrides | `object` |  | [Overrides](#overrides) | `{"num_train_epochs": null, "lr_multiplier": 1.0, "lr_batch_size_scaling": "none"}` | Override options to simplify the config interface |
 | batchsize_conf | `object` | ✅ | [BatchsizeConfig](#batchsizeconfig) |  | Batch size configuration |
 | peft_conf | `object` | ✅ | [NoPeftConfig](#nopeftconfig) or [PretrainedPeftConfig](#pretrainedpeftconfig) or [GenericPeftConfig](#genericpeftconfig) |  | Adapter configuration |
 | run_conf | `object` | ✅ | [RunConfig](#runconfig) |  | Model related configuration |
@@ -281,6 +282,22 @@ A special type for not using data e.g. in validation
 | type | `const` | ✅ | `NONE` |  |  |
 | data_type | `string` |  | string | `"ChatConversation"` | generally, the data_type is automatically set based on the experiment config method |
 
+## Overrides
+
+Override options that allow simple interfaces for charts using these configs
+
+This is particularly useful for a helm chart interface where we include the finetuning package config
+as a part of the values.yaml file. These a more flexible helm interface with certain keys brought to the
+top level.
+
+#### Type: `object`
+
+| Property | Type | Required | Possible values | Default | Description |
+| -------- | ---- | -------- | --------------- | ------- | ----------- |
+| num_train_epochs | `integer` or `number` or `null` |  | number |  | Overrides the number of epochs in the training_args |
+| lr_multiplier | `number` |  | number | `1.0` | Multiplier applied to the learning rate in the training_args |
+| lr_batch_size_scaling | `string` |  | `none` `sqrt` `linear` | `"none"` | Scales the learning rate in the training_args by a factor derived from the total training batch size. `none`: No scaling. `sqrt`: Multiplies learning rate by square root of batch size (a classic scaling rule). `linear`: Multiplies learning rate by the batch size (a more modern scaling rule). |
+
 ## PeftType
 
 Enum class for the different types of adapters in PEFT.
@@ -328,9 +345,10 @@ Experiment running configuration
 
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
-| model | `string` | ✅ | string |  | Local path to model to be fine-tuned. Normally this should be `/local_resources/basemodel` |
+| model | `string` |  | string | `"/local_resources/basemodel"` | Local path to model to be fine-tuned. Normally this should be `/local_resources/basemodel` |
 | model_args | `object` |  | [ModelArguments](#modelarguments) | `{"torch_dtype": "auto", "device_map": "auto", "max_memory": null, "low_cpu_mem_usage": false, "attn_implementation": null, "offload_folder": null, "offload_state_dict": null, "offload_buffers": null, "use_cache": true, "cache_dir": null, "force_download": false, "local_files_only": false, "proxies": null, "resume_download": false, "revision": "main", "code_revision": "main", "subfolder": null, "token": null, "use_safetensors": null, "variant": null, "trust_remote_code": false}` |  |
-| tokenizer | `string` or `null` |  | string |  | Model HuggingFace ID, or path, or None to use the one associated with the model
+| tokenizer | `string` or `null` |  | string |  | Model HuggingFace ID, or path, or None to use the one associated with the model |
+| use_fast_tokenizer | `boolean` |  | boolean | `True` | Use the Fast version of the tokenizer. The 'slow' version may be compatible with more features. |
 | resume_from_checkpoint | `boolean` or `string` | | boolean and/or string | `False`  | Normally should be set to 'auto' to continue if a checkpoint exists. Can set to `True` to always try to continue, `False` to never try, or a path to load from a specific path. |
 | final_checkpoint_name | `string` |  | string | `"checkpoint-final"` | Name of final checkpoint. Should be left as default |
 
