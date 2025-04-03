@@ -41,7 +41,7 @@ echo "Starting checkpoint sync process"
 mc mirror \
   --watch \
   /workdir/checkpoints \
-  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ 2>/dev/null &
+  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ &
 uploadPID=$!
 # Run training:
 echo "Starting training process"
@@ -66,7 +66,7 @@ merge_adapter $merge_base ./checkpoints/checkpoint-final ./checkpoints/checkpoin
 echo 'Training done, syncing once more...'
 mc mirror \
   /workdir/checkpoints \
-  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ 2>/dev/null
+  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/
 # Sync the final checkpoint with overwrite to carry over vLLM-compatibility changes
 mc mirror \
   --overwrite \
