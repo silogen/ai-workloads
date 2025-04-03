@@ -4,7 +4,7 @@ metadata:
   name: {{ include "release.fullname" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ include "release.name" . }}
+    app: {{ include "release.fullname" . }}
 spec:
   type: ClusterIP
   ports:

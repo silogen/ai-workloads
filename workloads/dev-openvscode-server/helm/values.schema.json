@@ -121,7 +121,17 @@
         }
       },
       "required": ["port"]
+    },
+    "kaiwo": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If true, use Kaiwo CRDs to have Kaiwo operator manage the workload"
+        }
+      }
     }
   },
-  "required": ["metadata", "image", "imagePullPolicy", "env_vars", "storage", "gpus", "memory_per_gpu", "cpu_per_gpu", "entrypoint", "deployment"]
+  "required": ["metadata", "image", "imagePullPolicy", "env_vars", "storage", "gpus", "memory_per_gpu", "cpu_per_gpu", "entrypoint", "deployment", "kaiwo"],
+  "additionalProperties": false
 }

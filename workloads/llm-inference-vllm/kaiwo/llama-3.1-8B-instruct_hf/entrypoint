@@ -1,5 +1,0 @@
-python3 -m vllm.entrypoints.openai.api_server \
-        --host="0.0.0.0" \
-        --port=8080 \
-        --model=${MODEL_ID} \
-        --tensor-parallel-size=${NUM_GPUS}

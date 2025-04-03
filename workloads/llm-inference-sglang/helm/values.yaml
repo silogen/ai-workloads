@@ -41,3 +41,7 @@ storage:
 
 deployment:
   port: 8080
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

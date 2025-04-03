@@ -31,6 +31,16 @@
       "description": "Number of GPUs",
       "minimum": 0
     },
+    "memory_per_gpu": {
+      "type": "integer",
+      "description": "Memory per GPU in Gi",
+      "minimum": 1
+    },
+    "cpu_per_gpu": {
+      "type": "integer",
+      "description": "CPU cores per GPU",
+      "minimum": 1
+    },
     "env_vars": {
       "type": "object",
       "properties": {
@@ -162,15 +172,28 @@
     "entrypoint": {
       "type": "string",
       "description": "Entrypoint script"
+    },
+    "kaiwo": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If true, use Kaiwo CRDs to have Kaiwo operator manage the workload"
+        }
+      }
     }
   },
   "required": [
     "image",
     "imagePullPolicy",
     "gpus",
+    "memory_per_gpu",
+    "cpu_per_gpu",
     "env_vars",
     "storage",
     "deployment",
-    "entrypoint"
-  ]
+    "entrypoint",
+    "kaiwo"
+  ],
+  "additionalProperties": false
 }

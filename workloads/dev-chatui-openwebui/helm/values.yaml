@@ -34,3 +34,7 @@ entrypoint: |
   pip install kubernetes
   export OPENAI_API_BASE_URLS=`python /workload/mount/get_openai_api_base_urls.py`
   bash start.sh
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

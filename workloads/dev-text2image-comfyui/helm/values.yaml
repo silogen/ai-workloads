@@ -24,3 +24,7 @@ deployment:
 
 entrypoint: |
   bash /workload/mount/comfyui.sh
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

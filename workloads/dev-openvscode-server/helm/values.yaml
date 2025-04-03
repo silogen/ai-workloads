@@ -39,3 +39,7 @@ entrypoint: |
   exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server \
     --host 0.0.0.0 \
     --without-connection-token
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

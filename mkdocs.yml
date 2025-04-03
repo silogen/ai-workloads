@@ -82,7 +82,7 @@ nav:
       # - llm-finetune-engine-agnostic: MISSING Helm version of workload
       - llm-finetune-silogen-engine:
         - Overview: workloads/llm-finetune-silogen-engine/helm/README.md
-        - Finetuning Config: workloads/llm-finetune-silogen-engine/silogen_finetuning_config_readme.md
+        - Finetuning Config: workloads/llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md
       - llm-inference-llamacpp-mi300x: workloads/llm-inference-llamacpp-mi300x/helm/README.md
       - llm-inference-sglang: workloads/llm-inference-sglang/helm/README.md
       - llm-inference-vllm: workloads/llm-inference-vllm/helm/README.md
