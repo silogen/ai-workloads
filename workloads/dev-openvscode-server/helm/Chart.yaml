@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dev-openvscode-server
+description: A Helm chart for Open VS Code Server
+version: 0.0.1
