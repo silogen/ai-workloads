@@ -181,7 +181,7 @@ To discuss with the model, we first need to setup a connection to it. Since this
 
 ```bash
 name="tiny-llama-argilla-v1"
-kubectl port-forward deployments/llm-inference-vllm-$name 8080:8080 -n silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8080:80 -n silo >/dev/null &
 portforwardPID=$!
 ```
 

@@ -148,13 +148,13 @@ helm template workloads/llm-inference-vllm/helm \
 To discuss with the models, we need to setup connections to them. Since these are not public-internet deployments, we'll do this simply by starting background port-forwarding processes:
 ```bash
 name="qwen-base-chat"
-kubectl port-forward deployments/llm-inference-vllm-$name 8080:8080 --namespace silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8080:80 --namespace silo >/dev/null &
 qwenchatPID=$!
 name="qwen-odia-base"
-kubectl port-forward deployments/llm-inference-vllm-$name 8090:8080 --namespace silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8090:80 --namespace silo >/dev/null &
 odiabasePID=$!
 name="qwen-odia-instruct-v1"
-kubectl port-forward deployments/llm-inference-vllm-$name 8100:8080 --namespace silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8100:80 --namespace silo >/dev/null &
 odiainstructPID=$!
 ```
 
