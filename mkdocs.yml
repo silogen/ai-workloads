@@ -69,6 +69,7 @@ nav:
     - Overview: docs/tutorials.md
     - Tutorials:
       - Deliver Resources and Finetune: docs/tutorials/tutorial-01-deliver-resources-and-finetune.md
+      - "Language extension: Odia-finetuning": docs/tutorials/tutorial-02-language-extension-finetune.md
   - Workloads:
     - Overview: docs/workloads.md
     - Workloads:

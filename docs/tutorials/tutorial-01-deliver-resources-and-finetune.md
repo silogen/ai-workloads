@@ -8,7 +8,7 @@ We're training it with some additional instruction data in the form of single pr
 
 ## 1: Setup for the walk-through, programs used, instructions for monitoring
 
-As a prerequisite, we should have a working cluster, setup by a cluster administrator. The access to that cluster is provided with a suitable Kubeconfig file. We don't require administrator permissions to run through this walk-through.
+We should start with a working cluster, setup by a cluster administrator using [Cluster-forge](https://github.com/silogen/cluster-forge). The access to that cluster is provided with a suitable Kubeconfig file.
 
 ### Required program installs
 
@@ -34,7 +34,9 @@ Additional cluster setup. This does the following:
 
 * Adds an External Secret to get the credentials to access the MinIO storage from our namespace.
 
-    - This depends on a ClusterSecretStore called `k8s-secret-store` being already setup by a cluster admin, which the cluster should have.
+    - This depends on a ClusterSecretStore called `k8s-secret-store` being already setup by a cluster admin, and the MinIO API credentials being secret there.
+    The cluster should have these by default.
+
 
 * Adds a LocalQueue so that our Jobs schedule intelligently.
 
@@ -220,7 +222,7 @@ One more comprehensive view point is provided by the [Tülü 3 paper](https://ar
 
 ### Preparing your own model and data
 
-The workload `workloads/download-huggingface-model-to-bucket/helm` delivers [HuggingFace Hub](https://huggingface.co/) models. To get models from elsewhere, we may for instance do it manually by downloading them to our own computers and uploading to our bucket storage from there. The data delivery workload `workloads/download-data-to-bucket/helm` uses a free script to download and preprocess the data, so it is more flexible in this regard. 
+The workload `workloads/download-huggingface-model-to-bucket/helm` delivers [HuggingFace Hub](https://huggingface.co/) models. To get models from elsewhere, we may for instance do it manually by downloading them to our own computers and uploading to our bucket storage from there. The data delivery workload `workloads/download-data-to-bucket/helm` uses a free script to download and preprocess the data, so it is more flexible in this regard.
 
 The bucket storage used in this tutorial is a MinIO server hosted inside the cluster itself. To use some other S3-compatible bucket storage, we need to change the `bucketStorageHost` field, add our credentials (HMAC keys) as a Secret in our namespace (this is generally achieved via an External Secret that in turn fetches the info from some secret store that we have access to), and then refer to that bucket storage credentials Secret in the `bucketCredentialsSecret` nested fields.
 

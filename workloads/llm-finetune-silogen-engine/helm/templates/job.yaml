@@ -59,11 +59,11 @@ spec:
               {{- include "finetuningAndUploadEntrypoint" . | nindent 14 }}
           resources:
             limits:
-              memory: "{{ mul .Values.finetuningGpus 30 }}Gi"
+              memory: "{{ mul .Values.finetuningGpus 48 }}Gi"
               cpu: "{{ mul .Values.finetuningGpus 4 }}"
               amd.com/gpu: "{{ .Values.finetuningGpus }}"
             requests:
-              memory: "{{ mul .Values.finetuningGpus 30 }}Gi"
+              memory: "{{ mul .Values.finetuningGpus 48 }}Gi"
               cpu: "{{ mul .Values.finetuningGpus 4 }}"
               amd.com/gpu: "{{ .Values.finetuningGpus }}"
           volumeMounts:
