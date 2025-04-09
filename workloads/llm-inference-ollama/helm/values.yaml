@@ -1,0 +1,39 @@
+metadata:
+  labels: {}
+
+image: "rocm/vllm-dev:20250205_aiter"
+imagePullPolicy: Always
+gpus: 1
+memory_per_gpu: 64
+cpu_per_gpu: 16
+
+env_vars:
+  MODEL: "gemma3:4b"
+  NCPU: "16"
+  OLLAMA_KEEP_ALIVE: "-1"
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+
+storage:
+  ephemeral:
+    quantity: 400Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 256Gi
+
+deployment:
+  port: 8080
+
+entrypoint: |
+  bash /workload/mount/entrypoint.sh
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
