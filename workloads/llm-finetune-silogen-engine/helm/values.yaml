@@ -1,5 +1,5 @@
 ### General chart values ###
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.3
+finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.4
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:
@@ -33,8 +33,15 @@ customAccelerateConfig:  # Can contain an accelerate config in YAML format, used
 mergeAdapter: true
 
 ### Model input and output, required args ###
-checkpointsRemote:  # Path where to sync checkpoints in bucket storage
+checkpointsRemote:  # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
 basemodel:  # Path to basemodel directory in the bucket storage
+
+# Reporting
+# Set runTensorboard to true to run tensorboard in the background in the same container.
+# Also remember to set report_to: tensorboard in the finetuning_config.training_args section.
+runTensorboard: false
+logsRemote: # Path where to sync logs in bucket storage (defaults to <checkpointsRemote>/logs if not set), format: bucktetName/path/in/bucket
+
 
 ### Finetuning config section ###
 finetuning_config:

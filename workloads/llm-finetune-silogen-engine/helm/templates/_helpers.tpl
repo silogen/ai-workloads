@@ -35,6 +35,7 @@ fi
 
 {/* ####################################################################################################################################################### */}}
 {{- define "finetuningAndUploadEntrypoint" -}}
+{{- $logs_path := (default ( .Values.checkpointsRemote | trimSuffix "/" | printf "%s/logs/" ) .Values.logsRemote ) -}}
 # Print GPU Info:
 rocm-smi
 echo "Starting checkpoint sync process"
@@ -44,6 +45,16 @@ mc mirror \
   minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ &
 uploadPID=$!
 # Run training:
+{{- if .Values.runTensorboard }}
+tensorboard --logdir /workdir/logs --port 6006 &
+echo "Serving tensorboard on port 6006. Port-forward to access training logs during the training process lifetime."
+echo "Also starting logs upload process, uploading to {{ $logs_path }}"
+mc mirror \
+  --watch \
+  /workdir/logs \
+  minio-host/{{ $logs_path }} &
+logsPID=$!
+{{- end }}
 echo "Starting training process"
 accelerate launch \
   --config_file /configs/accelerate_config.yaml \
@@ -52,6 +63,10 @@ accelerate launch \
 echo "Training done, stop the upload process"
 kill $uploadPID
 wait $uploadPID || true
+{{- if .Values.runTensorboard }}
+kill $logsPID
+wait $logsPID || true
+{{- end }}
 # Post process:
 echo "Running post-processing"
 create_vllm_compatible_adapter --training-config /configs/finetuning_config.yaml ./checkpoints/checkpoint-final
@@ -67,6 +82,11 @@ echo 'Training done, syncing once more...'
 mc mirror \
   /workdir/checkpoints \
   minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/
+{{- if .Values.runTensorboard }}
+mc mirror \
+  /workdir/logs \
+  minio-host/{{ $logs_path }}
+{{- end }}
 # Sync the final checkpoint with overwrite to carry over vLLM-compatibility changes
 mc mirror \
   --overwrite \

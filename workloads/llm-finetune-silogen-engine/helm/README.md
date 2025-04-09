@@ -63,3 +63,14 @@ diff \
   )
 ```
 
+## Tensorboard
+Specifying `runTensorboard: true` and `finetuning_config.trainings_args.report_to: ["tensorboard"]` logs the training progress to tensorboard and serves the Tensorboard web UI from the training container.
+The tensorboard logs are also uploaded to the bucket storage for later use.
+
+To connect to the Tensorboard web UI on the container, start a port-forward:
+```bash
+kubectl port-forward --namespace YOUR_NAMESPACE pods/YOUR_POD_NAME 6006:6006
+```
+Then browse to [localhost:6006](localhost:6006).
+
+Note that the logging frequency is set by the HuggingFace Transformers [logging options](https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.TrainingArguments.logging_strategy).
