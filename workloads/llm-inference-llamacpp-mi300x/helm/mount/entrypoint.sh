@@ -16,9 +16,9 @@ else
         cd llama.cpp/build/bin/ || exit 1
 fi
 
-# Download the DeepSeek-R1-GGUF model from Hugging Face Hub and merge the GGUF files
+# Retrieve model from Hugging Face Hub and concatenate split GGUF files if necessary
 export MODEL_TAG=$(echo $MODEL | tr '/:' '_')
-if [ -f ${MODEL_TAG}.merged.gguf ]; then
+if [ -f ${MODEL_TAG}.gguf ]; then
     echo "GGUF file already exists"
 else
     python /workload/mount/download_model.py && bash /workload/mount/merge_bin.sh
@@ -26,7 +26,7 @@ fi
 
 # serve the model
 ./llama-server \
-    -m ${MODEL_TAG}.merged.gguf \
+    -m ${MODEL_TAG}.gguf \
     --host 0.0.0.0 \
     --port ${PORT:-8080} \
     --n-gpu-layers ${GPU_LAYERS:-62} \

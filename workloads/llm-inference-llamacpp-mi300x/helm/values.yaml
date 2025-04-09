@@ -21,7 +21,7 @@ env_vars:
   BUCKET_STORAGE_SECRET_KEY:
     name: minio-credentials
     key: minio-secret-key
-  BIN_PATH: default-bucket/build/llama.cpp/
+  BIN_PATH: default-bucket/build/llama.cpp
   NCPU: "16"
 
 storage:
