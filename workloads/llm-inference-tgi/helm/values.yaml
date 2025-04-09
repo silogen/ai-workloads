@@ -1,0 +1,46 @@
+metadata:
+  labels: {}
+
+image: "ghcr.io/huggingface/text-generation-inference:3.0.2-rocm"
+imagePullPolicy: Always
+
+model: "meta-llama/Meta-Llama-3-8B-Instruct"
+gpus: 1
+memory_per_gpu: 64  # Gi
+cpu_per_gpu: 4
+
+# tgi engine args (ref: https://huggingface.co/docs/text-generation-inference/reference/launcher)
+tgi_engine_args: {}
+  # model-id: "{{ .Values.model }}"  # taken care of by the template
+  # num-shard: {{ .Values.gpus }}  # taken care of by the template
+
+# env vars ()
+env_vars:
+  BUCKET_STORAGE_HOST: https://default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  HF_HOME: /workload/.cache/huggingface
+  PYTORCH_TUNABLEOP_ENABLED: "0"
+  # HF_TOKEN:
+  #   key: hf-token
+  #   name: hf-token
+
+storage:
+  ephemeral:
+    quantity: 100Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+deployment:
+  port: 8080
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
