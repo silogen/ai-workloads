@@ -25,6 +25,7 @@ mc cp --recursive {{$minioModel -}}/ {{$localModel -}}/
 echo '--------------------------------------------'
 echo 'Starting vLLM'
 echo '--------------------------------------------'
+pip install huggingface_hub[hf_xet]
 python3 -m vllm.entrypoints.openai.api_server \
 {{- range $key, $value := .Values.vllm_engine_args }}
 --{{ $key }}={{ tpl $value $ | quote }} \
