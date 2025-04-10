@@ -93,10 +93,6 @@
         "HF_HOME": {
           "type": "string",
           "description": "Home directory for Hugging Face"
-        },
-        "HF_TOKEN": {
-          "type": "string",
-          "description": "Token for Hugging Face"
         }
       },
       "required": ["BUCKET_STORAGE_HOST", "BUCKET_STORAGE_ACCESS_KEY", "BUCKET_STORAGE_SECRET_KEY", "HF_HOME"]
