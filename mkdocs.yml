@@ -81,6 +81,7 @@ nav:
       - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/README.md
       - k8s-namespace-setup: workloads/k8s-namespace-setup/helm/README.md
       # - llm-finetune-engine-agnostic: MISSING Helm version of workload
+      - llm-evaluation-metrics: workloads/llm-evaluation-metrics/helm/README.md
       - llm-finetune-silogen-engine:
         - Overview: workloads/llm-finetune-silogen-engine/helm/README.md
         - Finetuning Config: workloads/llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md
