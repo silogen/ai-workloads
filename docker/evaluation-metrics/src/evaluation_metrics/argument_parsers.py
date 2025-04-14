@@ -36,10 +36,20 @@ def get_inference_parser() -> ArgumentParser:
         "-c", "--context-column-name", type=str, help="Name of the column containing context data in the dataset."
     )
     parser.add_argument(
+        "-i", "--id-column-name", type=str, help="Name of the column containing document id in the dataset."
+    )
+    parser.add_argument(
         "-g",
         "--gold-standard-column-name",
         type=str,
         help="Name of the column containing gold standard data in the dataset.",
+    )
+    parser.add_argument(
+        "-z",
+        "--batch-size",
+        type=int,
+        default=50,
+        help="Size of batch of documents sent by the ASYNC client to the LLM service.",
     )
     parser.add_argument(
         "-s",

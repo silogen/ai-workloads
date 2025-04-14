@@ -76,10 +76,6 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              ls -lh /;
-              echo $(whoami);
-              id;
-              wget -qO- http://localhost:8080/v1/models ;
               echo "Running evaluation:\nDownloading Dataset, Running inference, Evaluating inferences with bertscore...";
               python3 run_inference_and_metrics_evaluation.py \
                     --llm-base-url="http://localhost" \
@@ -90,8 +86,10 @@ spec:
                     --output-dir-path="/home/evaluation/results" \
                     --model-name="{{ .Values.model_inference_container.model }}" \
                     --model-path="{{ .Values.model_inference_container.model_path }}" \
-                    --maximum-context-size=2048 \
+                    --maximum-context-size={{ .Values.model_inference_container.max_model_len }} \
+                    --batch-size="{{ .Values.evaluation_container.batch_size}}" \
                     --context-column-name="{{ .Values.evaluation_container.dataset_info.context_column_name}}" \
+                    --id-column-name="{{ .Values.evaluation_container.dataset_info.id_column_name}}" \
                     --gold-standard-column-name="{{ .Values.evaluation_container.dataset_info.gold_standard_column_name}}" ;
           env:
             - name: TRANSFORMERS_CACHE

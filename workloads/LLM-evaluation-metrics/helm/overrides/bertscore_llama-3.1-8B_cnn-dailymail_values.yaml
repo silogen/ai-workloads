@@ -3,4 +3,3 @@ model_inference_container:
   image: rocm/vllm-dev:20241205-tuned
 evaluation_container:
   image: ghcr.io/silogen/evaluation-workloads-metrics:v0.1
-  #image: ghcr.io/silogen/evaluation-workloads-metrics:v0.1

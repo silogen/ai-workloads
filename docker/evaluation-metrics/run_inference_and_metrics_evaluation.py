@@ -1,3 +1,4 @@
+import asyncio
 import os
 from argparse import Namespace
 from pprint import pprint
@@ -72,18 +73,22 @@ def main(args: Namespace):
     if args.use_data_subset > 0:
         logger.warning(f"Using a subset of the data: {args.use_data_subset} documents.")
 
-    inference_results = run_call_inference_container(
-        dataset=ds,
-        prompt_template=prompt_template,
-        context_column_name=args.context_column_name,
-        gold_standard_column_name=args.gold_standard_column_name,
-        llm_client=client,
-        model_name=args.model_name,
-        model_path=args.model_path,
-        parameters=parameters,
-        max_context_size=args.maximum_context_size,
-        use_data_subset=args.use_data_subset,
-        dataset_split=args.dataset_split,
+    inference_results = asyncio.run(
+        run_call_inference_container(
+            dataset=ds,
+            prompt_template=prompt_template,
+            context_column_name=args.context_column_name,
+            id_column_name=args.id_column_name,
+            gold_standard_column_name=args.gold_standard_column_name,
+            llm_client=client,
+            model_name=args.model_name,
+            model_path=args.model_path,
+            parameters=parameters,
+            max_context_size=args.maximum_context_size,
+            batch_size=args.batch_size,
+            use_data_subset=args.use_data_subset,
+            dataset_split=args.dataset_split,
+        )
     )
 
     inferences_filepath = save_inference_results(
