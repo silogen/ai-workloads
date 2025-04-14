@@ -6,7 +6,7 @@ The necessary Kubernetes and Helm files are stored here in `/workloads/llm-evalu
 
 ### Helm and Kubernetes files
 
-The Helm templates are stored in `/workloads/LLM-evaluation-metrics/helm/templates`, the main template workload template being `metrics_evaluation_template_with_download.yaml`. Default values can be found in `values.yaml`, with user-defined configurations stored in `/overrides`.
+The Helm templates are stored in `/workloads/llm-evaluation-metrics/helm/templates`, the main template workload template being `metrics_evaluation_template_with_download.yaml`. Default values can be found in `values.yaml`, with user-defined configurations stored in `/overrides`.
 
 A few extra resources are defined in `templates/`.
 We use a `ConfigMap` (`templates/configmap.yaml`) to mount files directly to the cluster when running the workload. Anything stored in the `mount/` directory will be mounted.
@@ -22,7 +22,7 @@ This package is installed into a docker image, which can be used to run the eval
 To run this evaluation workload with helm, use the template command and pipe it to kubectl apply:
 
 ```bash
-cd ai-workloads-dev/workloads/LLM-evaluation-metrics
+cd workloads/llm-evaluation-metrics
 ```
 
 ```bash
@@ -36,18 +36,18 @@ kubectl delete job evaluation-metrics -n <your-namespace>
 ```
 
 ## Making changes
-The templated kubernetes manifest, where you can make the main changes to the workload, is `ai-workloads-dev/workloads/llm-evaluation-metrics/helm/templates/metrics_evaluation_template_with_download.yaml`
+The templated kubernetes manifest, where you can make the main changes to the workload, is `workloads/llm-evaluation-metrics/helm/templates/metrics_evaluation_template_with_download.yaml`
 
 Parameters of the job are stored in
 
-```ai-workloads-dev/workloads/llm-evaluation-metrics/helm/values.yaml```
+```workloads/llm-evaluation-metrics/helm/values.yaml```
 
 And can be overridden by
 
-```ai-workloads-dev/workloads/llm-evaluation-metrics/helm/overrides/bertscore_llama-3.1-8B_cnn-dailymail_values.yaml```
+```workloads/llm-evaluation-metrics/helm/overrides/bertscore_llama-3.1-8B_cnn-dailymail_values.yaml```
 
 Finally, to change the docker image, refer to dockerfiles in the docker directory, e.g.
-`ai-workloads-dev/docker/evaluation/metrics/evaluation_by_metrics.Dockerfile`
+`docker/evaluation/metrics/evaluation_by_metrics.Dockerfile`
 
 This directory may also contain some scripts, like compute_bertscore.py, that will probably be built into the docker images.
 The docker images can be uploaded to our private GCS registry, here: https://console.cloud.google.com/artifacts/docker/silogen-dev/europe-west4/silogen-dev?inv=1&invt=AbqFEQ&project=silogen-dev
