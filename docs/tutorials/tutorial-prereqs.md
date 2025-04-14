@@ -37,8 +37,7 @@ kubectl create namespace "silo"
 helm template workloads/k8s-namespace-setup/helm \
   --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-local-queue.yaml \
   --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-storage-access-external-secret.yaml \
-  --namespace "silo" \
-  | kubectl apply -f - --namespace silo
+  | kubectl apply -n silo -f -
 ```
 
 - HuggingFace token: In addition to running the command above you also need to add your HF Token as a secret called `hf-token` with the key `hf-token` in your namespace.

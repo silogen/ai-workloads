@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: "{{ .Release.Name }}-job-{{ randAlphaNum 5 | lower }}"
-  namespace: "{{ .Release.Namespace }}"
   {{- if .Values.labels }}
   labels:
     {{- range $label, $value := .Values.labels }}
@@ -133,7 +132,7 @@ spec:
               {{ .Values.dataset.outputPrefix }} \
               {{ .Values.dataset.jsonKey }} \
               {{ .Values.tokenizer }}
-              
+
               # Exchange signals with upload container to wrap up the run
               touch /downloads/done_preprocessing;
               while [ ! -f /downloads/done_uploading ]; do

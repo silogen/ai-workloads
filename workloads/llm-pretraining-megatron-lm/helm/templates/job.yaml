@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "release.fullname" . }}
-  namespace: "{{ .Release.Namespace }}"
   {{- if .Values.metadata.labels }}
   labels:
     {{- range $key, $value := .Values.metadata.labels }}

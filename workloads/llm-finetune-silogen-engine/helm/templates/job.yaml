@@ -3,7 +3,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: "{{ .Release.Name }}-job"
-  namespace: "{{ .Release.Namespace }}"
   {{- if .Values.labels }}
   labels:
     {{- range $label, $value := .Values.labels }}
@@ -136,7 +135,6 @@ apiVersion: kaiwo.silogen.ai/v1alpha1
 kind: KaiwoJob
 metadata:
   name: "{{ .Release.Name }}-job"
-  namespace: "{{ .Release.Namespace }}"
 spec:
   job:
     {{- include "job" . | nindent 4 }}

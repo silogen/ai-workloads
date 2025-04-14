@@ -49,8 +49,7 @@ kubectl create namespace "silo"
 helm template workloads/k8s-namespace-setup/helm \
   --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-local-queue.yaml \
   --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-storage-access-external-secret.yaml \
-  --namespace "silo" \
-  | kubectl apply -f - --namespace silo
+  | kubectl apply -n silo -f -
 ```
 
 ### Monitoring progress, logs, and GPU utilization with k9s
@@ -84,13 +83,11 @@ Our user input files are in `workloads/download-huggingface-model-to-bucket/helm
 helm template workloads/download-huggingface-model-to-bucket/helm \
   --values workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-01-tiny-llama-to-minio.yaml \
   --name-template "deliver-tiny-llama-model" \
-  --namespace "silo" \
-  | kubectl apply -f -
+  | kubectl apply -n silo -f -
 helm template workloads/download-data-to-bucket/helm \
   --values workloads/download-data-to-bucket/helm/overrides/tutorial-01-argilla-to-minio.yaml \
   --name-template "deliver-argilla-data" \
-  --namespace "silo" \
-  | kubectl apply -f -
+  | kubectl apply -n silo -f -
 ```
 
 The [logs](#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload for the model delivery workload, and data download, preprocessing, and upload for the data delivery.
@@ -112,10 +109,9 @@ for r in 4 6 8 10 12 16 20 24 32 64; do
   helm template workloads/llm-finetune-silogen-engine/helm \
     --values workloads/llm-finetune-silogen-engine/helm/overrides/tutorial-01-finetune-lora.yaml \
     --name-template $name \
-    --namespace "silo" \
     --set finetuning_config.peft_conf.peft_kwargs.r=$r \
     --set "checkpointsRemote=default-bucket/experiments/$name" \
-    | kubectl apply -f -
+    | kubectl apply -n silo -f -
 done
 ```
 
@@ -133,10 +129,9 @@ name="tiny-llama-argilla-v1"
 helm template workloads/llm-finetune-silogen-engine/helm \
   --values workloads/llm-finetune-silogen-engine/helm/overrides/tutorial-01-finetune-full-param.yaml \
   --name-template $name \
-  --namespace "silo" \
   --set "checkpointsRemote=default-bucket/experiments/$name" \
   --set "finetuningGpus=8" \
-  | kubectl apply -f -
+  | kubectl apply -n silo -f -
 ```
 
 We can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions above](#monitoring-progress-logs-and-gpu-utilization-with-k9s).
@@ -150,10 +145,9 @@ name="tiny-llama-argilla-v1-singlegpu"
 helm template workloads/llm-finetune-silogen-engine/helm \
   --values workloads/llm-finetune-silogen-engine/helm/overrides/tutorial-01-finetune-full-param.yaml \
   --name-template $name \
-  --namespace "silo" \
   --set "checkpointsRemote=default-bucket/experiments/$name" \
   --set "finetuningGpus=1" \
-  | kubectl apply -f -
+  | kubectl apply -n silo -f -
 ```
 
 The training steps for this single-GPU run take around 340 seconds.
@@ -172,7 +166,7 @@ helm template workloads/llm-inference-vllm/helm \
   --set "model=s3://default-bucket/experiments/$name/checkpoint-final" \
   --set "vllm_engine_args.served_model_name=$name" \
   --name-template "$name" \
-  | kubectl apply --namespace "silo" -f -
+  | kubectl apply -n silo -f -
 ```
 
 We can change the `name` to different experiment names to deploy other models. Note that discussing with the LoRA adapter models with these workloads requires us to merge the final adapter. This can be achieved during finetuning by adding `--set mergeAdapter=true` and additionally in the deploy command, we have to refer to the merged model, changing the path to `--set "model=s3://default-bucket/experiments/$name/checkpoint-final-merged"` .

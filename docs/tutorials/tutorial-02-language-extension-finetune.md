@@ -51,8 +51,7 @@ kubectl create namespace "silo"
 helm template workloads/k8s-namespace-setup/helm \
   --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-local-queue.yaml \
   --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-storage-access-external-secret.yaml \
-  --namespace "silo" \
-  | kubectl apply -f - --namespace silo
+  | kubectl apply -n silo -f -
 ```
 
 ⚠️TODO: Guidance on adding the HF Token⚠️
@@ -89,13 +88,11 @@ We will use the helm charts in `workloads/download-huggingface-model-to-bucket/h
 helm template workloads/download-huggingface-model-to-bucket/helm \
   --values workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-02-qwen-odia.yaml \
   --name-template "download-odia-qwen-odia" \
-  --namespace "silo" \
-  | kubectl apply -f -
+  | kubectl apply -n silo -f -
 helm template workloads/download-data-to-bucket/helm \
   --values workloads/download-data-to-bucket/helm/overrides/tutorial-02-odia-data.yaml \
   --name-template "download-odia-data" \
-  --namespace "silo" \
-  | kubectl apply -f -
+  | kubectl apply -n silo -f -
 ```
 
 The [logs](#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload, then data download, preprocessing, and upload.
@@ -111,10 +108,9 @@ name="qwen-odia-instruct-v1"
 helm template workloads/llm-finetune-silogen-engine/helm \
   --values workloads/llm-finetune-silogen-engine/helm/overrides/tutorial-02-qwen-odia-instruct-v1.yaml \
   --name-template $name \
-  --namespace "silo" \
   --set "checkpointsRemote=default-bucket/experiments/$name" \
   --set "finetuningGpus=8" \
-  | kubectl apply -f -
+  | kubectl apply -n silo -f -
 ```
 can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions above](#monitoring-progress-logs-and-gpu-utilization-with-k9s).
 
@@ -130,31 +126,31 @@ helm template workloads/llm-inference-vllm/helm \
   --set "model=Qwen/Qwen1.5-7B-Chat" \
   --set "vllm_engine_args.served_model_name=$name" \
   --name-template "$name" \
-  | kubectl create --namespace "silo" -f -
+  | kubectl create -n silo -f -
 name="qwen-odia-base"
 helm template workloads/llm-inference-vllm/helm \
   --set "model=s3://default-bucket/models/OdiaGenAI/LLM_qwen_1.5_odia_7b" \
   --set "vllm_engine_args.served_model_name=$name" \
   --name-template "$name" \
-  | kubectl create --namespace "silo" -f -
+  | kubectl create -n silo -f -
 name="qwen-odia-instruct-v1"
 helm template workloads/llm-inference-vllm/helm \
   --set "model=s3://default-bucket/experiments/$name/checkpoint-final" \
   --set "vllm_engine_args.served_model_name=$name" \
   --name-template "$name" \
-  | kubectl create --namespace "silo" -f -
+  | kubectl create -n silo -f -
 ```
 
 To discuss with the models, we need to setup connections to them. Since these are not public-internet deployments, we'll do this simply by starting background port-forwarding processes:
 ```bash
 name="qwen-base-chat"
-kubectl port-forward services/llm-inference-vllm-$name 8080:80 --namespace silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8080:80 -n silo >/dev/null &
 qwenchatPID=$!
 name="qwen-odia-base"
-kubectl port-forward services/llm-inference-vllm-$name 8090:80 --namespace silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8090:80 -n silo >/dev/null &
 odiabasePID=$!
 name="qwen-odia-instruct-v1"
-kubectl port-forward services/llm-inference-vllm-$name 8100:80 --namespace silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8100:80 -n silo >/dev/null &
 odiainstructPID=$!
 ```
 
@@ -220,6 +216,6 @@ kill $qwenchatPID $odiabasePID $odiainstructPID
 and we can shut down the inference deployments with:
 ```bash
 for name in qwen-base-chat qwen-odia-base qwen-odia-instruct-v1; do
-  kubectl delete deployment --namespace silo llm-inference-vllm-$name
+  kubectl delete deployment -n silo llm-inference-vllm-$name
 done
 ```

@@ -28,10 +28,10 @@ Deploying AI/ML workloads (inference, training, batch processing) on Kubernetes 
 
 Helm addresses these challenges by:
 
-1. Standardizing Deployments: 
+1. Standardizing Deployments:
    - AI components (model servers, preprocessing, monitoring) are defined in a Helm chart (deployment.yaml, service.yaml, etc.).
 
-2. Managing Configurations: 
+2. Managing Configurations:
    - values.yaml centralizes tunable parameters (e.g., replicaCount, modelPath, GPU limits). Overrides allow specifying specific models, datasets or environment-specific setups (e.g., dev vs. prod):
 
 3. Supporting AI-Specific Needs
@@ -108,15 +108,15 @@ Helm merges overrides in this order (last takes precedence):
 ### Verifying the Deployment
 
 Check pods
-```bash 
+```bash
 kubectl get pods -n <namespace>
 ```
 Check services
-```bash 
+```bash
 kubectl get svc -n <namespace>
 ```
 View logs (for a specific pod)
-```bash 
+```bash
 kubectl logs -f <pod-name> -n <namespace>
 ```
 
@@ -126,10 +126,10 @@ We're interested to see a progress bar of the finetuning training, seeing any me
 are consuming our compute relatively effectively. This information can be fetched from our Kubernetes cluster in many ways, but one convenient and recommended way us using [k9s](https://k9scli.io/).
 We recommend the official documentation for more thorough guidance, but this section shows some basic commands to get what we want here.
 
-To get right to the Jobs view in the namespace we're using in this walk-through, we can run:
+To get right to the Jobs view in the namespace `<namespace>`, we can run:
 
 ```bash
-k9s --namespace silo --command Jobs
+k9s --namespace <namespace> --command Jobs
 ```
 
 Choose a Job using `arrow keys` and `Enter` to see the Pod that it spawned, then `Enter` again to see the Container in the Pod. From here, we can do three things:
