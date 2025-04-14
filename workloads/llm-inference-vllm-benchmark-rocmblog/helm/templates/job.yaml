@@ -9,8 +9,8 @@ metadata:
     {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:
+  ttlSecondsAfterFinished: 3600
   backoffLimit: 0
-  ttlSecondsAfterFinished: 600
   template:
     metadata:
       labels:

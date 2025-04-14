@@ -4,13 +4,13 @@ kind: Job
 metadata:
   name: {{ include "release.fullname" . }}
   labels:
-    app: {{ include "release.name" . }}
+    app: {{ include "release.fullname" . }}
     {{- range $key, $value := .Values.metadata.labels }}
     {{ $key }}: {{ $value | quote}}
     {{- end }}
 spec:
-  backoffLimit: 0
   ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
   template:
     metadata:
       labels:
@@ -26,7 +26,7 @@ spec:
           {{- if .Values.entrypoint }}
           command: ["sh", "-c"]
           args:
-          - | 
+          - |
             {{- .Values.entrypoint | nindent 12 }}
           {{- end }}
           resources:
@@ -34,7 +34,7 @@ spec:
           volumeMounts:
             {{- include "container.volumeMounts" . | nindent 12 }}
       volumes:
-        {{- include "container.volumes" . | nindent 8 }}            
+        {{- include "container.volumes" . | nindent 8 }}
 {{- end -}}
 
 {{- define "job_wrapped_with_kaiwojob" -}}

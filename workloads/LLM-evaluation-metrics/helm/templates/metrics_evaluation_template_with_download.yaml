@@ -3,6 +3,8 @@ kind: Job
 metadata:
   name: "{{ .Values.general.job_name }}"
 spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
   template:
     metadata:
       labels:
@@ -152,5 +154,3 @@ spec:
         - configMap:
             name: configmap-mount
           name: configmap-mount
-  backoffLimit: 0
-  ttlSecondsAfterFinished: 600
