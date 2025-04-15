@@ -1,6 +1,0 @@
-baseModel: silogen-dev-data/models/meta-llama-31-8b
-dataDownloads:
-  - bucketPath: silogen-dev-data/finetuning/datasets/messages_format_data_v2/argilla-10k-mistral-large-human-prompts-elainesplit.train.jsonl
-    localName: training_data.json
-checkpointsBucketPath: silogen-dev-data/finetuning/experiments/meta-llama-31-8b-argilla-sft-alpha
-method: sft
