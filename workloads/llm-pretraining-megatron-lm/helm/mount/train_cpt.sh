@@ -4,10 +4,10 @@
 # ROCm/Megatron-LM repository for training a Llama-3 model
 # https://github.com/ROCm/Megatron-LM/blob/rocm_dev/examples/llama/train_llama3.sh.
 #
-# Present adaptation is designed to accept arbitrary Megatron-LM arguments 
+# Present adaptation is designed to accept arbitrary Megatron-LM arguments
 # found in https://github.com/ROCm/Megatron-LM/blob/rocm_dev/megatron/training/arguments.py.
-# It assumes Continuous Pretraining (CPT) use case, i.e., model architecture parameters 
-# are derived from the provided initial checkpoint. 
+# It assumes Continuous Pretraining (CPT) use case, i.e., model architecture parameters
+# are derived from the provided initial checkpoint.
 #################################################################################
 
 # Source the environment variables from the separate script
@@ -39,7 +39,7 @@ MBS="${MBS:-2}"
 BS="${BS:-8}"
 SEQ_LENGTH="${SEQ_LENGTH:-2048}"
 TOTAL_ITERS="${TOTAL_ITERS:-20}"
-SEQ_PARALLEL="${SEQ_PARALLEL:-1}" 
+SEQ_PARALLEL="${SEQ_PARALLEL:-1}"
 CONTI_PARAMS="${CONTI_PARAMS:-0}"
 OPTIMIZER="${OPTIMIZER:-sgd}"
 FSDP="${FSDP:-0}"
@@ -241,13 +241,13 @@ run_cmd="
         $@
 "
 
-if [ "$TEE_OUTPUT" -eq 0 ]; then 
+if [ "$TEE_OUTPUT" -eq 0 ]; then
     run_cmd="$run_cmd >& $TRAIN_LOG"
 else
     run_cmd="$run_cmd |& tee $TRAIN_LOG"
 fi
 
-if [ "$NO_TRAINING" -eq 0 ]; then 
+if [ "$NO_TRAINING" -eq 0 ]; then
     eval $run_cmd
 fi
 

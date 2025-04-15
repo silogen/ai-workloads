@@ -2,8 +2,8 @@
 
 export TMPDIR=/workload
 export PATH=$PATH:/usr/local/go/bin
-export hip_DIR="$(hipconfig -R)" 
-export OLLAMA_HOST="0.0.0.0:8080" 
+export hip_DIR="$(hipconfig -R)"
+export OLLAMA_HOST="0.0.0.0:8080"
 
 #----------------------------------- prep
 cd /workload
@@ -20,7 +20,7 @@ cmake --build build -j ${NCPU:-4}
 
 
 #----------------------------------- run
-mkdir -p /workload/.ollama 
+mkdir -p /workload/.ollama
 ln -s /workload/.ollama /root/.ollama
 
 go run . serve &

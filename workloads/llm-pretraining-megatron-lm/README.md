@@ -6,15 +6,15 @@ To generate manifests and print them in standard output using the default `value
 ```bash
 helm template ./ --name-template 8b
 ```
-This will generate a kubernetes manifest with a job and a configmap both named `llm-pretraining-megatron-lm-job-8b` in the user's active namespace. 
+This will generate a kubernetes manifest with a job and a configmap both named `llm-pretraining-megatron-lm-job-8b` in the user's active namespace.
 
 To override the default values, a specific file can be passed using `-f` flag, for example:
-```bash 
+```bash
 helm template ./ --name-template 70b -f overrides/values-llama-70b-cpt.yaml
 ```
 
 Multiple overriding yaml files can be used e.g.:
-```bash 
+```bash
 helm template ./ --name-template 70b \
     -f overrides/values-llama-70b-cpt.yaml \
     -f overrides/labels/kaiwo-managed-true.yaml

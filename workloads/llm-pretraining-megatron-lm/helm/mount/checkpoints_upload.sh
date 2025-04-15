@@ -26,7 +26,7 @@ while [ ! -f /local_resources/done_training ]; do
 
     echo "Moving older than 1 min files to remote storage:"
     echo "$older_than_1" | sed 's/\/local_resources\/checkpoints\///' | xargs -r -I {} mc mv /local_resources/checkpoints/{} "minio-host/$remote_checkpoints_path/{}"
-    
+
     if [ -f "/local_resources/checkpoints/latest_checkpointed_iteration_pinned.txt" ]; then
         mc mv /local_resources/checkpoints/latest_checkpointed_iteration_pinned.txt "minio-host/$remote_checkpoints_path/latest_checkpointed_iteration.txt"
     fi
@@ -34,7 +34,7 @@ while [ ! -f /local_resources/done_training ]; do
     echo -e "Waiting for training to finish...\n";
     sleep 60
 done
-              
+
 echo "Training done, syncing remaining checkpoint artifacts to remote storage...";
 mc mirror --overwrite \
     --exclude latest_checkpointed_iteration.txt \

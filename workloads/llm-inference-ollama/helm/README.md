@@ -35,7 +35,7 @@ To access the service locally, forward the port using the following commands. Th
 The service exposes HTTP on port **80**, while the deployment uses port **8080** (instead of the default 11434).
 
 ```bash
-kubectl port-forward services/llm-inference-ollama 8080:80 
+kubectl port-forward services/llm-inference-ollama 8080:80
 # kubectl port-forward deployments/llm-inference-ollama 8080:8080
 ```
 

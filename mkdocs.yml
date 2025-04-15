@@ -91,7 +91,7 @@ nav:
       - llm-inference-vllm-benchmark-mad: workloads/llm-inference-vllm-benchmark-mad/helm/README.md
       - llm-inference-vllm-benchmark-rocmblog: workloads/llm-inference-vllm-benchmark-rocmblog/helm/README.md
       - llm-inference-openai-benchmark-rocmblog: workloads/llm-inference-openai-benchmark-rocmblog/helm/README.md
-      - llm-inference-openai-benchmark-guidellm: workloads/llm-inference-openai-benchmark-guidellm/helm/README.md      
+      - llm-inference-openai-benchmark-guidellm: workloads/llm-inference-openai-benchmark-guidellm/helm/README.md
   - Contributing: docs/contributing.md
 
 #extra_css:

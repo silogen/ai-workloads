@@ -44,7 +44,7 @@ for req_in_out in "${Req_In_Out[@]}"; do
             --request-rate \"$qps\""
         echo "[CMD] $cmd"
         eval "$cmd"
-        echo -e "<=============================================\n\n"    
+        echo -e "<=============================================\n\n"
     done
 done
 
