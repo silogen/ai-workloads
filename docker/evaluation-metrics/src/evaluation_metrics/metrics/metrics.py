@@ -10,19 +10,18 @@ def compute_bertscore(
 ) -> Tuple[float, float, float, List[float]]:
     """
     Computes the BERTScore for a set of predictions and references.
-    BERTScore is a metric that uses BERT embeddings to evaluate the similarity
-    between predicted and reference text. It calculates precision, recall, and F1
-    scores based on token embeddings.
+
     Args:
         predictions (List[str]): A list of predicted text strings.
         references (List[str]): A list of reference text strings.
         language (str, optional): The language of the text. Defaults to "en".
+
     Returns:
         Tuple[float, float, float, List[float]]: A tuple containing:
-            - precision_bert (float): The average precision score, rounded to 4 decimal places.
-            - recall_bert (float): The average recall score, rounded to 4 decimal places.
-            - f1_bert (float): The average F1 score, rounded to 4 decimal places.
-            - f1_list (List[float]): A list of F1 scores for each prediction-reference pair, rounded to 4 decimal places.
+            - precision_bert (float): The average precision score.
+            - recall_bert (float): The average recall score.
+            - f1_bert (float): The average F1 score.
+            - f1_list (List[float]): A list of F1 scores for each prediction-reference pair.
     """
     bertscore = load("bertscore")
     results = bertscore.compute(
@@ -47,11 +46,13 @@ def compute_exact_match(
 ) -> float:
     """
     Computes the exact match accuracy between predictions and references.
+
     Args:
         predictions (List[str]): A list of predicted strings.
         references (List[str]): A list of reference strings to compare against.
         ignore_case (bool, optional): Whether to ignore case when comparing strings. Defaults to True.
         ignore_punctuation (bool, optional): Whether to ignore punctuation when comparing strings. Defaults to True.
+
     Returns:
         float: The exact match accuracy as a percentage (0.0 to 100.0).
     """
@@ -68,9 +69,11 @@ def compute_bleu_score(predictions: List[str], references: List[str]) -> float:
     """
     Computes the BLEU (Bilingual Evaluation Understudy) score for a set of predictions
     against a set of reference translations.
+
     Args:
         predictions (List[str]): A list of predicted translations.
         references (List[str]): A list of reference translations corresponding to the predictions.
+
     Returns:
         float: The computed BLEU score, a value between 0 and 1, where higher values indicate
                closer matches between predictions and references.

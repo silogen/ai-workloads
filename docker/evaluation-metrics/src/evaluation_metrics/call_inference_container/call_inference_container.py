@@ -17,9 +17,11 @@ from transformers import AutoTokenizer
 def download_dataset(dataset: str, version: str) -> Dict:
     """
     Downloads a specified dataset and version.
+
     Args:
         dataset (str): The name of the dataset to download.
         version (str): The version of the dataset to download.
+
     Returns:
         Dict: A dictionary containing the downloaded dataset.
     """
@@ -31,10 +33,12 @@ def download_dataset(dataset: str, version: str) -> Dict:
 def get_llm_client(base_url: str, port: str | None, endpoint: str | None) -> AsyncClient:
     """
     Creates and returns a client for interacting with a language model (LLM) service.
+
     Args:
         base_url (str): The base URL of the LLM service.
         port (str | None): The port number to connect to the LLM service. If None, no port is appended.
         endpoint (str | None): The endpoint path for the LLM service. If None, no endpoint is appended.
+
     Returns:
         AsyncClient: An instance of the AsyncClient class configured to interact with the specified LLM service.
     """
@@ -47,9 +51,11 @@ def get_llm_client(base_url: str, port: str | None, endpoint: str | None) -> Asy
 def handle_llm_inference_result(doc_id: str, result: ChatCompletion) -> str:
     """
     Processes the result of an LLM (Large Language Model) inference and extracts the relevant content.
+
     Args:
-        id (str): The identifier for the document or request being processed.
+        doc_id (str): The identifier for the document or request being processed.
         result (ChatCompletion): The result object from the LLM inference, containing choices and messages.
+
     Returns:
         str: The extracted content from the LLM inference result.
     """
@@ -68,16 +74,16 @@ def save_inference_results(
 ) -> str:
     """
     Saves inference results to a JSONL file in the specified output directory.
+
     Args:
         results (list): A list of inference results to be saved.
         output_dir_path (str): The directory path where the inference results file will be saved.
         model_name (str): The name of the model used for inference.
         evaluation_dataset (str): The name of the evaluation dataset used.
         evaluation_dataset_version (str): The version of the evaluation dataset used.
+
     Returns:
         str: The file path of the saved inference results.
-    Raises:
-        OSError: If the output directory cannot be created or the file cannot be written.
     """
 
     if not os.path.exists(output_dir_path):
@@ -100,13 +106,12 @@ def save_inference_results(
 def read_prompt_template(prompt_template_path: str) -> str:
     """
     Reads a prompt template from a file.
+
     Args:
         prompt_template_path (str): The file path to the prompt template.
+
     Returns:
         str: The content of the prompt template as a string.
-    Raises:
-        FileNotFoundError: If the specified file does not exist.
-        IOError: If there is an error reading the file.
     """
     with open(prompt_template_path, "r") as p_file:
         prompt_template = p_file.read()
@@ -116,11 +121,13 @@ def read_prompt_template(prompt_template_path: str) -> str:
 def batched(iterable: Iterable, n: int, strict=False):
     """
     Splits an iterable into batches of a specified size.
+
     Args:
         iterable (Iterable): The input iterable to be split into batches.
         n (int): The size of each batch. Must be at least 1.
         strict (bool, optional): If True, raises a ValueError if the last batch
             is incomplete (i.e., its size is less than `n`). Defaults to False.
+
     Yields:
         Tuple: Batches of size `n` from the input iterable. If `strict` is False,
         the last batch may be smaller than `n` if there are not enough elements.
@@ -148,12 +155,14 @@ async def get_inference_result(
 ) -> Tuple[str, ChatCompletion]:
     """
     Sends a message to an LLM client to get an inference result and handles potential API errors.
+
     Args:
         llm_client (AsyncClient): The asynchronous client used to communicate with the LLM service.
         message (str): The input message to be sent to the LLM.
         model_name (str): The name of the model to be used for inference.
         parameters (Dict[str, Any]): Additional parameters to configure the LLM request.
         doc_id (str): A unique identifier for the document for this inference request.
+
     Returns:
         Tuple[str, ChatCompletion]: A tuple containing the document ID and the response from the LLM.
     """
@@ -198,22 +207,27 @@ async def run(
 ) -> List[Dict[str, Any]]:
     """
     Executes inference on a dataset using a specified language model and returns the results.
+
     Args:
         dataset (Dict): The dataset containing the input data for inference.
         prompt_template (str): The template used to format the prompt for the language model.
         context_column_name (str): The column name in the dataset containing the context documents.
+        id_column_name (str): The column name in the dataset containing the document identifiers.
         gold_standard_column_name (str): The column name in the dataset containing the gold standard answers.
-        llm_client (Client): The client used to interact with the language model.
+        llm_client (AsyncClient): The async client used to interact with the language model.
         model_name (str): The name of the language model to use for inference.
+        model_path (str): The path to the model tokenizer for token counting.
         parameters (Dict[str, Any]): Additional parameters to configure the language model.
         max_context_size (int): The maximum number of tokens allowed in the context document.
         batch_size (int): The size of the batches for async LLM inference.
-        use_data_subset (bool): Whether to use only a subset of the dataset for testing purposes.
+        use_data_subset (int): Number of documents to use for evaluation. If > 0, limits to this many documents.
         dataset_split (str): The split of the dataset to use (e.g., "train", "test", "validation").
+
     Returns:
         List[Dict[str, Any]]: A list of dictionaries containing the inference results, gold standard answers,
-        input documents, and prompts.
+                              document IDs, input documents, and prompts.
     """
+
     results = list()
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -286,6 +300,30 @@ async def run(
 
 
 def main(args: Namespace) -> str:
+    """
+    Main function to execute the inference pipeline.
+
+    Args:
+        args (Namespace): A namespace object containing the following attributes:
+            - evaluation_dataset (str): The name of the evaluation dataset.
+            - evaluation_dataset_version (str): The version of the evaluation dataset.
+            - prompt_template_path (str): Path to the prompt template file.
+            - llm_base_url (str): Base URL of the LLM service.
+            - llm_port (int): Port number of the LLM service.
+            - llm_endpoint (str): Endpoint of the LLM service.
+            - context_column_name (str): Name of the column containing context data in the dataset.
+            - gold_standard_column_name (str): Name of the column containing gold standard data in the dataset.
+            - model_name (str): Name of the model to be used for inference.
+            - model_path (str): Path to the model.
+            - maximum_context_size (int): Maximum size of the context for inference.
+            - batch_size (int): Batch size for inference.
+            - use_data_subset (int): Number of documents to use for evaluation. If > 0, limits to this many documents.
+            - dataset_split (str): The dataset split to use (e.g., "train", "test").
+            - output_dir_path (str): Directory path to save output files.
+
+    Returns:
+        str: The file path of the saved inference results.
+    """
 
     logger.info(f"Loading dataset {args.evaluation_dataset} version {args.evaluation_dataset_version}")
 
@@ -306,6 +344,7 @@ def main(args: Namespace) -> str:
             dataset=ds,
             prompt_template=prompt_template,
             context_column_name=args.context_column_name,
+            id_column_name=args.id_column_name,
             gold_standard_column_name=args.gold_standard_column_name,
             llm_client=client,
             model_name=args.model_name,

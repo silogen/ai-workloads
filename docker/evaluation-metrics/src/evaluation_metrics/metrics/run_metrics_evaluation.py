@@ -11,13 +11,18 @@ from evaluation_metrics.metrics.utils import save_results
 
 
 def compute_scores(predictions: List[str], references: List[str]) -> EvaluationScores:
-    """Computes BERTScore, BLEU score and Exact Match for the given predictions and references.
-    Args:
-        predictions: A list of predicted strings.
-        references: A list of reference strings.
-    Returns:
-        An EvaluationScores object containing the computed scores.
     """
+    Computes evaluation metrics (BERTScore, BLEU score, and Exact Match) for the given predictions and references.
+
+    Args:
+        predictions (List[str]): A list of predicted strings.
+        references (List[str]): A list of reference strings.
+
+    Returns:
+        EvaluationScores: An object containing the computed scores for precision, recall, F1 (BERTScore),
+                          BLEU score, and Exact Match accuracy.
+    """
+
     precision_bert, recall_bert, f1_bert, f1_list = compute_bertscore(predictions=predictions, references=references)
     bleu_score = compute_bleu_score(predictions=predictions, references=references)
     accuracy = compute_exact_match(predictions=predictions, references=references)
@@ -35,10 +40,13 @@ def compute_scores(predictions: List[str], references: List[str]) -> EvaluationS
 def read_jsonl_data(input_file_path: str) -> List[Dict[str, Any]]:
     """
     Reads a JSONL (JSON Lines) file and returns its contents as a list of dictionaries.
+
     Args:
         input_file_path (str): The file path to the JSONL file.
+
     Returns:
         List[Dict[str, Any]]: A list of dictionaries, where each dictionary represents a line in the JSONL file.
+
     Raises:
         jsonlines.InvalidLineError: If a line in the file is invalid and cannot be parsed as a dictionary.
     """
@@ -51,7 +59,8 @@ def read_jsonl_data(input_file_path: str) -> List[Dict[str, Any]]:
 
 
 def run(generations: List[Dict[str, Any]]) -> EvaluationResults:
-    """Evaluates the performance of a model by comparing its predictions to the gold standard results.
+    """
+    Evaluates the performance of a model by comparing its predictions to the gold standard results.
 
     Args:
         generations (List[Dict[str, Any]]): A list of dictionaries where each dictionary represents a data point.
@@ -82,6 +91,20 @@ def run(generations: List[Dict[str, Any]]) -> EvaluationResults:
 
 
 def main(args: Namespace):
+    """
+    Main function to execute the metrics evaluation pipeline.
+
+    Args:
+        args (Namespace): A namespace object containing the following attributes:
+            - input_file_path (str): Path to the JSONL file containing the model's generations.
+            - output_dir_path (str): Directory path to save the evaluation results.
+
+    Workflow:
+        1. Reads the input JSONL file containing generations.
+        2. Computes evaluation metrics for the generations.
+        3. Saves the evaluation results to the specified output directory.
+    """
+
     generations = read_jsonl_data(input_file_path=args.input_file_path)
 
     logger.info("Running metrics evaluation...")

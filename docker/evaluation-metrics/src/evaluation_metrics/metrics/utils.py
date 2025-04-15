@@ -78,7 +78,7 @@ def save_results(results: EvaluationResults, results_filepath: str):
 
     logger.info("Writing evaluation results locally to %s", results_filepath)
     with open(results_filepath, "w") as outfile:
-        outfile.write(json.dumps(results.to_dict()))
+        outfile.write(json.dumps(results.to_dict()))  # type: ignore
     logger.info("Results written locally")
 
     logger.info("Copying results file to MinIO...")

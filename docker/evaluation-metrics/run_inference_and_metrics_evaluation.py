@@ -22,6 +22,7 @@ from evaluation_metrics.metrics.utils import save_results
 def main(args: Namespace):
     """
     Main function to execute the inference and metrics evaluation pipeline.
+
     Args:
         args (Namespace): A namespace object containing the following attributes:
             - evaluation_dataset (str): The name of the evaluation dataset.
@@ -35,18 +36,20 @@ def main(args: Namespace):
             - model_name (str): Name of the model to be used for inference.
             - model_path (str): Path to the model.
             - maximum_context_size (int): Maximum size of the context for inference.
-            - use_data_subset (bool): Whether to use a subset of the dataset for evaluation.
+            - batch_size (int): Batch size for inference.
+            - use_data_subset (int): Number of documents to use for evaluation. If > 0, limits to this many documents.
             - dataset_split (str): The dataset split to use (e.g., "train", "test").
             - output_dir_path (str): Directory path to save output files.
+
     Workflow:
-        1. Prints environment variables for debugging.
-        2. Downloads the specified dataset.
-        3. Reads the prompt template from the provided file path.
-        4. Initializes the LLM client with the specified configuration.
-        5. Runs inference using the dataset and prompt template.
-        6. Saves the inference results to a file.
-        7. Loads the generated inferences and evaluates metrics.
-        8. Saves the evaluation results to a file and copies the file to MinIO.
+        1. Downloads the specified dataset.
+        2. Reads the prompt template from the provided file path.
+        3. Initializes the LLM client with the specified configuration.
+        4. Runs inference using the dataset and prompt template.
+        5. Saves the inference results to a file.
+        6. Loads the generated inferences and evaluates metrics.
+        7. Saves the evaluation results to a file.
+
     Outputs:
         - Inference results are saved to a file in the specified output directory.
         - Evaluation results are saved to a file in the specified output directory and to MinIO.
