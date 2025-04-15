@@ -77,6 +77,7 @@ nav:
       - dev-chatui-openwebui: workloads/dev-chatui-openwebui/helm/README.md
       - dev-openvscode-server: workloads/dev-openvscode-server/helm/README.md
       - dev-text2image-comfyui: workloads/dev-text2image-comfyui/helm/README.md
+      - dev-workspace-jupyterlab: workloads/dev-workspace-jupyterlab/helm/README.md
       - download-data-to-bucket: workloads/download-data-to-bucket/helm/README.md
       - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/README.md
       - k8s-namespace-setup: workloads/k8s-namespace-setup/helm/README.md
