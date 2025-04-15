@@ -1,0 +1,7 @@
+bert_score==0.3.13
+dataclasses-json==0.6.7
+evaluate==0.4.3
+jsonlines==4.0.0
+minio==7.2.15
+openai==1.64.0
+sentencepiece==0.2.0

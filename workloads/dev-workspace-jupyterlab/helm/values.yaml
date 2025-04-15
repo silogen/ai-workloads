@@ -1,0 +1,43 @@
+metadata:
+  labels: {}
+
+image: "python:3.12"
+imagePullPolicy: Always
+gpus: 0
+memory_per_gpu: 64 # Gi
+cpu_per_gpu: 4
+
+env_vars:
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  PIPX_HOME: /workload/.pipx
+  PIPX_BIN_DIR: /workload/bin
+
+storage:
+  ephemeral:
+    quantity: 128Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 16Gi
+
+deployment:
+  port: 8888
+
+entrypoint: |
+  export PATH=$PATH:$PIPX_BIN_DIR
+  cd /workload
+  pip install pipx ipykernel
+  pipx install --include-deps jupyter
+  python -m ipykernel install --user --name=default-python3
+  jupyter-lab --LabApp.token='' --LabApp.ip='0.0.0.0' --LabApp.allow_root=True --no-browser
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
