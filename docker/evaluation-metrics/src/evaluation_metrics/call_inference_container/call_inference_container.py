@@ -69,30 +69,21 @@ def handle_llm_inference_result(doc_id: str, result: ChatCompletion) -> str:
     return inference_result
 
 
-def save_inference_results(
-    results: list, output_dir_path: str, model_name: str, evaluation_dataset: str, evaluation_dataset_version: str
-) -> str:
+def save_inference_results(results: list, output_dir_path: str) -> str:
     """
     Saves inference results to a JSONL file in the specified output directory.
 
     Args:
         results (list): A list of inference results to be saved.
         output_dir_path (str): The directory path where the inference results file will be saved.
-        model_name (str): The name of the model used for inference.
-        evaluation_dataset (str): The name of the evaluation dataset used.
-        evaluation_dataset_version (str): The version of the evaluation dataset used.
 
     Returns:
         str: The file path of the saved inference results.
     """
 
-    if not os.path.exists(output_dir_path):
-        logger.info(f"Creating path {output_dir_path}")
-        os.makedirs(output_dir_path)
-
     inferences_filepath = os.path.join(
         output_dir_path,
-        f"inferences_{model_name}--{evaluation_dataset.replace('/', '_')}--{evaluation_dataset_version}--{datetime.now().isoformat()}.jsonl",
+        "inference_results.jsonl",
     )
 
     logger.info(f"Writing inferences to {inferences_filepath}")
@@ -357,12 +348,14 @@ def main(args: Namespace) -> str:
         )
     )
 
+    results_dir_path = os.path.join(
+        args.output_dir_path,
+        f"inferences_{args.model_name}--{args.evaluation_dataset.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
+    )
+
     inferences_filepath = save_inference_results(
         results=results,
-        output_dir_path=args.output_dir_path,
-        model_name=args.model_name,
-        evaluation_dataset=args.evaluation_dataset,
-        evaluation_dataset_version=args.evaluation_dataset_version,
+        output_dir_path=results_dir_path,
     )
 
     return inferences_filepath

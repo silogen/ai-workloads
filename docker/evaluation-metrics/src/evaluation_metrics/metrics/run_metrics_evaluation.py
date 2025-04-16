@@ -111,10 +111,10 @@ def main(args: Namespace):
     results = run(generations=generations)
 
     logger.info("Saving evaluation results...")
-    results_filepath = os.path.join(args.output_dir_path, "evaluation_results.json")
+    results_dir_path = os.path.join(args.output_dir_path, "evaluation_results")
 
-    save_results(results, results_filepath)
-    logger.info(f"Results saved to {results_filepath}")
+    save_results(results=results, config=args, results_dir_path=results_dir_path)
+    logger.info(f"Results saved to {results_dir_path}")
 
 
 if __name__ == "__main__":

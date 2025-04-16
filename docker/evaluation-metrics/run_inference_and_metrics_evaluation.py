@@ -1,6 +1,7 @@
 import asyncio
 import os
 from argparse import Namespace
+from datetime import datetime
 from pprint import pprint
 
 from evaluation_metrics import logger
@@ -58,9 +59,6 @@ def main(args: Namespace):
         - Final evaluation results.
     """
 
-    logger.info("Env Variables")
-    logger.info(os.environ)
-
     ds = download_dataset(dataset=args.evaluation_dataset, version=args.evaluation_dataset_version)
 
     logger.info("Dataset loaded...")
@@ -94,12 +92,18 @@ def main(args: Namespace):
         )
     )
 
+    results_dir_path = os.path.join(
+        args.output_dir_path,
+        f"inferences_{args.model_name}--{args.evaluation_dataset.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
+    )
+
+    if not os.path.exists(results_dir_path):
+        logger.info(f"Creating path {results_dir_path}")
+        os.makedirs(results_dir_path)
+
     inferences_filepath = save_inference_results(
         results=inference_results,
-        output_dir_path=args.output_dir_path,
-        model_name=args.model_name,
-        evaluation_dataset=args.evaluation_dataset,
-        evaluation_dataset_version=args.evaluation_dataset_version,
+        output_dir_path=results_dir_path,
     )
 
     logger.info(f"Loading file with generated inferences: {inferences_filepath}")
@@ -110,9 +114,7 @@ def main(args: Namespace):
     logger.info("Evaluation results:")
     logger.info(eval_results)
 
-    results_filepath = inferences_filepath.replace("inferences", "results", 1).replace(".jsonl", ".json")
-
-    save_results(results=eval_results, results_filepath=results_filepath)
+    save_results(results=eval_results, config=args, results_dir_path=results_dir_path)
 
     logger.info("Evaluation complete.")
 

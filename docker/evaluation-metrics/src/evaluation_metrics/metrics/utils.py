@@ -1,5 +1,6 @@
 import json
 import os
+from argparse import Namespace
 
 from evaluation_metrics import logger
 from evaluation_metrics.metrics.data.data_classes import EvaluationResults
@@ -52,12 +53,13 @@ def write_to_minio_storage(client: Minio, source_file: str, destination_file: st
         logger.error("Error occurred in Minio upload: %s", e)
 
 
-def save_results(results: EvaluationResults, results_filepath: str):
+def save_results(results: EvaluationResults, config: Namespace, results_dir_path: str):
     """
     Save evaluation results locally and upload them to MinIO storage.
     Args:
         results (EvaluationResults): The evaluation results to be saved.
-        results_filepath (str): The local file path where the results will be saved.
+        config (Namespace): The configuration object containing the parameters used for evaluation.
+        results_dir_path (str): The local directory path where the results will be saved.
     Raises:
         KeyError: If any required environment variable for MinIO configuration
                   (BUCKET_STORAGE_HOST, BUCKET_STORAGE_ACCESS_KEY,
@@ -76,16 +78,34 @@ def save_results(results: EvaluationResults, results_filepath: str):
         cert_check=False,
     )
 
-    logger.info("Writing evaluation results locally to %s", results_filepath)
-    with open(results_filepath, "w") as outfile:
+    evaluation_results_file_path = os.path.join(results_dir_path, "evaluation_results.json")
+
+    config_file_path = os.path.join(results_dir_path, "config.json")
+
+    logger.info(f"Writing evaluation results locally to {evaluation_results_file_path}")
+    with open(evaluation_results_file_path, "w") as outfile:
         outfile.write(json.dumps(results.to_dict()))  # type: ignore
+    logger.info("Results written locally")
+
+    logger.info(f"Writing config locally to {config_file_path}")
+    with open(config_file_path, "w") as outfile:
+        outfile.write(json.dumps(vars(config)))
     logger.info("Results written locally")
 
     logger.info("Copying results file to MinIO...")
     write_to_minio_storage(
         client=client,
-        source_file=results_filepath,
-        destination_file="llm-evaluation-metrics/results.json",
+        source_file=evaluation_results_file_path,
+        destination_file=os.path.join("llm-evaluation-metrics", results_dir_path, "results.json"),
         bucket_name=os.environ["BUCKET_STORAGE_BUCKET"],
     )
     logger.info("Results saved to MinIO")
+
+    logger.info("Copying configs to MinIO...")
+    write_to_minio_storage(
+        client=client,
+        source_file=config_file_path,
+        destination_file=os.path.join("llm-evaluation-metrics", results_dir_path, "config.json"),
+        bucket_name=os.environ["BUCKET_STORAGE_BUCKET"],
+    )
+    logger.info("Config saved to MinIO")
