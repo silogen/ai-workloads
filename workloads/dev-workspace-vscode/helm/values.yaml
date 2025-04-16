@@ -1,0 +1,42 @@
+metadata:
+  labels: {}
+
+image: python:3.12
+imagePullPolicy: Always
+gpus: 0
+memory_per_gpu: 64 # Gi
+cpu_per_gpu: 4
+
+env_vars:
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  SERVICE_URL: https://open-vsx.org/vscode/gallery
+  ITEM_URL: https://open-vsx.org/vscode/item
+
+storage:
+  ephemeral:
+    quantity: 128Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 16Gi
+
+deployment:
+  port: 8080
+
+entrypoint: |
+  curl -fsSL https://code-server.dev/install.sh | sh
+  code-server --install-extension ms-python.python
+  code-server --install-extension GitHub.vscode-pull-request-github
+  code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
+  code-server --auth none --port 8080
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

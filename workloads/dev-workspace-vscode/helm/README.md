@@ -1,6 +1,6 @@
-# JupyterLab workload
+# Visual Studio Code workload
 
-This workload deploys a basic JupyterLab instance on top of any image that has Python (pip) built-in, ideal for interactive development sessions and experimentation with other workloads.
+This workload deploys a basic Visual Studio Code on top of any image that has Python (pip) built-in, ideal for interactive development sessions and experimentation with other workloads.
 
 ## Configuration Parameters
 
@@ -23,10 +23,10 @@ helm template example . | kubectl apply -f -
 
 ## Port Forwarding
 
-To access JupyterLab locally, forward the service port to your local machine:
+To access Visual Studio Code locally, forward the service port to your local machine:
 
 ```bash
-kubectl port-forward services/dev-workspace-jupyterlab-example 8888:80
+kubectl port-forward services/dev-workspace-vscode-example 8080:80
 ```
 
-Then access JupyterLab by navigating to `http://localhost:8888` in your web browser.
+Then access Visual Studio Code by navigating to `http://localhost:8080` in your web browser.
