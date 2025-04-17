@@ -160,18 +160,33 @@
     "deployment": {
       "type": "object",
       "properties": {
-        "port": {
-          "type": "integer",
-          "description": "Deployment port"
+      "ports": {
+        "type": "object",
+        "description": "Deployment ports as a key-value mapping of string to integer",
+        "additionalProperties": {
+        "type": "integer"
         }
+      }
       },
       "required": [
-        "port"
+        "ports"
       ]
     },
     "entrypoint": {
       "type": "string",
       "description": "Entrypoint script"
+    },
+    "startupProbe": {
+      "type": ["object"],
+      "additionalProperties": true
+    },
+    "livenessProbe": {
+      "type": ["object"],
+      "additionalProperties": true
+    },
+    "readinessProbe": {
+      "type": ["object"],
+      "additionalProperties": true
     },
     "kaiwo": {
       "type": "object",
@@ -193,6 +208,9 @@
     "storage",
     "deployment",
     "entrypoint",
+    "startupProbe",
+    "livenessProbe",
+    "readinessProbe",
     "kaiwo"
   ],
   "additionalProperties": false

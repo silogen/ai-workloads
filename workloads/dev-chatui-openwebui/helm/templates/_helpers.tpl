@@ -35,6 +35,8 @@ limits:
 
 # Container environment variables helper
 {{- define "container.env" -}}
+- name: OPENAI_API_BASE_URLS_AUTODISCOVERY
+  value: {{ include "env.openai_api_base_urls" . | trim | quote -}}
 {{- range $key, $value := .Values.env_vars }}
 {{- if (typeIs "string" $value) }}
 - name: {{ $key }}

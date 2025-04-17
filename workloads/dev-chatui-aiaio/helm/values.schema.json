@@ -22,7 +22,7 @@
     "env_vars": {
       "type": "object",
       "additionalProperties": {
-        "type": "string"
+        "type": ["string", "object"]
       }
     },
     "storage": {
@@ -58,8 +58,15 @@
     "deployment": {
       "type": "object",
       "properties": {
-        "port": {
-          "type": "integer"
+        "ports": {
+          "type": "object",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "description": "HTTP port for the deployment"
+            }
+          },
+          "required": ["http"]
         }
       }
     },
@@ -74,8 +81,29 @@
           "description": "If true, use Kaiwo CRDs to have Kaiwo operator manage the workload"
         }
       }
+    },
+    "startupProbe": {
+      "type": ["object"],
+      "additionalProperties": true
+    },
+    "livenessProbe": {
+      "type": ["object"],
+      "additionalProperties": true
+    },
+    "readinessProbe": {
+      "type": ["object"],
+      "additionalProperties": true
     }
   },
-  "required": ["image", "imagePullPolicy", "storage", "deployment", "kaiwo"],
+  "required": [
+    "image",
+    "imagePullPolicy",
+    "storage",
+    "deployment",
+    "kaiwo",
+    "startupProbe",
+    "livenessProbe",
+    "readinessProbe"
+  ],
   "additionalProperties": false
 }

@@ -32,11 +32,8 @@ kubectl get service
 
 To access the service locally, forward the port using the following commands. This assumes the service name is `llm-inference-ollama`:
 
-The service exposes HTTP on port **80**, while the deployment uses port **8080** (instead of the default 11434).
-
 ```bash
 kubectl port-forward services/llm-inference-ollama 8080:80
-# kubectl port-forward deployments/llm-inference-ollama 8080:8080
 ```
 
 **Note** Ollama server provides both [Ollama API](https://github.com/ollama/ollama/blob/main/docs/api.md) `http://localhost:8080/api` and OpenAI-compatible API `http://localhost:8080/v1`

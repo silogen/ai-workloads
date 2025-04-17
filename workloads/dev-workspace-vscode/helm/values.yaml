@@ -28,14 +28,33 @@ storage:
     sizeLimit: 16Gi
 
 deployment:
-  port: 8080
+  ports:
+    http: 8080
+
+# startupProbe - checks if the container has successfully started. It disables liveness and readiness probes until it succeeds, useful for slow-starting applications.
+# livenessProbe - checks if the container is still alive. If it fails, Kubernetes restarts the container to recover from failure.
+# readinessProbe - checks if the container is ready to serve traffic. If it fails, the container is removed from the service's endpoints but remains running.
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  failureThreshold: 20
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
 
 entrypoint: |
   curl -fsSL https://code-server.dev/install.sh | sh
   code-server --install-extension ms-python.python
   code-server --install-extension GitHub.vscode-pull-request-github
   code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
-  code-server --auth none --port 8080
+  code-server --auth none --bind-addr 0.0.0.0:8080
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:

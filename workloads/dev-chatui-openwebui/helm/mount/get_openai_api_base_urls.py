@@ -7,7 +7,7 @@ from kubernetes import client, config
 
 def endpoint_check(endpoint):
     try:
-        response = requests.get(endpoint.rstrip("/") + "/models")
+        response = requests.get(endpoint.rstrip("/") + "/models", timeout=10)
         if response.status_code == 200:
             return True
     except requests.RequestException:
@@ -27,7 +27,7 @@ def get_services(separator=";"):
         url
         for url in set(filtered_services).union(
             os.environ.get("OPENAI_API_BASE_URLS", "").split(separator)
-            + os.environ.get("OPENAI_API_BASE_URLS_K8S", "").split(separator)
+            + os.environ.get("OPENAI_API_BASE_URLS_AUTODISCOVERY", "").split(separator)
         )
         if endpoint_check(url)
     ]
@@ -35,7 +35,10 @@ def get_services(separator=";"):
     return env_var_value
 
 
+discovered_services = get_services(separator=";")
 sys.stderr.write("Discovered OpenAI API Base URLs\n")
-sys.stderr.write(get_services(separator="\n"))
+for url in discovered_services.split(";"):
+    if url:
+        sys.stderr.write(f"{url}\n")
 sys.stderr.flush()
-print(get_services(separator=";"))
+print(discovered_services)

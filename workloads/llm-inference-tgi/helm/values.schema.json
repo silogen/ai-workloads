@@ -141,12 +141,19 @@
       "type": "object",
       "description": "Deployment configuration",
       "properties": {
-        "port": {
-          "type": "integer",
-          "description": "Port for the deployment"
+        "ports": {
+          "type": "object",
+          "description": "Ports for the deployment",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "description": "HTTP port for the deployment"
+            }
+          },
+          "required": ["http"]
         }
       },
-      "required": ["port"]
+      "required": ["ports"]
     },
     "kaiwo": {
       "type": "object",
@@ -156,8 +163,23 @@
           "description": "If true, use Kaiwo CRDs to have Kaiwo operator manage the workload"
         }
       }
+    },
+    "startupProbe": {
+      "type": ["object"],
+      "additionalProperties": true,
+      "description": "Startup probe configuration for the container"
+    },
+    "livenessProbe": {
+      "type": ["object"],
+      "additionalProperties": true,
+      "description": "Liveness probe configuration for the container"
+    },
+    "readinessProbe": {
+      "type": ["object"],
+      "additionalProperties": true,
+      "description": "Readiness probe configuration for the container"
     }
   },
-  "required": ["metadata", "image", "imagePullPolicy", "model", "gpus", "memory_per_gpu", "cpu_per_gpu", "tgi_engine_args", "env_vars", "storage", "deployment", "kaiwo"],
+  "required": ["metadata", "image", "imagePullPolicy", "model", "gpus", "memory_per_gpu", "cpu_per_gpu", "tgi_engine_args", "env_vars", "storage", "deployment", "kaiwo", "startupProbe", "livenessProbe", "readinessProbe"],
   "additionalProperties": false
 }

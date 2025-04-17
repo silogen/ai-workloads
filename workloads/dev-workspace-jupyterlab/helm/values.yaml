@@ -28,7 +28,22 @@ storage:
     sizeLimit: 16Gi
 
 deployment:
-  port: 8888
+  ports:
+    http: 8888
+
+# startupProbe - checks if the container has successfully started. It disables liveness and readiness probes until it succeeds, useful for slow-starting applications.
+# livenessProbe - checks if the container is still alive. If it fails, Kubernetes restarts the container to recover from failure.
+# readinessProbe - checks if the container is ready to serve traffic. If it fails, the container is removed from the service's endpoints but remains running.
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+startupProbe: {}
+livenessProbe:
+  httpGet:
+    path: /api
+    port: http
+readinessProbe:
+  httpGet:
+    path: /api
+    port: http
 
 entrypoint: |
   export PATH=$PATH:$PIPX_BIN_DIR
@@ -36,7 +51,7 @@ entrypoint: |
   pip install pipx ipykernel
   pipx install --include-deps jupyter
   python -m ipykernel install --user --name=default-python3
-  jupyter-lab --LabApp.token='' --LabApp.ip='0.0.0.0' --LabApp.allow_root=True --no-browser
+  jupyter-lab --ServerApp.token='' --ServerApp.ip='0.0.0.0' --ServerApp.allow_root=True --no-browser
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:

@@ -19,19 +19,36 @@ spec:
         app: {{ include "release.fullname" . }}
     spec:
       containers:
-        - args:
-            - |
-              {{- include "entrypoint" . | nindent 14 }}
+        - name: {{ .Chart.Name }}
+          args:
+          - |
+            {{- include "entrypoint" . | nindent 12 }}
           command: ["sh", "-c"]
+          {{- if .Values.env_vars }}
           env:
             {{- include "container.env" . | nindent 12 }}
+          {{- end }}
           image: {{ .Values.image | quote}}
           imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
-          name: {{ .Chart.Name }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- .Values.livenessProbe | toYaml | nindent 12 -}}
+          {{- end }}
           ports:
-            - containerPort: {{ .Values.deployment.port }}
+            {{- range $key, $value := .Values.deployment.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $value }}
+            {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- .Values.readinessProbe | toYaml | nindent 12 -}}
+          {{- end }}
           resources:
             {{- include "container.resources" . | nindent 12 }}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+            {{- .Values.startupProbe | toYaml | nindent 12 -}}
+          {{- end }}
           volumeMounts:
             {{- include "container.volumeMounts" . | nindent 12 }}
       volumes:

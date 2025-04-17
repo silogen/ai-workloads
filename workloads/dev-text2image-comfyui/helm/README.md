@@ -25,12 +25,12 @@ kubectl get service
 
 ### Port Forwarding
 
-To access the service locally on port `8080`, forward the port of the service/deployment using the following commands. This assumes the service name is `dev-text2image-comfyui`:
+To access the service locally on port `8188`, forward the port of the service/deployment using the following commands. This assumes the service name is `dev-text2image-comfyui`:
 
 The service exposes HTTP on port 80 (the deployment uses port 8188 by default).
 
 ```bash
-kubectl port-forward services/dev-text2image-comfyui 8080:80
+kubectl port-forward services/dev-text2image-comfyui 8188:80
 ```
 
-Now, you can access ComfyUI ([Manager](https://github.com/ltdrdata/ComfyUI-Manager) also included) at [http://localhost:8080](http://localhost:8080) using a web browser.
+Now, you can access ComfyUI ([Manager](https://github.com/ltdrdata/ComfyUI-Manager) also included) at [http://localhost:8188](http://localhost:8188) using a web browser.

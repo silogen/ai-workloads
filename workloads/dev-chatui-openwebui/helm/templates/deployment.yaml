@@ -19,22 +19,38 @@ spec:
         app: {{ include "release.fullname" . }}
     spec:
       containers:
-        - env:
-            - name: OPENAI_API_BASE_URLS_K8S
-              value: {{ tpl .Values.openai_api_base_urls . | trim | quote -}}
+        - name: {{ .Chart.Name }}
+          {{- if .Values.entrypoint }}
+          args:
+          - |
+            {{- .Values.entrypoint | nindent 12 }}
+          command: ["sh", "-c"]
+          {{- end }}
+          {{- if .Values.env_vars }}
+          env:
             {{- include "container.env" . | nindent 12 }}
+          {{- end }}
           image: {{ .Values.image | quote}}
           imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
-          name: {{ .Chart.Name }}
-          {{- if .Values.entrypoint }}
-          command: ["sh", "-c"]
-          args:
-          - | {{- .Values.entrypoint | nindent 12 }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- .Values.livenessProbe | toYaml | nindent 12 -}}
           {{- end }}
           ports:
-            - containerPort: {{ .Values.deployment.port }}
+            {{- range $key, $value := .Values.deployment.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $value }}
+            {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- .Values.readinessProbe | toYaml | nindent 12 -}}
+          {{- end }}
           resources:
             {{- include "container.resources" . | nindent 12 }}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+            {{- .Values.startupProbe | toYaml | nindent 12 -}}
+          {{- end }}
           volumeMounts:
             {{- include "container.volumeMounts" . | nindent 12 }}
       volumes:

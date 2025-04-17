@@ -36,11 +36,8 @@ kubectl get service
 
 To access the service locally, forward the port using the following commands. This assumes the service name is `llm-inference-llamacpp`:
 
-The service exposes HTTP on port 80, while the deployment uses port 8080 by default.
-
 ```bash
-kubectl port-forward services/llm-inference-llamacpp 8080:80 ||\
-kubectl port-forward deployments/llm-inference-llamacpp 8080:8080
+kubectl port-forward services/llm-inference-llamacpp 8080:80
 ```
 
 You can access the Llama.cpp server's WebUI at `http://localhost:8080` using a web browser.

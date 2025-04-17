@@ -7,7 +7,16 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 80
-      targetPort: {{ .Values.deployment.port }}
+    {{ range $name, $port := .Values.deployment.ports }}
+    {{- if ne $name "http" }}
+    - name: {{ $name }}
+      port: {{ $port }}
+      targetPort: {{ $port }}
+    {{- else -}}
+    - name: {{ $name }}
+      port: 80
+      targetPort: {{ $port }}
+    {{- end }}
+    {{- end }}
   selector:
     app: {{ include "release.fullname" . }}

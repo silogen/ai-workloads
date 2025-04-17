@@ -100,10 +100,29 @@
     "deployment": {
       "type": "object",
       "properties": {
-        "port": {
-          "type": "integer"
+        "ports": {
+          "type": "object",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "description": "HTTP port for the deployment"
+            }
+          },
+          "required": ["http"]
         }
       }
+    },
+    "startupProbe": {
+      "type": ["object"],
+      "additionalProperties": true
+    },
+    "livenessProbe": {
+      "type": ["object"],
+      "additionalProperties": true
+    },
+    "readinessProbe": {
+      "type": ["object"],
+      "additionalProperties": true
     },
     "entrypoint": {
       "type": "string"

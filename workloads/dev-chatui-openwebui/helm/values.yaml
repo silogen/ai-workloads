@@ -4,10 +4,6 @@ metadata:
 image: "ghcr.io/open-webui/open-webui:main"
 imagePullPolicy: Always
 
-# Use `helm template --dry-run=server` to enable client-side automatic service discovery.
-# This will add to OPENAI_API_BASE_URLS with all services named llm-inference-* in the current namespace.
-openai_api_base_urls: '{{- include "env.openai_api_base_urls" . -}}'
-
 env_vars:
   OPENAI_API_BASE_URLS: ""
   ANONYMIZED_TELEMETRY: "false"
@@ -28,7 +24,33 @@ storage:
     sizeLimit: 32Gi
 
 deployment:
-  port: 8080
+  ports:
+    http: 8080
+
+# startupProbe - checks if the container has successfully started. It disables liveness and readiness probes until it succeeds, useful for slow-starting applications.
+# livenessProbe - checks if the container is still alive. If it fails, Kubernetes restarts the container to recover from failure.
+# readinessProbe - checks if the container is ready to serve traffic. If it fails, the container is removed from the service's endpoints but remains running.
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# ref: https://github.com/open-webui/helm-charts/blob/main/charts/open-webui/values.yaml
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  failureThreshold: 20
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  failureThreshold: 1
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /health/db
+    port: http
+  failureThreshold: 1
+  periodSeconds: 10
 
 entrypoint: |
   pip install kubernetes
