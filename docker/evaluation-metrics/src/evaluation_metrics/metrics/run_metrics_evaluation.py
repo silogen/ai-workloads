@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import time
 from argparse import Namespace
 from typing import Any, Dict, List
 
@@ -25,9 +26,23 @@ def compute_scores(predictions: List[str], references: List[str]) -> EvaluationS
                           BLEU score, and Exact Match accuracy.
     """
 
+    bert_score_start_time = time.time()
+
     precision_bert, recall_bert, f1_bert, f1_list = compute_bertscore(predictions=predictions, references=references)
+
+    logger.info(f"BERT-score computation took {time.time() - bert_score_start_time:.2f} seconds")
+
+    bleu_score_start_time = time.time()
+
     bleu_score = compute_bleu_score(predictions=predictions, references=references)
+
+    logger.info(f"BLEU score computation took {time.time() - bleu_score_start_time:.2f} seconds")
+
+    exact_match_start_time = time.time()
+
     accuracy = compute_exact_match(predictions=predictions, references=references)
+
+    logger.info(f"Exact match computation took {time.time() - exact_match_start_time:.2f} seconds")
 
     return EvaluationScores(
         precision_bert=precision_bert,
@@ -140,7 +155,15 @@ def run(generations: List[Dict[str, Any]]) -> EvaluationResults:
         else:
             raise NotImplementedError("Multiple correct answers")
     predictions = [datapoint["inference_result"] for datapoint in generations]
+
+    logger.info("Computing evaluation scores...")
+
+    start_score_computation = time.time()
+
     scores = compute_scores(predictions=predictions, references=references)
+
+    logger.info(f"Score computation took {time.time() - start_score_computation:.2f} seconds")
+
     prompts = [datapoint["prompt"] for datapoint in generations]
 
     return EvaluationResults(scores=scores, prompts=prompts)

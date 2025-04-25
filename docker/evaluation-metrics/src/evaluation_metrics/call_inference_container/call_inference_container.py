@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import time
 from argparse import Namespace
 from datetime import datetime
 from itertools import islice
@@ -64,8 +65,7 @@ def handle_llm_inference_result(doc_id: str, result: ChatCompletion) -> str:
     logger.info(f"Result: {result}")
 
     inference_result = result.choices[0].message.content
-    logger.info(f"Got inference result for ID {doc_id}")
-    logger.info(f"Inference result: {inference_result}")
+
     return inference_result
 
 
@@ -196,9 +196,11 @@ def get_inference_result_as_dict(
         Dict[str, Any]: A dictionary containing the processed inference result, gold standard answer,
                         document ID, original document text, and prompt template.
     """
-    logger.info(f"Got inference result for ID {doc_id}")
-    logger.info(f"Inference result: {inference_result}")
+    logger.info(f"Processing inference result for ID {doc_id}...")
+
     processed_result = handle_llm_inference_result(doc_id=doc_id, result=inference_result)
+
+    logger.info(f"Processed inference result: {processed_result}")
 
     result = {
         "inference_result": processed_result,
@@ -264,9 +266,17 @@ async def run(
     documents_map = {}
     correct_answers_map = {}
 
-    for batch in batched(dataset[dataset_split], batch_size):
-        tasks = []
+    inference_start_time = time.time()
+
+    logger.info(f"Starting inference on batches with batch size {batch_size}...")
+
+    for batch_number, batch in enumerate(batched(dataset[dataset_split], batch_size)):
+        inference_tasks = []
         batch_doc_ids = []
+
+        logger.info(f"Processing batch {batch_number}...")
+
+        batch_start_time = time.time()
 
         for datum in batch:
             doc_id = datum[id_column_name]
@@ -287,7 +297,7 @@ async def run(
                 length_exclusion_counter += 1
                 continue
 
-            tasks.append(
+            inference_tasks.append(
                 get_inference_result(
                     llm_client=llm_client, message=message, model_name=model_name, parameters=parameters, doc_id=doc_id
                 )
@@ -295,12 +305,13 @@ async def run(
 
             counter += 1
             if use_data_subset > 0 and counter >= use_data_subset:
+
                 break
 
         # Process results as they become available
-        if tasks:
-            for completed_task in asyncio.as_completed(tasks):
-                doc_id, inference_result = await completed_task
+        if inference_tasks:
+            for completed_inference_task in asyncio.as_completed(inference_tasks):
+                doc_id, inference_result = await completed_inference_task
 
                 try:
                     result_dict = get_inference_result_as_dict(
@@ -316,6 +327,8 @@ async def run(
                     logger.error(f"Error processing inference result for document {doc_id}: {str(e)}")
                     inference_errors_counter += 1
 
+        logger.info(f"Batch {batch_number} processed in {time.time() - batch_start_time:.2f} seconds.")
+
         if use_data_subset > 0 and counter >= use_data_subset:
             logger.info(f"Ran inference for a subset of data: {use_data_subset} documents.")
             break
@@ -324,6 +337,7 @@ async def run(
     logger.info(f"Total documents processed for evaluation: {processed_documents_counter}")
     logger.info(f"\tDocuments excluded due to length: {length_exclusion_counter}")
     logger.info(f"\tInference errors encountered: {inference_errors_counter}")
+    logger.info(f"Total inference time: {time.time() - inference_start_time:.2f} seconds.")
 
 
 async def main(args: Namespace) -> str:

@@ -70,9 +70,11 @@ spec:
             limits:
               memory: "{{ .Values.evaluation_container.memory }}"
               cpu: "{{ .Values.evaluation_container.cpu_count }}"
+              amd.com/gpu: "{{ .Values.model_inference_container.gpu_count }}"
             requests:
               memory: "{{ .Values.evaluation_container.memory }}"
               cpu: "{{ .Values.evaluation_container.cpu_count }}"
+              amd.com/gpu: "{{ .Values.model_inference_container.gpu_count }}"
           command: ["sh", "-c"]
           args:
             - |

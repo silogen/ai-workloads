@@ -25,8 +25,8 @@ def compute_bertscore(
     """
     bertscore = load("bertscore")
     results = bertscore.compute(
-        predictions=predictions, references=references, lang=language, rescale_with_baseline=True, device="cpu"
-    )
+        predictions=predictions, references=references, lang=language, rescale_with_baseline=True
+    )  # Defaults to CUDA, if available
 
     precision_list = convert_negatives_to_zero(array=np.array(results["precision"]))
     recall_list = convert_negatives_to_zero(array=np.array(results["recall"]))

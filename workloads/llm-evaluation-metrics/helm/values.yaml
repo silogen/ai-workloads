@@ -12,6 +12,7 @@ model_inference_container:
 evaluation_container:
   image: ghcr.io/silogen/evaluation-workloads-metrics:v0.1
   memory: 24Gi
+  gpu_count: 1
   cpu_count: 2
   metric: bertscore
   dataset_path: abisee/cnn_dailymail
