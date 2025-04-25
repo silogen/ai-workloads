@@ -9,75 +9,11 @@ Note that access to the Odia continued pretraining version of the Qwen model req
 The tutorial includes cluster setup, model and data downloads, finetuning, and finally inference.
 We should start with a working cluster, setup by a cluster administrator using [Cluster-forge](https://github.com/silogen/cluster-forge). The access to that cluster is provided with a suitable Kubeconfig file.
 
-## 1: Setup for the tutorial, programs used, instructions for monitoring
+## 1: Setup
 
-⚠️ WARNING: This tutorial does not handle adding the HF Token to the cluster yet. Coming soon. Before then, to run this tutorial, you are responsible for adding your HF Token as a secret called `hf-token` with the key `hf-token` in the `silo` namespace. ⚠️
+Follow the setup in the [tutorial pre-requisites section](tutorial-prereqs.md).
 
-### Required program installs
-
-Programs that are used in this tutorial:
-
-* [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
-
-* [helm](https://helm.sh/docs/intro/install/)
-
-* [k9s](https://k9scli.io/topics/install/)
-
-* [jq](https://jqlang.org/download/)
-
-* [curl](https://everything.curl.dev/install/index.html)
-
-At least curl and often jq too are commonly installed in many distributions out of the box.
-
-### Additional cluster setup
-
-Additional cluster setup. This does the following:
-
-* Adds a namespace, where we will conduct all our work. We will use the `silo` namespace.
-
-* Adds an External Secret to get the credentials to access the MinIO storage from our namespace.
-
-    - This depends on a ClusterSecretStore called `k8s-secret-store` being already setup by a cluster admin, and the MinIO API credentials being secret there.
-    The cluster should have these by default.
-
-* Adds a LocalQueue so that our Jobs schedule intelligently.
-
-    - This references the ClusterQueue `kaiwo` which should already be setup by a cluster admin.
-
-We will use the helm chart in `workloads/k8s-namespace-setup/helm` and the overrides in `workloads/k8s-namespace-setup/helm/overrides/`.
-
-```bash
-kubectl create namespace "silo"
-helm template workloads/k8s-namespace-setup/helm \
-  --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-local-queue.yaml \
-  --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-storage-access-external-secret.yaml \
-  | kubectl apply -n silo -f -
-```
-
-⚠️TODO: Guidance on adding the HF Token⚠️
-
-### Monitoring progress, logs, and GPU utilization with k9s
-
-We're interested to see a progress bar of the finetuning training, seeing any messages that a workload logs, and we also want to verify that our GPU Jobs
-are consuming our compute relatively effectively. This information can be fetched from our Kubernetes cluster in many ways, but one convenient and recommended way us using [k9s](https://k9scli.io/).
-We recommend the official documentation for more thorough guidance, but this section shows some basic commands to get what we want here.
-
-To get right to the Jobs view in the namespace we're using in this walk-through, we can run:
-
-```bash
-k9s --namespace silo --command Jobs
-```
-
-Choose a Job using `arrow keys` and `Enter` to see the Pod that it spawned, then `Enter` again to see the Container in the Pod. From here, we can do three things:
-
-* Look at the logs by pressing `l`. The logs show any output messages produced during the workload runtime.
-
-* Attach to the output of the container by pressing `a`. This is particularly useful to see the interactive progress bar of a finetuning run.
-
-* Spawn a shell inside the container by pressing `s`. Inside the shell we can run `watch -n0.5 rocm-smi` to get a view of the GPU utilization that updates every 0.5s.
-
-Return from any regular `k9s` view with `Esc` .
-
+⚠️ WARNING: This tutorial does not handle adding the HF Token to the cluster yet. Coming soon. Before then, to run this tutorial, you are responsible for adding your HF Token as a secret called `hf-token` with the key `hf-token` in the `silo-tutorial` namespace. ⚠️
 
 ## 2. Fetch data and models
 
@@ -88,11 +24,11 @@ We will use the helm charts in `workloads/download-huggingface-model-to-bucket/h
 helm template workloads/download-huggingface-model-to-bucket/helm \
   --values workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-02-qwen-odia.yaml \
   --name-template "download-odia-qwen-odia" \
-  | kubectl apply -n silo -f -
+  | kubectl apply -f -
 helm template workloads/download-data-to-bucket/helm \
   --values workloads/download-data-to-bucket/helm/overrides/tutorial-02-odia-data.yaml \
   --name-template "download-odia-data" \
-  | kubectl apply -n silo -f -
+  | kubectl apply -f -
 ```
 
 The [logs](#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload, then data download, preprocessing, and upload.
@@ -110,7 +46,7 @@ helm template workloads/llm-finetune-silogen-engine/helm \
   --name-template $name \
   --set "checkpointsRemote=default-bucket/experiments/$name" \
   --set "finetuningGpus=8" \
-  | kubectl apply -n silo -f -
+  | kubectl apply -f -
 ```
 can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions above](#monitoring-progress-logs-and-gpu-utilization-with-k9s).
 
@@ -126,31 +62,31 @@ helm template workloads/llm-inference-vllm/helm \
   --set "model=Qwen/Qwen1.5-7B-Chat" \
   --set "vllm_engine_args.served_model_name=$name" \
   --name-template "$name" \
-  | kubectl create -n silo -f -
+  | kubectl create -f -
 name="qwen-odia-base"
 helm template workloads/llm-inference-vllm/helm \
   --set "model=s3://default-bucket/models/OdiaGenAI/LLM_qwen_1.5_odia_7b" \
   --set "vllm_engine_args.served_model_name=$name" \
   --name-template "$name" \
-  | kubectl create -n silo -f -
+  | kubectl create -f -
 name="qwen-odia-instruct-v1"
 helm template workloads/llm-inference-vllm/helm \
   --set "model=s3://default-bucket/experiments/$name/checkpoint-final" \
   --set "vllm_engine_args.served_model_name=$name" \
   --name-template "$name" \
-  | kubectl create -n silo -f -
+  | kubectl create -f -
 ```
 
 To discuss with the models, we need to setup connections to them. Since these are not public-internet deployments, we'll do this simply by starting background port-forwarding processes:
 ```bash
 name="qwen-base-chat"
-kubectl port-forward services/llm-inference-vllm-$name 8080:80 -n silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8080:80 >/dev/null &
 qwenchatPID=$!
 name="qwen-odia-base"
-kubectl port-forward services/llm-inference-vllm-$name 8090:80 -n silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8090:80 >/dev/null &
 odiabasePID=$!
 name="qwen-odia-instruct-v1"
-kubectl port-forward services/llm-inference-vllm-$name 8100:80 -n silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8100:80 >/dev/null &
 odiainstructPID=$!
 ```
 
@@ -216,6 +152,6 @@ kill $qwenchatPID $odiabasePID $odiainstructPID
 and we can shut down the inference deployments with:
 ```bash
 for name in qwen-base-chat qwen-odia-base qwen-odia-instruct-v1; do
-  kubectl delete deployment -n silo llm-inference-vllm-$name
+  kubectl delete deployment llm-inference-vllm-$name
 done
 ```

@@ -5,74 +5,9 @@ This tutorial shows how to download a model and some data from HuggingFace Hub t
 The finetuning work in this tutorial is meant for demonstration purposes, small enough to be run live. We're starting from Tiny-Llama 1.1B Chat, a small LLM. This is already a chat-finetuned model.
 We're training it with some additional instruction data in the form of single prompt-and-answer pairs. The prompts in this data were gathered from real human prompts to LLMs, mostly ones that were shared on the now deprecated sharegpt.com site. The answers to those human prompts were generated with the [Mistral Large model](https://huggingface.co/mistralai/Mistral-Large-Instruct-2407). So in essence, training on this data makes our model respond more like Mistral Large. And there's another thing that this training accomplishes, which is to change the chat template, meaning the way the input to the model is formatted. More specifically, this adds special tokens that signal the start and end of message. Our experience is that such special tokens make the inference time message end signaling and message formatting a bit more robust.
 
+## 1. Setup
 
-## 1: Setup for the walk-through, programs used, instructions for monitoring
-
-We should start with a working cluster, setup by a cluster administrator using [Cluster-forge](https://github.com/silogen/cluster-forge). The access to that cluster is provided with a suitable Kubeconfig file.
-
-### Required program installs
-
-Programs that are used in this tutorial:
-
-* [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
-
-* [helm](https://helm.sh/docs/intro/install/)
-
-* [k9s](https://k9scli.io/topics/install/)
-
-* [jq](https://jqlang.org/download/)
-
-* [curl](https://everything.curl.dev/install/index.html)
-
-At least curl and often jq too are commonly installed in many distributions out of the box.
-
-### Additional cluster setup
-
-Additional cluster setup. This does the following:
-
-* Adds a namespace, where we will conduct all our work. We will use the `silo` namespace.
-
-* Adds an External Secret to get the credentials to access the MinIO storage from our namespace.
-
-    - This depends on a ClusterSecretStore called `k8s-secret-store` being already setup by a cluster admin, and the MinIO API credentials being secret there.
-    The cluster should have these by default.
-
-
-* Adds a LocalQueue so that our Jobs schedule intelligently.
-
-    - This references the ClusterQueue `kaiwo` which should already be setup by a cluster admin.
-
-We will use the helm chart in `workloads/k8s-namespace-setup/helm` and the overrides in `workloads/k8s-namespace-setup/helm/overrides/`.
-
-```bash
-kubectl create namespace "silo"
-helm template workloads/k8s-namespace-setup/helm \
-  --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-local-queue.yaml \
-  --values workloads/k8s-namespace-setup/helm/overrides/tutorial-01-storage-access-external-secret.yaml \
-  | kubectl apply -n silo -f -
-```
-
-### Monitoring progress, logs, and GPU utilization with k9s
-
-We're interested to see a progress bar of the finetuning training, seeing any messages that a workload logs, and we also want to verify that our GPU Jobs
-are consuming our compute relatively effectively. This information can be fetched from our Kubernetes cluster in many ways, but one convenient and recommended way us using [k9s](https://k9scli.io/).
-We recommend the official documentation for more thorough guidance, but this section shows some basic commands to get what we want here.
-
-To get right to the Jobs view in the namespace we're using in this walk-through, we can run:
-
-```bash
-k9s --namespace silo --command Jobs
-```
-
-Choose a Job using `arrow keys` and `Enter` to see the Pod that it spawned, then `Enter` again to see the Container in the Pod. From here, we can do three things:
-
-* Look at the logs by pressing `l`. The logs show any output messages produced during the workload runtime.
-
-* Attach to the output of the container by pressing `a`. This is particularly useful to see the interactive progress bar of a finetuning run.
-
-* Spawn a shell inside the container by pressing `s`. Inside the shell we can run `watch -n0.5 rocm-smi` to get a view of the GPU utilization that updates every 0.5s.
-
-Return from any regular `k9s` view with `Esc` .
+Follow the setup in the [tutorial pre-requisites section](tutorial-prereqs.md).
 
 ## 2. Run workloads to deliver data and a model
 
@@ -83,11 +18,11 @@ Our user input files are in `workloads/download-huggingface-model-to-bucket/helm
 helm template workloads/download-huggingface-model-to-bucket/helm \
   --values workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-01-tiny-llama-to-minio.yaml \
   --name-template "deliver-tiny-llama-model" \
-  | kubectl apply -n silo -f -
+  | kubectl apply -f -
 helm template workloads/download-data-to-bucket/helm \
   --values workloads/download-data-to-bucket/helm/overrides/tutorial-01-argilla-to-minio.yaml \
   --name-template "deliver-argilla-data" \
-  | kubectl apply -n silo -f -
+  | kubectl apply -f -
 ```
 
 The [logs](#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload for the model delivery workload, and data download, preprocessing, and upload for the data delivery.
@@ -111,7 +46,7 @@ for r in 4 6 8 10 12 16 20 24 32 64; do
     --name-template $name \
     --set finetuning_config.peft_conf.peft_kwargs.r=$r \
     --set "checkpointsRemote=default-bucket/experiments/$name" \
-    | kubectl apply -n silo -f -
+    | kubectl apply -f -
 done
 ```
 
@@ -131,7 +66,7 @@ helm template workloads/llm-finetune-silogen-engine/helm \
   --name-template $name \
   --set "checkpointsRemote=default-bucket/experiments/$name" \
   --set "finetuningGpus=8" \
-  | kubectl apply -n silo -f -
+  | kubectl apply -f -
 ```
 
 We can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions above](#monitoring-progress-logs-and-gpu-utilization-with-k9s).
@@ -147,7 +82,7 @@ helm template workloads/llm-finetune-silogen-engine/helm \
   --name-template $name \
   --set "checkpointsRemote=default-bucket/experiments/$name" \
   --set "finetuningGpus=1" \
-  | kubectl apply -n silo -f -
+  | kubectl apply -f -
 ```
 
 The training steps for this single-GPU run take around 340 seconds.
@@ -166,7 +101,7 @@ helm template workloads/llm-inference-vllm/helm \
   --set "model=s3://default-bucket/experiments/$name/checkpoint-final" \
   --set "vllm_engine_args.served_model_name=$name" \
   --name-template "$name" \
-  | kubectl apply -n silo -f -
+  | kubectl apply -f -
 ```
 
 We can change the `name` to different experiment names to deploy other models. Note that discussing with the LoRA adapter models with these workloads requires us to merge the final adapter. This can be achieved during finetuning by adding `--set mergeAdapter=true` and additionally in the deploy command, we have to refer to the merged model, changing the path to `--set "model=s3://default-bucket/experiments/$name/checkpoint-final-merged"` .
@@ -175,7 +110,7 @@ To discuss with the model, we first need to setup a connection to it. Since this
 
 ```bash
 name="tiny-llama-argilla-v1"
-kubectl port-forward services/llm-inference-vllm-$name 8080:80 -n silo >/dev/null &
+kubectl port-forward services/llm-inference-vllm-$name 8080:80 >/dev/null &
 portforwardPID=$!
 ```
 
@@ -203,7 +138,7 @@ kill $portforwardPID
 and to stop the deployment, we run:
 ```bash
 name="tiny-llama-argilla-v1"
-kubectl delete deployments/llm-inference-vllm-$name -n silo
+kubectl delete deployments/llm-inference-vllm-$name
 ```
 
 
