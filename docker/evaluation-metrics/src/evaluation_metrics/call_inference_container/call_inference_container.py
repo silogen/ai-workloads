@@ -1,14 +1,14 @@
 import asyncio
+import json
 import os
 from argparse import Namespace
 from datetime import datetime
 from itertools import islice
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, AsyncGenerator, Dict, Iterable, List, Tuple
 
 from datasets import load_dataset
 from evaluation_metrics import logger
 from evaluation_metrics.argument_parsers import get_inference_parser
-from jsonlines import Writer
 from openai import APIError, AsyncClient
 from openai.types.chat import ChatCompletion
 from transformers import AutoTokenizer
@@ -69,27 +69,25 @@ def handle_llm_inference_result(doc_id: str, result: ChatCompletion) -> str:
     return inference_result
 
 
-def save_inference_results(results: list, output_dir_path: str) -> str:
+def save_inference_results(result: Dict[str, Any], output_dir_path: str) -> str:
     """
-    Saves inference results to a JSONL file in the specified output directory.
+    Saves a single inference result to a JSON file in the specified output directory.
 
     Args:
-        results (list): A list of inference results to be saved.
-        output_dir_path (str): The directory path where the inference results file will be saved.
+        result (Dict[str, Any]): A dictionary containing the inference result to be saved.
+        output_dir_path (str): The directory path where the inference result file will be saved.
 
     Returns:
-        str: The file path of the saved inference results.
+        str: The file path of the saved inference result.
     """
-
     inferences_filepath = os.path.join(
         output_dir_path,
-        "inference_results.jsonl",
+        f"{result['doc_id']}.json",
     )
 
     logger.info(f"Writing inferences to {inferences_filepath}")
     with open(inferences_filepath, "w") as fp:
-        writer = Writer(fp)
-        writer.write_all(results)
+        fp.write(json.dumps(result))
 
     return inferences_filepath
 
@@ -181,6 +179,38 @@ async def get_inference_result(
     return doc_id, response
 
 
+def get_inference_result_as_dict(
+    doc_id: str, inference_result: ChatCompletion, correct_answer: str, document: str, prompt_template: str
+) -> Dict[str, Any]:
+    """
+    Generates a dictionary containing the inference result and other relevant information.
+
+    Args:
+        doc_id (str): The identifier for the document or request being processed.
+        inference_result (ChatCompletion): The result object from the LLM inference.
+        correct_answer (str): The gold standard answer for the document.
+        document (str): The original document text.
+        prompt_template (str): The prompt template used for inference.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the processed inference result, gold standard answer,
+                        document ID, original document text, and prompt template.
+    """
+    logger.info(f"Got inference result for ID {doc_id}")
+    logger.info(f"Inference result: {inference_result}")
+    processed_result = handle_llm_inference_result(doc_id=doc_id, result=inference_result)
+
+    result = {
+        "inference_result": processed_result,
+        "gold_standard_result": [correct_answer],
+        "doc_id": doc_id,
+        "document": document,
+        "prompt": prompt_template,
+    }
+
+    return result
+
+
 async def run(
     dataset: Dict,
     prompt_template: str,
@@ -195,9 +225,9 @@ async def run(
     batch_size: int,
     use_data_subset: int,
     dataset_split: str,
-) -> List[Dict[str, Any]]:
+) -> AsyncGenerator[Dict[str, Any], None]:
     """
-    Executes inference on a dataset using a specified language model and returns the results.
+    Executes inference on a dataset using a specified language model and yields results as they become available.
 
     Args:
         dataset (Dict): The dataset containing the input data for inference.
@@ -214,30 +244,40 @@ async def run(
         use_data_subset (int): Number of documents to use for evaluation. If > 0, limits to this many documents.
         dataset_split (str): The split of the dataset to use (e.g., "train", "test", "validation").
 
-    Returns:
-        List[Dict[str, Any]]: A list of dictionaries containing the inference results, gold standard answers,
-                              document IDs, input documents, and prompts.
+    Yields:
+        Dict[str, Any]: A dictionary containing the inference result, gold standard answer,
+                        document ID, input document, and prompt for each processed document.
+
+    Notes:
+        - The function processes one batch of documents at a time, creating parallel tasks for each document in the batch.
+        - Results within a batch are yielded as soon as they become available through async processing.
+        - The next batch is not processed until all tasks in the current batch have completed or yielded results.
     """
-
-    results = list()
-
     tokenizer = AutoTokenizer.from_pretrained(model_path)
 
     counter = 0  # Used for running a subset of the dataset for testing purposes
     length_exclusion_counter = 0
     inference_errors_counter = 0
-    correct_answers = dict()
+    processed_documents_counter = 0
+
+    # Store document and gold standard info temporarily for each batch
+    documents_map = {}
+    correct_answers_map = {}
+
     for batch in batched(dataset[dataset_split], batch_size):
-        tasks = list()
+        tasks = []
+        batch_doc_ids = []
+
         for datum in batch:
             doc_id = datum[id_column_name]
-            correct_answers[doc_id] = datum[gold_standard_column_name]
-            document = datum[context_column_name]
+            correct_answers_map[doc_id] = datum[gold_standard_column_name]
+            documents_map[doc_id] = datum[context_column_name]
 
             logger.info(f"Running ASYNC inference on document: {doc_id}")
+            batch_doc_ids.append(doc_id)
 
             # Format the prompt with the context document
-            message = prompt_template.format(context=document)
+            message = prompt_template.format(context=documents_map[doc_id])
 
             # Exclude messages that are longer than the context length
             tokens = tokenizer(message)["input_ids"]
@@ -257,40 +297,36 @@ async def run(
             if use_data_subset > 0 and counter >= use_data_subset:
                 break
 
-        for doc_id, inference_result in await asyncio.gather(*tasks):
-            logger.info(f"Got inference result for ID {doc_id}")
-            logger.info(f"Inference result: {inference_result}")
-            processed_result = handle_llm_inference_result(doc_id=doc_id, result=inference_result)
-            if processed_result.startswith("**ERROR**: "):
-                logger.warning(
-                    f"Error {processed_result} during handling inference results for document {doc_id}. Skipping..."
-                )
-                inference_errors_counter += 1
-                continue
+        # Process results as they become available
+        if tasks:
+            for completed_task in asyncio.as_completed(tasks):
+                doc_id, inference_result = await completed_task
 
-            results.append(
-                {
-                    "inference_result": processed_result,
-                    "gold_standard_result": [correct_answers[doc_id]],
-                    "doc_id": doc_id,
-                    "document": document,
-                    "prompt": prompt_template,
-                }
-            )
+                try:
+                    result_dict = get_inference_result_as_dict(
+                        doc_id=doc_id,
+                        inference_result=inference_result,
+                        correct_answer=correct_answers_map[doc_id],
+                        document=documents_map[doc_id],
+                        prompt_template=prompt_template,
+                    )
+                    processed_documents_counter += 1
+                    yield result_dict
+                except Exception as e:
+                    logger.error(f"Error processing inference result for document {doc_id}: {str(e)}")
+                    inference_errors_counter += 1
 
         if use_data_subset > 0 and counter >= use_data_subset:
             logger.info(f"Ran inference for a subset of data: {use_data_subset} documents.")
             break
 
-        logger.info(f"Total documents: {len(dataset[dataset_split])}")
-        logger.info(f"Total documents used for evaluation: {len(results)}")
-        logger.info(f"\tDocuments excluded due to length: {length_exclusion_counter}")
-        logger.info(f"\tInference errors encountered: {inference_errors_counter}")
-
-    return results
+    logger.info(f"Total documents in dataset: {len(dataset[dataset_split])}")
+    logger.info(f"Total documents processed for evaluation: {processed_documents_counter}")
+    logger.info(f"\tDocuments excluded due to length: {length_exclusion_counter}")
+    logger.info(f"\tInference errors encountered: {inference_errors_counter}")
 
 
-def main(args: Namespace) -> str:
+async def main(args: Namespace) -> str:
     """
     Main function to execute the inference pipeline.
 
@@ -330,38 +366,45 @@ def main(args: Namespace) -> str:
 
     client = get_llm_client(base_url=args.llm_base_url, port=args.llm_port, endpoint=args.llm_endpoint)
 
-    results = asyncio.run(
-        run(
-            dataset=ds,
-            prompt_template=prompt_template,
-            context_column_name=args.context_column_name,
-            id_column_name=args.id_column_name,
-            gold_standard_column_name=args.gold_standard_column_name,
-            llm_client=client,
-            model_name=args.model_name,
-            model_path=args.model_path,
-            parameters=parameters,
-            max_context_size=args.maximum_context_size,
-            batch_size=args.batch_size,
-            use_data_subset=args.use_data_subset,
-            dataset_split=args.dataset_split,
-        )
-    )
-
     results_dir_path = os.path.join(
         args.output_dir_path,
         f"inferences_{args.model_name}--{args.evaluation_dataset.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
     )
 
-    inferences_filepath = save_inference_results(
-        results=results,
-        output_dir_path=results_dir_path,
-    )
+    if not os.path.exists(results_dir_path):
+        os.makedirs(results_dir_path)
+    logger.info(f"Results directory created at {results_dir_path}")
 
-    return inferences_filepath
+    async for inference_result in run(
+        dataset=ds,
+        prompt_template=prompt_template,
+        context_column_name=args.context_column_name,
+        id_column_name=args.id_column_name,
+        gold_standard_column_name=args.gold_standard_column_name,
+        llm_client=client,
+        model_name=args.model_name,
+        model_path=args.model_path,
+        parameters=parameters,
+        max_context_size=args.maximum_context_size,
+        batch_size=args.batch_size,
+        use_data_subset=args.use_data_subset,
+        dataset_split=args.dataset_split,
+    ):
+        logger.info(f"Got inference result for document {inference_result['doc_id']}")
+        logger.info(f"Inference result: {inference_result}")
+
+        # Save the inference result to a file
+        _ = save_inference_results(
+            result=inference_result,
+            output_dir_path=results_dir_path,
+        )
+
+        logger.info(f"Saved inference result for document {inference_result['doc_id']}")
+
+    return results_dir_path
 
 
 if __name__ == "__main__":
     parser = get_inference_parser()
     args = parser.parse_args()
-    main(args)
+    asyncio.run(main(args))

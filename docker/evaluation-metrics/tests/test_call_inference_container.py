@@ -1,4 +1,5 @@
 import asyncio
+import glob
 import json
 import os
 from argparse import Namespace
@@ -181,8 +182,9 @@ def test_run(mocker):
 
     prompt_template = "Summarise the following text:\n{context}"
 
-    results = asyncio.run(
-        run(
+    async def collect_results():
+        results = []
+        async for result in run(
             dataset=dataset,
             prompt_template=prompt_template,
             context_column_name="article",
@@ -196,8 +198,11 @@ def test_run(mocker):
             batch_size=1,
             use_data_subset=False,
             dataset_split="test",
-        )
-    )
+        ):
+            results.append(result)
+        return results
+
+    results = asyncio.run(collect_results())
 
     assert len(results) == 1
     assert results[0]["inference_result"] == "This is a summary."
@@ -225,7 +230,7 @@ def test_main(mocker, tmpdir):
         llm_endpoint="v1",
         evaluation_dataset="abisee/cnn_dailymail",
         evaluation_dataset_version="3.0.0",
-        output_dir_path="/tmp",
+        output_dir_path=tmpdir,
         model_name="test-model",
         model_path="meta-llama/Llama-3.1-8B-Instruct",
         maximum_context_size=100,
@@ -234,34 +239,64 @@ def test_main(mocker, tmpdir):
         context_column_name="article",
         dataset_split="test",
         gold_standard_column_name="highlights",
+        id_column_name="id",  # Add the id_column_name attribute
         batch_size=50,  # Add the batch_size attribute
     )
 
-    dataset = {"test": [{"article": "This is a test article.", "highlights": "This is a test answer."}]}
+    dataset = {
+        "test": [{"article": "This is a test article.", "highlights": "This is a test answer.", "id": "test_doc_id"}]
+    }
     prompt_template = "Summarise the following text."
 
     with open(os.path.join(tmpdir, "prompt.txt"), "w") as input_file:
         input_file.write(prompt_template)
 
-    mock_client = mocker.Mock()
-    mock_results = [
-        {"answer": "This is a summary.", "correct_answer": "This is a test article.", "prompt": prompt_template}
-    ]
-
+    # Use AsyncMock instead of Mock for async methods
+    mock_client = mocker.AsyncMock()
     mocker.patch(
         "evaluation_metrics.call_inference_container.call_inference_container.download_dataset", return_value=dataset
     )
     mocker.patch(
         "evaluation_metrics.call_inference_container.call_inference_container.get_llm_client", return_value=mock_client
     )
-    mocker.patch("evaluation_metrics.call_inference_container.call_inference_container.run", return_value=mock_results)
+
+    # Define mock_results before using it
+    mock_results = [
+        {
+            "inference_result": "This is a test inference.",
+            "gold_standard_result": ["This is a test answer."],
+            "prompt": "Test prompt",
+            "doc_id": "test_doc_id",
+        }
+    ]
+
+    # Mock the run function to return a coroutine that yields mock_results
+    async def mock_run_coroutine(*args, **kwargs):
+        yield mock_results[0]
+
+    # Mock AutoTokenizer to avoid actual model loading
+    mock_tokenizer = mocker.MagicMock()
+
+    # Mock the run function
+    mocker.patch(
+        "evaluation_metrics.call_inference_container.call_inference_container.run", return_value=mock_run_coroutine()
+    )
+
+    # This is redundant code - removed duplicate mocking and call
     mocker.patch("evaluation_metrics.call_inference_container.call_inference_container.AutoTokenizer.from_pretrained")
 
-    inferences_filepath = call_inference_container_main(mock_args)
+    inferences_filepath = asyncio.run(call_inference_container_main(mock_args))
 
-    assert inferences_filepath.startswith("/tmp/inferences_test-model--abisee_cnn_dailymail--3.0.0--")
+    print(inferences_filepath)
+    print(os.listdir(inferences_filepath))
 
-    with open(inferences_filepath, "r") as infile:
+    assert inferences_filepath.startswith(os.path.join(tmpdir, "inferences_test-model--abisee_cnn_dailymail--3.0.0--"))
+
+    # Use glob to find the json file created in the output directory
+    json_files = glob.glob(os.path.join(inferences_filepath, "*.json"))
+    assert len(json_files) == 1
+
+    with open(json_files[0], "r") as infile:
         inference_results = infile.read()
 
     assert json.loads(inference_results) == mock_results[0]
