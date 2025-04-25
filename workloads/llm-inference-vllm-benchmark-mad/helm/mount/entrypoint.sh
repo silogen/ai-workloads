@@ -14,6 +14,10 @@ curl https://dl.min.io/client/mc/release/linux-amd64/mc -o $WORKPATH/bin/mc
 chmod +x $WORKPATH/bin/mc
 mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
 
+# Start a background process that watches for changes and uploads them
+mc mirror --watch $WORKPATH/output/ minio-host/${BUCKET_RESULT_PATH} &
+MINIOPID=$!
+
 bash $WORKPATH/mount/minio_download_models.sh
 
 if [ $USE_MAD != "false" ]; then
@@ -41,7 +45,13 @@ if [ $USE_SCENARIO != "false" ]; then
         --result-dir $OUTPATH
 fi
 
-mc cp --recursive $OUTPATH minio-host/${BUCKET_RESULT_PATH}/
-
-echo "\n\n==========\n"
+echo -e "\n\n==========\n"
 find $OUTPATH -name "*.csv" | xargs tail -n +1
+
+echo 'Benchmarking completed'
+kill $MINIOPID
+wait $MINIOPID || true
+
+# Run a final mirror command to ensure all data is uploaded
+mc mirror $WORKPATH/output/ minio-host/${BUCKET_RESULT_PATH}
+echo 'All data uploaded successfully'

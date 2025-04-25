@@ -1,4 +1,11 @@
 # Wait for vLLM server (localhost) to be ready
+mkdir -p /workload/output
+curl https://dl.min.io/client/mc/release/linux-amd64/mc -o /workload/mc
+chmod +x /workload/mc
+/workload/mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
+/workload/mc mirror --watch /workload/output/ minio-host/${BUCKET_RESULT_PATH} &
+MINIOPID=$! # Capture the PID of the mc mirror process
+
 echo "vLLM server started with PID: $SERVER_PID"
 ATTEMPT=0
 while ! curl -s http://localhost:8000/v1/models >/dev/null; do
@@ -52,9 +59,8 @@ for req_in_out in "${Req_In_Out[@]}"; do
     done
 done
 
-curl https://dl.min.io/client/mc/release/linux-amd64/mc --create-dirs -o /minio-binaries/mc
-chmod +x /minio-binaries/mc
-export PATH="${PATH}:/minio-binaries/"
-
-mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
-mc cp --recursive $OUTPATH minio-host/${BUCKET_RESULT_PATH}/
+echo "Benchmarking completed"
+kill $MINIOPID
+wait $MINIOPID || true
+/workload/mc mirror /workload/output/ minio-host/${BUCKET_RESULT_PATH}
+echo "All data uploaded successfully"
