@@ -23,6 +23,8 @@ spec:
               cpu: "{{ .Values.model_inference_container.cpu_count }}"
               amd.com/gpu: "{{ .Values.model_inference_container.gpu_count }}"
           env:
+            - name: VLLM_USE_V1
+              value: "1"
             - name: VLLM_NO_USAGE_STATS
               value: "1"
             - name: DO_NOT_TRACK
