@@ -11,12 +11,11 @@ cpu_per_gpu: 4
 
 # vllm engine args (ref: https://docs.vllm.ai/en/latest/serving/engine_args.html)
 vllm_engine_args:
-  {}
   # tensor-parallel-size: "{{ .Values.gpus }}"  # taken care of by the template
   # model: "{{ .Values.model }}"  # taken care of by the template
   # served-model-name: "{{ .Values.model }}"
   # enforce-eager: "true"
-  # gpu-memory-utilization: 0.9
+  gpu-memory-utilization: "0.95"
 
 # env vars (vllm ref: https://docs.vllm.ai/en/latest/serving/env_vars.html)
 env_vars:
@@ -32,7 +31,7 @@ env_vars:
 
 storage:
   ephemeral:
-    quantity: 128Gi
+    quantity: 256Gi
     storageClassName: mlstorage
     accessModes:
       - ReadWriteOnce
