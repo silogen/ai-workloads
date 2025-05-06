@@ -1,3 +1,11 @@
+# Base URL helper
+{{- define "httpRoute.baseUrl" -}}
+{{- $projectId := default "project_id" .Values.metadata.project_id -}}
+{{- $userId := default "user_id" .Values.metadata.user_id -}}
+{{- $workloadId := default (include "release.fullname" .) .Values.metadata.workload_id -}}
+{{- printf "/%s/%s/%s" $projectId $userId $workloadId }}
+{{- end -}}
+
 # Release name helper
 {{- define "release.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
@@ -47,6 +55,8 @@ limits:
       key: {{ $value.key }}
 {{- end }}
 {{- end }}
+- name: BASE_URL
+  value: {{ include "httpRoute.baseUrl" . | quote }}
 {{- end -}}
 
 # Container volume mounts helper
@@ -57,6 +67,12 @@ limits:
   name: workload-mount
 - mountPath: /dev/shm
   name: dshm
+{{- if .Values.persistent_storage.enabled }}
+{{- range $key, $value := .Values.persistent_storage.volumes }}
+- mountPath: {{ tpl $value.mount_path $ }}
+  name: {{ $key }}
+{{- end }}
+{{- end }}
 {{- end -}}
 
 # Container volumes helper
@@ -88,4 +104,11 @@ limits:
 - configMap:
     name: {{ include "release.fullname" . }}
   name: workload-mount
+{{- if .Values.persistent_storage.enabled }}
+{{- range $key, $value := .Values.persistent_storage.volumes }}
+- persistentVolumeClaim:
+    claimName: {{ tpl $value.pvc_name $ }}
+  name: {{ $key }}
+{{- end }}
+{{- end }}
 {{- end -}}

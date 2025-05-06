@@ -1,10 +1,13 @@
 metadata:
   labels: {}
+  project_id: silogen
+  user_id: user
+  workload_id: # defaults to the release name
 
-image: "python:3.12"
+image: rocm/pytorch:rocm6.4_ubuntu24.04_py3.12_pytorch_release_2.6.0
 imagePullPolicy: Always
-gpus: 0
-memory_per_gpu: 64 # Gi
+gpus: 1
+memory_per_gpu: 128 # Gi
 cpu_per_gpu: 4
 
 env_vars:
@@ -36,23 +39,30 @@ deployment:
 # readinessProbe - checks if the container is ready to serve traffic. If it fails, the container is removed from the service's endpoints but remains running.
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 startupProbe: {}
-livenessProbe:
-  httpGet:
-    path: /api
-    port: http
-readinessProbe:
-  httpGet:
-    path: /api
-    port: http
+livenessProbe: {}
+readinessProbe: {}
 
 entrypoint: |
   export PATH=$PATH:$PIPX_BIN_DIR
-  cd /workload
   pip install pipx ipykernel
   pipx install --include-deps jupyter
+  pipx inject --include-deps jupyter jupyterlab-lsp 'python-lsp-server[all]' ipywidgets jupyterlab-git jupyterlab_code_formatter
   python -m ipykernel install --user --name=default-python3
-  jupyter-lab --ServerApp.token='' --ServerApp.ip='0.0.0.0' --ServerApp.allow_root=True --no-browser
+  jupyter-lab --ServerApp.token='' --ServerApp.ip='0.0.0.0' --ServerApp.allow_root=True --ServerApp.base_url=$BASE_URL --no-browser --ServerApp.root_dir='/workload'
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:
   enabled: false
+
+http_route:
+  enabled: false
+
+ingress:
+  enabled: false
+
+persistent_storage:
+  enabled: false
+  volumes:
+    pvc-user:
+      pvc_name: "pvc-user-{{ .Values.metadata.user_id }}"
+      mount_path: "/workload/{{ .Values.metadata.user_id }}"
