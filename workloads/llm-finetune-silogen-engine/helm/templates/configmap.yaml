@@ -6,11 +6,30 @@ data:
   accelerate_config.yaml: |
     {{- if (eq .Values.distributedType "auto-deepspeed-stage1" ) }}
     compute_environment: LOCAL_MACHINE
+    distributed_type: DEEPSPEED
     deepspeed_config:
       zero_stage: 1
       bf16:
         enabled: true
+    fsdp_config: {}
+    machine_rank: 0
+    main_process_ip: null
+    main_process_port: null
+    mixed_precision: bf16
+    num_machines: 1
+    num_processes: {{ .Values.finetuningGpus }}
+    use_cpu: false
+    {{- else if (eq .Values.distributedType "auto-deepspeed-stage3") }}
+    compute_environment: LOCAL_MACHINE
     distributed_type: DEEPSPEED
+    deepspeed_config:
+      zero_stage: 3
+      bf16:
+        enabled: true
+      offload_optimizer_device: none
+      offload_param_device: none
+      zero3_init_flag: true
+      zero3_save_16bit_model: true
     fsdp_config: {}
     machine_rank: 0
     main_process_ip: null

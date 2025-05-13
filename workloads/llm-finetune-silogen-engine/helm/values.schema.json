@@ -65,7 +65,7 @@
       "distributedType": {
         "type": "string",
         "default": "auto-deepspeed-stage1",
-        "enum": ["auto-deepspeed-stage1", "auto-ddp", "auto-single-process", "custom-accelerate-config"],
+        "enum": ["auto-deepspeed-stage1", "auto-deepspeed-stage3", "auto-ddp", "auto-single-process", "custom-accelerate-config"],
         "description": "The type of distributed training to use. If using custom-accelerate-config, provide the config as an object in customAccelerateConfig"
       },
       "customAccelerateConfig": {

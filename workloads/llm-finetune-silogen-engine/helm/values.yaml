@@ -26,9 +26,11 @@ downloadsReservedSize: 64Gi
 checkpointsReservedSize: 512Gi
 storageClass: mlstorage # set this to use a specific storageClass for the storage.
 finetuningGpus: 1 # 1 or 8, values in between are not robust at the moment
+memoryPerGpu: 64
+cpusPerGpu: 8
 
 # Runtime configuration:
-distributedType: "auto-deepspeed-stage1"  # Alternatives: "auto-single-process", "custom-accelerate-config"
+distributedType: "auto-deepspeed-stage1"  # Alternatives: "auto-deepspeed-stage3", "auto-ddp", "auto-single-process", "custom-accelerate-config"
 customAccelerateConfig:  # Can contain an accelerate config in YAML format, used with distributed_type: "custom-accelerate-config".
 mergeAdapter: true
 

@@ -10,7 +10,7 @@ metadata:
     {{- end }}
   {{- end }}
 spec:
-  ttlSecondsAfterFinished: 3600
+  ttlSecondsAfterFinished: 86400  #24h
   backoffLimit: 0
   template:
     spec:
@@ -39,7 +39,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.bucketCredentialsSecret.name }}
                   key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
-            # finetuning
+            # finetuning logging
             - name: ACCELERATE_LOG_LEVEL
               value: info
             - name: TRANSFORMERS_VERBOSITY
@@ -58,12 +58,12 @@ spec:
               {{- include "finetuningAndUploadEntrypoint" . | nindent 14 }}
           resources:
             limits:
-              memory: "{{ mul .Values.finetuningGpus 48 }}Gi"
-              cpu: "{{ mul .Values.finetuningGpus 4 }}"
+              memory: "{{ mul .Values.finetuningGpus .Values.memoryPerGpu }}Gi"
+              cpu: "{{ mul .Values.finetuningGpus .Values.cpusPerGpu }}"
               amd.com/gpu: "{{ .Values.finetuningGpus }}"
             requests:
-              memory: "{{ mul .Values.finetuningGpus 48 }}Gi"
-              cpu: "{{ mul .Values.finetuningGpus 4 }}"
+              memory: "{{ mul .Values.finetuningGpus .Values.memoryPerGpu }}Gi"
+              cpu: "{{ mul .Values.finetuningGpus .Values.cpusPerGpu }}"
               amd.com/gpu: "{{ .Values.finetuningGpus }}"
           volumeMounts:
             - name: dshm # Increase SHM size for the container by mounting /dev/shm, for Pytorch parallel processing

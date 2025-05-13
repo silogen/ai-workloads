@@ -74,3 +74,7 @@ kubectl port-forward --namespace YOUR_NAMESPACE pods/YOUR_POD_NAME 6006:6006
 Then browse to [localhost:6006](localhost:6006).
 
 Note that the logging frequency is set by the HuggingFace Transformers [logging options](https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.TrainingArguments.logging_strategy).
+
+## Best-known-configuration model overrides
+
+The directory `overrides/models` hosts finetuning recipes for various models. The files are named according to model canonical names, which is the huggingface pattern of `organization/model-name` just changed into `organization_model-name`. These configurations have been shown to work well in experiments, but that does not guarantee that these exact parameters are always optimal. The best parameters still depend on the data, too.
