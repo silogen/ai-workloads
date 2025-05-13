@@ -25,7 +25,7 @@ async def main(args: Namespace):
 
     Args:
         args (Namespace): A namespace object containing the following attributes:
-            - evaluation_dataset (str): The name of the evaluation dataset.
+            - evaluation_dataset_name (str): The name of the evaluation dataset.
             - evaluation_dataset_version (str): The version of the evaluation dataset.
             - prompt_template_path (str): Path to the prompt template file.
             - llm_base_url (str): Base URL of the LLM service.
@@ -59,7 +59,7 @@ async def main(args: Namespace):
         - Final evaluation results.
     """
 
-    ds = download_dataset(dataset=args.evaluation_dataset, version=args.evaluation_dataset_version)
+    ds = download_dataset(dataset=args.evaluation_dataset_name, version=args.evaluation_dataset_version)
 
     logger.info("Dataset loaded...")
 
@@ -76,17 +76,16 @@ async def main(args: Namespace):
 
     results_dir_path = os.path.join(
         args.output_dir_path,
-        f"inferences_{args.model_name}--{args.evaluation_dataset.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
+        f"inferences_{args.model_name}--{args.evaluation_dataset_name.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
         "inference_results",
     )
+    if not os.path.exists(results_dir_path):
+        logger.info(f"Creating path {results_dir_path}")
+        os.makedirs(results_dir_path)
 
     logger.info(f"Results will be saved to {results_dir_path}")
 
     saved_results = []
-
-    if not os.path.exists(results_dir_path):
-        logger.info(f"Creating path {results_dir_path}")
-        os.makedirs(results_dir_path)
 
     async for inference_result in run_call_inference_container(
         dataset=ds,

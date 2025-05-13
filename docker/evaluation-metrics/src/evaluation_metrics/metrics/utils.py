@@ -1,8 +1,11 @@
 import json
 import os
 from argparse import Namespace
+from typing import Any, Dict, List
 
+import jsonlines
 from evaluation_metrics import logger
+from evaluation_metrics.data.data_classes import AggregatedJudgeResults
 from evaluation_metrics.metrics.data.data_classes import EvaluationResults
 from minio import Minio, S3Error
 from numpy import ndarray
@@ -53,7 +56,7 @@ def write_to_minio_storage(client: Minio, source_file: str, destination_file: st
         logger.error("Error occurred in Minio upload: %s", e)
 
 
-def save_results(results: EvaluationResults, config: Namespace, results_dir_path: str):
+def save_results(results: EvaluationResults | AggregatedJudgeResults, config: Namespace, results_dir_path: str):
     """
     Save evaluation results locally and upload them to MinIO storage.
     Args:
@@ -109,3 +112,21 @@ def save_results(results: EvaluationResults, config: Namespace, results_dir_path
         bucket_name=os.environ["BUCKET_STORAGE_BUCKET"],
     )
     logger.info("Config saved to MinIO")
+
+
+def read_jsonl_data(input_file_path: str) -> List[Dict[str, Any]]:
+    """
+    Reads a JSONL (JSON Lines) file and returns its contents as a list of dictionaries.
+    Args:
+        input_file_path (str): The file path to the JSONL file.
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries, where each dictionary represents a line in the JSONL file.
+    Raises:
+        jsonlines.InvalidLineError: If a line in the file is invalid and cannot be parsed as a dictionary.
+    """
+
+    generations = list()
+    with jsonlines.open(input_file_path) as reader:
+        for line in reader.iter(type=dict, skip_invalid=True):
+            generations.append(line)
+    return generations

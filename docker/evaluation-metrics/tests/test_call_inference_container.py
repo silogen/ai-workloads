@@ -228,7 +228,7 @@ def test_main(mocker, tmpdir):
         llm_base_url="http://localhost",
         llm_port="8080",
         llm_endpoint="v1",
-        evaluation_dataset="abisee/cnn_dailymail",
+        evaluation_dataset_name="abisee/cnn_dailymail",
         evaluation_dataset_version="3.0.0",
         output_dir_path=tmpdir,
         model_name="test-model",

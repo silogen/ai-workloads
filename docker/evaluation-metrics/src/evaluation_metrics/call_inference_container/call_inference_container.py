@@ -10,6 +10,7 @@ from typing import Any, AsyncGenerator, Dict, Iterable, List, Tuple
 from datasets import load_dataset
 from evaluation_metrics import logger
 from evaluation_metrics.argument_parsers import get_inference_parser
+from jsonlines import Writer
 from openai import APIError, AsyncClient
 from openai.types.chat import ChatCompletion
 from transformers import AutoTokenizer
@@ -49,7 +50,7 @@ def get_llm_client(base_url: str, port: str | None, endpoint: str | None) -> Asy
     return AsyncClient(base_url=model_url, api_key="EMPTY")
 
 
-def handle_llm_inference_result(doc_id: str, result: ChatCompletion) -> str:
+def handle_llm_inference_result(doc_id: str, result: ChatCompletion) -> str | None:
     """
     Processes the result of an LLM (Large Language Model) inference and extracts the relevant content.
 
@@ -88,6 +89,45 @@ def save_inference_results(result: Dict[str, Any], output_dir_path: str) -> str:
     logger.info(f"Writing inferences to {inferences_filepath}")
     with open(inferences_filepath, "w") as fp:
         fp.write(json.dumps(result))
+
+    return inferences_filepath
+
+
+def save_judge_inferences(
+    results: list,
+    output_dir_path: str,
+    llm_name: str,
+    judge_name: str,
+    evaluation_dataset_name: str,
+    evaluation_dataset_version: str,
+) -> str:
+    """
+    Saves judge inference results to a JSONL file in the specified output directory.
+    Args:
+        results (list): A list of judge inference results to be saved.
+        output_dir_path (str): The directory path where the judge inference results file will be saved.
+        model_name (str): The name of the model used for inference.
+        evaluation_dataset_name (str): The name of the evaluation dataset used.
+        evaluation_dataset_version (str): The version of the evaluation dataset used.
+    Returns:
+        str: The file path of the saved judge inference results.
+    Raises:
+        OSError: If the output directory cannot be created or the file cannot be written.
+    """
+
+    if not os.path.exists(output_dir_path):
+        logger.info(f"Creating path {output_dir_path}")
+        os.makedirs(output_dir_path)
+
+    inferences_filepath = os.path.join(
+        output_dir_path,
+        f"judge_{judge_name}_judging_inferences_by_{llm_name}--{evaluation_dataset_name.replace('/', '_')}--{evaluation_dataset_version}--{datetime.now().isoformat()}.jsonl",
+    )
+
+    logger.info(f"Writing inferences to {inferences_filepath}")
+    with open(inferences_filepath, "w") as fp:
+        writer = Writer(fp)
+        writer.write_all(results)
 
     return inferences_filepath
 
@@ -139,8 +179,26 @@ def batched(iterable: Iterable, n: int, strict=False):
         yield batch
 
 
+async def async_iterable(iterable):
+    for item in iterable:
+        yield item
+
+
+async def batched_async(iterable, batch_size: int):
+    """Generator to batch an input iterator."""
+    batch = []
+    async for item in async_iterable(iterable):
+        batch.append(item)
+        if len(batch) == batch_size:
+            yield batch
+            batch = []
+
+    if len(batch) > 0:
+        yield batch
+
+
 async def get_inference_result(
-    llm_client: AsyncClient, message: str, model_name: str, parameters: Dict[str, Any], doc_id: str
+    llm_client: AsyncClient, messages: list, model_name: str, parameters: Dict[str, Any], doc_id: str
 ) -> Tuple[str, ChatCompletion]:
     """
     Sends a message to an LLM client to get an inference result and handles potential API errors.
@@ -158,7 +216,7 @@ async def get_inference_result(
 
     try:
         response = await llm_client.chat.completions.create(
-            messages=[{"role": "user", "content": message}],
+            messages=messages,
             model=model_name,
             **parameters,
         )
@@ -283,7 +341,7 @@ async def run(
             correct_answers_map[doc_id] = datum[gold_standard_column_name]
             documents_map[doc_id] = datum[context_column_name]
 
-            logger.info(f"Running ASYNC inference on document: {doc_id}")
+            logger.info(f"Running async inference on document: {doc_id}")
             batch_doc_ids.append(doc_id)
 
             # Format the prompt with the context document
@@ -299,7 +357,11 @@ async def run(
 
             inference_tasks.append(
                 get_inference_result(
-                    llm_client=llm_client, message=message, model_name=model_name, parameters=parameters, doc_id=doc_id
+                    llm_client=llm_client,
+                    messages=[{"role": "user", "content": message}],
+                    model_name=model_name,
+                    parameters=parameters,
+                    doc_id=doc_id,
                 )
             )
 
@@ -346,7 +408,7 @@ async def main(args: Namespace) -> str:
 
     Args:
         args (Namespace): A namespace object containing the following attributes:
-            - evaluation_dataset (str): The name of the evaluation dataset.
+            - evaluation_dataset_name (str): The name of the evaluation dataset.
             - evaluation_dataset_version (str): The version of the evaluation dataset.
             - prompt_template_path (str): Path to the prompt template file.
             - llm_base_url (str): Base URL of the LLM service.
@@ -366,9 +428,9 @@ async def main(args: Namespace) -> str:
         str: The file path of the saved inference results.
     """
 
-    logger.info(f"Loading dataset {args.evaluation_dataset} version {args.evaluation_dataset_version}")
+    logger.info(f"Loading dataset {args.evaluation_dataset_name} version {args.evaluation_dataset_version}")
 
-    ds = download_dataset(dataset=args.evaluation_dataset, version=args.evaluation_dataset_version)
+    ds = download_dataset(dataset=args.evaluation_dataset_name, version=args.evaluation_dataset_version)
 
     logger.info("Dataset loaded...")
 
@@ -382,7 +444,7 @@ async def main(args: Namespace) -> str:
 
     results_dir_path = os.path.join(
         args.output_dir_path,
-        f"inferences_{args.model_name}--{args.evaluation_dataset.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
+        f"inferences_{args.model_name}--{args.evaluation_dataset_name.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
     )
 
     if not os.path.exists(results_dir_path):

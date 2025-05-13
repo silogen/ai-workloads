@@ -1,0 +1,81 @@
+import json
+import os
+from dataclasses import dataclass
+
+from dataclasses_json import dataclass_json
+from evaluation_metrics import logger
+
+
+@dataclass_json
+@dataclass
+class JudgeResult:
+    context_document: str
+    context_document_id: str
+    gold_standard: str
+    llm_inference: str
+    judge_explanation: str
+    judge_grade: float
+
+    def save_dataclass_result(self, output_dir_path: str):
+        """
+        Saves the judge result to a JSONL file.
+        """
+        filepath = os.path.join(
+            output_dir_path,
+            f"judge_result_{self.context_document_id}.json",
+        )
+        with open(filepath, "w") as f:
+            f.write(self.to_json())  # type: ignore
+        logger.info(f"Saved judge result for document {filepath} to json file.")
+
+
+@dataclass_json
+@dataclass
+class AggregatedJudgeResults:
+    judge_results: dict[str, JudgeResult]
+    average_grade: float
+    prompt_template_step_1: str
+    prompt_template_step_2: str
+    evaluation_dataset_name: str
+    evaluation_dataset_version: str
+    llm_name: str
+    judge_name: str
+
+    def compute_average_grade(self):
+        """
+        Aggregates scores from judge
+        Args:
+            judge_inferences_filepath (str): Path to the JSONL file containing judge inferences.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the average grade across all judge inferences."""
+
+        judge_grades = [judge_result.judge_grade for judge_result in self.judge_results.values()]
+
+        try:
+            average_grade = sum(judge_grades) / len(judge_grades)
+        except ZeroDivisionError:
+            logger.error("No judge grades found. Cannot compute average grade.")
+            average_grade = 0
+
+        self.average_grade = average_grade
+
+    def print_evaluation_results(self):
+        """
+        Prints the evaluation results.
+        """
+        logger.info("Evaluation results:")
+        logger.info(
+            f"Performance of {self.llm_name} on {self.evaluation_dataset_name} v{self.evaluation_dataset_version} as judged by {self.judge_name}"
+        )
+        logger.info(f"Average grade: {self.average_grade}")
+        n_judgments = sum(1 for judge_result in self.judge_results.values() if judge_result.judge_grade is not None)
+        logger.info(f"Number of inferences for judging: {len(self.judge_results)}")
+        logger.info(f"Number of judgments: {n_judgments}")
+
+        logger.info(f"Prompt template step 1: {self.prompt_template_step_1}")
+        logger.info(f"Prompt template step 2: {self.prompt_template_step_2}")
+        logger.info(f"Evaluation dataset name: {self.evaluation_dataset_name}")
+        logger.info(f"Evaluation dataset version: {self.evaluation_dataset_version}")
+        logger.info(f"LLM name: {self.llm_name}")
+        logger.info(f"Judge name: {self.judge_name}")

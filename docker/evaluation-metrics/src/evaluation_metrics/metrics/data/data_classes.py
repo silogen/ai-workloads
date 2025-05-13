@@ -20,3 +20,19 @@ class EvaluationScores:
 class EvaluationResults:
     prompts: List[str]
     scores: EvaluationScores
+
+
+@dataclass_json
+@dataclass
+class JudgeScores:
+    average_grade: float
+
+
+@dataclass_json
+@dataclass
+class JudgeResults:
+    judge_scores: JudgeScores
+    prompts: List[str]
+    inferences: List[str]
+    judge_explanations: List[str]
+    judge_grades: List[float]
