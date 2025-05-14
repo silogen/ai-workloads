@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from evaluation_metrics.metrics.utils import convert_negatives_to_zero
+from llm_evaluation.metrics.utils import convert_negatives_to_zero
 
 
 def test_convert_negatives_to_zero_all_positive():

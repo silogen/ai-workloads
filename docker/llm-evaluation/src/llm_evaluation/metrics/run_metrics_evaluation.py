@@ -6,11 +6,11 @@ from argparse import Namespace
 from typing import Any, Dict, List
 
 import jsonlines
-from evaluation_metrics import logger
-from evaluation_metrics.argument_parsers import get_metrics_parser
-from evaluation_metrics.metrics.data.data_classes import EvaluationResults, EvaluationScores
-from evaluation_metrics.metrics.metrics import compute_bertscore, compute_bleu_score, compute_exact_match
-from evaluation_metrics.metrics.utils import save_results
+from llm_evaluation import logger
+from llm_evaluation.argument_parsers import get_metrics_parser
+from llm_evaluation.data.data_classes import EvaluationResults, EvaluationScores
+from llm_evaluation.metrics.metrics import compute_bertscore, compute_bleu_score, compute_exact_match
+from llm_evaluation.metrics.utils import save_results
 
 
 def compute_scores(predictions: List[str], references: List[str]) -> EvaluationScores:

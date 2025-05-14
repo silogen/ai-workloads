@@ -4,9 +4,8 @@ from argparse import Namespace
 from typing import Any, Dict, List
 
 import jsonlines
-from evaluation_metrics import logger
-from evaluation_metrics.data.data_classes import AggregatedJudgeResults
-from evaluation_metrics.metrics.data.data_classes import EvaluationResults
+from llm_evaluation import logger
+from llm_evaluation.data.data_classes import AggregatedJudgeResults, EvaluationResults
 from minio import Minio, S3Error
 from numpy import ndarray
 

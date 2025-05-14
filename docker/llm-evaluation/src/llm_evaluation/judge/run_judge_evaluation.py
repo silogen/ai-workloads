@@ -3,14 +3,14 @@ import re
 import time
 from typing import AsyncGenerator
 
-from evaluation_metrics import logger
-from evaluation_metrics.call_inference_container.call_inference_container import (
+from llm_evaluation import logger
+from llm_evaluation.call_inference_container.call_inference_container import (
     batched_async,
     get_inference_result,
     handle_llm_inference_result,
     read_prompt_template,
 )
-from evaluation_metrics.data.data_classes import JudgeResult
+from llm_evaluation.data.data_classes import JudgeResult
 
 
 async def run_2step_judge(

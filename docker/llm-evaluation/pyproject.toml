@@ -2,7 +2,7 @@
 requires = ["setuptools"]
 
 [project]
-name = "evaluation-metrics"
+name = "llm-evaluation"
 description = "Evaluations for LLMs."
 version = "0.0.1"
 readme = "README.md"
@@ -17,7 +17,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["evaluation-metrics*"]
+include = ["llm-evaluation*"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }

@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 import numpy as np
 from evaluate import load
-from evaluation_metrics.metrics.utils import convert_negatives_to_zero
+from llm_evaluation.metrics.utils import convert_negatives_to_zero
 
 
 def compute_bertscore(

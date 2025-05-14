@@ -3,20 +3,20 @@ import os
 from argparse import Namespace
 from datetime import datetime
 
-from evaluation_metrics import logger
-from evaluation_metrics.argument_parsers import get_inference_parser
-from evaluation_metrics.call_inference_container.call_inference_container import (
+from llm_evaluation import logger
+from llm_evaluation.argument_parsers import get_inference_parser
+from llm_evaluation.call_inference_container.call_inference_container import (
     download_dataset,
     get_llm_client,
     read_prompt_template,
 )
-from evaluation_metrics.call_inference_container.call_inference_container import run as run_call_inference_container
-from evaluation_metrics.call_inference_container.call_inference_container import (
+from llm_evaluation.call_inference_container.call_inference_container import run as run_call_inference_container
+from llm_evaluation.call_inference_container.call_inference_container import (
     save_inference_results,
 )
-from evaluation_metrics.metrics.run_metrics_evaluation import read_inference_data
-from evaluation_metrics.metrics.run_metrics_evaluation import run as run_metrics_evaluation
-from evaluation_metrics.metrics.utils import save_results
+from llm_evaluation.metrics.run_metrics_evaluation import read_inference_data
+from llm_evaluation.metrics.run_metrics_evaluation import run as run_metrics_evaluation
+from llm_evaluation.metrics.utils import save_results
 
 
 async def main(args: Namespace):

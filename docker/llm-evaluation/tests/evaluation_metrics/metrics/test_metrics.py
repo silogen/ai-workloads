@@ -1,5 +1,5 @@
 import pytest
-from evaluation_metrics.metrics.metrics import (
+from llm_evaluation.metrics.metrics import (
     compute_bertscore,
     compute_bleu_score,
     compute_exact_match,

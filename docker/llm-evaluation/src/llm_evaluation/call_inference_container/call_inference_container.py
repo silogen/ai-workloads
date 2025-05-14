@@ -5,12 +5,12 @@ import time
 from argparse import Namespace
 from datetime import datetime
 from itertools import islice
-from typing import Any, AsyncGenerator, Dict, Iterable, List, Tuple
+from typing import Any, AsyncGenerator, Dict, Iterable, Tuple
 
 from datasets import load_dataset
-from evaluation_metrics import logger
-from evaluation_metrics.argument_parsers import get_inference_parser
 from jsonlines import Writer
+from llm_evaluation import logger
+from llm_evaluation.argument_parsers import get_inference_parser
 from openai import APIError, AsyncClient
 from openai.types.chat import ChatCompletion
 from transformers import AutoTokenizer

@@ -5,7 +5,7 @@ from argparse import Namespace
 
 import jsonlines
 import pytest
-from evaluation_metrics.metrics.run_metrics_evaluation import main, read_inference_data, run
+from llm_evaluation.metrics.run_metrics_evaluation import main, read_inference_data, run
 
 
 def test_read_inference_data_nonexistent_path():
@@ -68,9 +68,9 @@ def test_main_function(minio_mock, tmpdir, mocker):
     # mock_minio_instance.fput_object = mocker.Mock()
 
     # Mock the return values of compute_bertscore, compute_bleu_score, and compute_exact_match
-    mocker.patch("evaluation_metrics.metrics.metrics.compute_bertscore", return_value=0.5)
-    mocker.patch("evaluation_metrics.metrics.metrics.compute_bleu_score", return_value=0.5)
-    mocker.patch("evaluation_metrics.metrics.metrics.compute_exact_match", return_value=0.5)
+    mocker.patch("llm_evaluation.metrics.metrics.compute_bertscore", return_value=0.5)
+    mocker.patch("llm_evaluation.metrics.metrics.compute_bleu_score", return_value=0.5)
+    mocker.patch("llm_evaluation.metrics.metrics.compute_exact_match", return_value=0.5)
 
     # Mock environment variables
     mocker.patch.dict(

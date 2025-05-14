@@ -6,14 +6,14 @@ from argparse import Namespace
 from unittest.mock import Mock
 
 import httpx
-from evaluation_metrics.call_inference_container.call_inference_container import (
+from llm_evaluation.call_inference_container.call_inference_container import (
     batched,
     get_inference_result,
     get_llm_client,
     handle_llm_inference_result,
 )
-from evaluation_metrics.call_inference_container.call_inference_container import main as call_inference_container_main
-from evaluation_metrics.call_inference_container.call_inference_container import (
+from llm_evaluation.call_inference_container.call_inference_container import main as call_inference_container_main
+from llm_evaluation.call_inference_container.call_inference_container import (
     read_prompt_template,
     run,
 )
@@ -169,7 +169,7 @@ def test_run(mocker):
 
     # Mock the tokenizer
     mock_tokenizer = mocker.patch(
-        "evaluation_metrics.call_inference_container.call_inference_container.AutoTokenizer.from_pretrained"
+        "llm_evaluation.call_inference_container.call_inference_container.AutoTokenizer.from_pretrained"
     )
     mock_tokenizer_instance = mock_tokenizer.return_value
     mock_tokenizer_instance.return_value = {"input_ids": [1, 2, 3, 4, 5]}
@@ -254,10 +254,10 @@ def test_main(mocker, tmpdir):
     # Use AsyncMock instead of Mock for async methods
     mock_client = mocker.AsyncMock()
     mocker.patch(
-        "evaluation_metrics.call_inference_container.call_inference_container.download_dataset", return_value=dataset
+        "llm_evaluation.call_inference_container.call_inference_container.download_dataset", return_value=dataset
     )
     mocker.patch(
-        "evaluation_metrics.call_inference_container.call_inference_container.get_llm_client", return_value=mock_client
+        "llm_evaluation.call_inference_container.call_inference_container.get_llm_client", return_value=mock_client
     )
 
     # Define mock_results before using it
@@ -279,11 +279,11 @@ def test_main(mocker, tmpdir):
 
     # Mock the run function
     mocker.patch(
-        "evaluation_metrics.call_inference_container.call_inference_container.run", return_value=mock_run_coroutine()
+        "llm_evaluation.call_inference_container.call_inference_container.run", return_value=mock_run_coroutine()
     )
 
     # This is redundant code - removed duplicate mocking and call
-    mocker.patch("evaluation_metrics.call_inference_container.call_inference_container.AutoTokenizer.from_pretrained")
+    mocker.patch("llm_evaluation.call_inference_container.call_inference_container.AutoTokenizer.from_pretrained")
 
     inferences_filepath = asyncio.run(call_inference_container_main(mock_args))
 
