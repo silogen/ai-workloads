@@ -14,7 +14,6 @@ from evaluation_metrics.call_inference_container.call_inference_container import
 from evaluation_metrics.call_inference_container.call_inference_container import (
     save_inference_results,
 )
-from evaluation_metrics.call_inference_container.run_inference_on_dataset import run as run_inference_on_dataset
 from evaluation_metrics.data.data_classes import AggregatedJudgeResults
 from evaluation_metrics.judge.run_judge_evaluation import run_2step_judge_on_inferences
 from evaluation_metrics.metrics.run_metrics_evaluation import read_inference_data
