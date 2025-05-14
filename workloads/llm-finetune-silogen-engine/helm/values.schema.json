@@ -574,6 +574,7 @@
             "default": "CAUSAL_LM"
           },
           "peft_kwargs": {
+            "additionalProperties": true,
             "title": "Peft Kwargs",
             "type": "object"
           }
@@ -893,6 +894,7 @@
           "adafactor",
           "adamw_anyprecision",
           "adamw_torch_4bit",
+          "adamw_torch_8bit",
           "ademamix",
           "sgd",
           "adagrad",
@@ -920,8 +922,11 @@
           "lomo",
           "adalomo",
           "grokadamw",
+          "schedule_free_radam",
           "schedule_free_adamw",
-          "schedule_free_sgd"
+          "schedule_free_sgd",
+          "apollo_adamw",
+          "apollo_adamw_layerwise"
         ],
         "title": "OptimizerNames",
         "type": "string"
@@ -1070,6 +1075,17 @@
             "default": "checkpoint-final",
             "description": "Name of final checkpoint. Should be left as default",
             "title": "Final Checkpoint Name",
+            "type": "string"
+          },
+          "determinism": {
+            "default": "no",
+            "description": "Set the level of determinism in implementations. Deterministic implementations are not always available,\nand when they are, they are usually slower than their non-deterministic counterparts. Recommended for\ndebugging only.\n'no': No determinism.\n'half': Prefer deterministic implementations.\n'full': Only fully deterministic implementations, error out on operations that only have non-deterministic\n        implementations.",
+            "enum": [
+              "no",
+              "half",
+              "full"
+            ],
+            "title": "Determinism",
             "type": "string"
           }
         },
@@ -1396,6 +1412,7 @@
           "lr_scheduler_kwargs": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -1831,6 +1848,7 @@
           "fsdp_config": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -1858,6 +1876,7 @@
           "accelerator_config": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -1873,6 +1892,7 @@
           "deepspeed": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -2088,6 +2108,7 @@
           "gradient_checkpointing_kwargs": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -2521,6 +2542,7 @@
           "model_init_kwargs": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -2533,6 +2555,7 @@
           "ref_model_init_kwargs": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -2810,6 +2833,7 @@
           "lr_scheduler_kwargs": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -2861,16 +2885,10 @@
             "type": "boolean"
           },
           "logging_dir": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Logging Dir"
+            "default": "logs",
+            "description": "The output directory where logs (like tensorboard outputs) will be written. Should be left as default, which is ./logs",
+            "title": "Logging Dir",
+            "type": "string"
           },
           "logging_strategy": {
             "anyOf": [
@@ -3245,6 +3263,7 @@
           "fsdp_config": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -3272,6 +3291,7 @@
           "accelerator_config": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -3287,6 +3307,7 @@
           "deepspeed": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -3502,6 +3523,7 @@
           "gradient_checkpointing_kwargs": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
