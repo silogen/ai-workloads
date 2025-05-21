@@ -10,6 +10,8 @@ memory_per_gpu: 64 # Gi
 cpu_per_gpu: 4
 
 # vllm engine args (ref: https://docs.vllm.ai/en/latest/serving/engine_args.html)
+# allows flag arguments to be passed to the cli by leaving empty. for example:
+# example-flag:
 vllm_engine_args:
   # tensor-parallel-size: "{{ .Values.gpus }}"  # taken care of by the template
   # model: "{{ .Values.model }}"  # taken care of by the template

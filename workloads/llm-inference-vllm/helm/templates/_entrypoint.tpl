@@ -28,7 +28,11 @@ echo '--------------------------------------------'
 pip install huggingface_hub[hf_xet]
 python3 -m vllm.entrypoints.openai.api_server \
 {{- range $key, $value := .Values.vllm_engine_args }}
+{{- if eq $value nil }}
+--{{ $key }} \
+{{- else }}
 --{{ $key }}={{ tpl $value $ | quote }} \
+{{- end }}
 {{- end }}
 --model={{ $modelPath }} \
 --tensor-parallel-size={{ .Values.gpus }} \

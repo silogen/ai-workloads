@@ -27,7 +27,11 @@ echo 'Starting SGLang'
 echo '--------------------------------------------'
 python3 -m sglang.launch_server \
 {{- range $key, $value := .Values.sglang_server_args }}
+{{- if eq $value nil }}
+--{{ $key }} \
+{{- else }}
 --{{ $key }}={{ tpl $value $ | quote }} \
+{{- end }}
 {{- end }}
 --model-path={{ $modelPath }} \
 --tensor-parallel-size={{ .Values.gpus }} \

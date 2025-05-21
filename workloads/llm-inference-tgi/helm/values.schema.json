@@ -48,7 +48,7 @@
       "type": "object",
       "description": "Arguments for the TGI engine",
       "additionalProperties": {
-        "type": "string"
+        "type": ["string", "null"]
       }
     },
     "env_vars": {

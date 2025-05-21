@@ -28,7 +28,11 @@ echo '--------------------------------------------'
 cd /server
 /tgi-entrypoint.sh \
 {{- range $key, $value := .Values.tgi_engine_args }}
+{{- if eq $value nil }}
+--{{ $key }} \
+{{- else }}
 --{{ $key }}={{ tpl $value $ | quote }} \
+{{- end }}
 {{- end }}
 --model-id={{ $modelPath }} \
 --num-shard={{ .Values.gpus }} \

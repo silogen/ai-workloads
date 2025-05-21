@@ -48,7 +48,7 @@
       "type": "object",
       "description": "Arguments for the sglang server",
       "additionalProperties": {
-        "type": "string"
+        "type": ["string", "null"]
       }
     },
     "env_vars": {

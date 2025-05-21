@@ -10,6 +10,8 @@ memory_per_gpu: 64 # Gi
 cpu_per_gpu: 4
 
 # tgi engine args (ref: https://huggingface.co/docs/text-generation-inference/reference/launcher)
+# allows flag arguments to be passed to the cli by leaving empty. for example:
+# example-flag:
 tgi_engine_args:
   {}
   # model-id: "{{ .Values.model }}"  # taken care of by the template

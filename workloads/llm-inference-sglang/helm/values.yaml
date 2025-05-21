@@ -10,6 +10,8 @@ memory_per_gpu: 64 # Gi
 cpu_per_gpu: 4
 
 # sglang server args (ref: https://docs.sglang.ai/backend/server_arguments.html)
+# allows flag arguments to be passed to the cli by leaving empty. for example:
+# example-flag:
 sglang_server_args:
   {}
   # model-path={{ .Values.model }}  # taken care of by the template
