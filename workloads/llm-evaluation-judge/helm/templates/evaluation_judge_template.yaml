@@ -161,7 +161,7 @@ spec:
                 --context-column-name="{{ .Values.judge_evaluation_container.context_column_name}}"  \
                 --id-column-name="{{ .Values.judge_evaluation_container.id_column_name}}" \
                 --gold-standard-column-name="{{ .Values.judge_evaluation_container.gold_standard_column_name}}" \
-                --use-data-subset=5 ;
+                --use-data-subset="{{ .Values.judge_evaluation_container.use_data_subset }}" \;
           env:
             - name: TRANSFORMERS_CACHE
               value: /HF_HOME

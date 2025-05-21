@@ -94,7 +94,8 @@ spec:
                     --batch-size="{{ .Values.evaluation_container.batch_size}}" \
                     --context-column-name="{{ .Values.evaluation_container.dataset_info.context_column_name}}" \
                     --id-column-name="{{ .Values.evaluation_container.dataset_info.id_column_name}}" \
-                    --gold-standard-column-name="{{ .Values.evaluation_container.dataset_info.gold_standard_column_name}}" ;
+                    --gold-standard-column-name="{{ .Values.evaluation_container.dataset_info.gold_standard_column_name}}" \
+                    --use-data-subset="{{ .Values.evaluation_container.use_data_subset}}" ;
           env:
             - name: TRANSFORMERS_CACHE
               value: /HF_HOME

@@ -1,5 +1,5 @@
 general:
-  job_name: evaluation-judge-async
+  job_name: evaluation-judge
 model_inference_container:
   image: rocm/vllm-dev:20241205-tuned
   memory: 24Gi
@@ -34,6 +34,7 @@ judge_evaluation_container:
   id_column_name: id
   gold_standard_column_name: highlights
   output_dir_path: /home/evaluation/results
+  use_data_subset: 0
 storage:
   ephemeral:
     quantity: 100Gi

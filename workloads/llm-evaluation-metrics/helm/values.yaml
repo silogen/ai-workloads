@@ -24,6 +24,7 @@ evaluation_container:
     context_column_name: article
     id_column_name: id
     gold_standard_column_name: highlights
+  use_data_subset: 0
 storage:
   ephemeral:
     quantity: 100Gi
