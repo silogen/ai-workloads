@@ -21,6 +21,48 @@ from llm_evaluation.metrics.utils import save_results
 
 
 async def main(args: Namespace):
+    """
+    Main function to orchestrate evaluate performance of an llm on a given dataset using an LLM-as-a-Judge.
+
+    This function performs the following steps:
+    1. Downloads the specified evaluation dataset.
+    2. Runs inference on the dataset using the evaluated model and saves the results.
+    3. Loads the generated inferences and evaluates them using a two-step judge model.
+    4. Aggregates and computes evaluation metrics based on judge results.
+    5. Saves the aggregated evaluation results to MinIO.
+
+    Args:
+        args (Namespace): Command-line arguments containing configuration for the evaluation process.
+            - model_name (str): Name of the model to use for inference.
+            - model_path (str): Path to the model checkpoint or configuration.
+            - judge_model_name (str): Name of the judge model.
+            - judge_model_path (str): Path to the judge model checkpoint or configuration.
+            - llm_base_url (str): Base URL of the LLM inference service.
+            - llm_port (int): Port of the LLM inference service.
+            - llm_endpoint (str): Endpoint of the LLM inference service.
+            - judge_base_url (str): Base URL of the judge model service.
+            - judge_port (int): Port of the judge model service.
+            - judge_endpoint (str): Endpoint of the judge model service.
+            - prompt_template_path (str): Path to the prompt template file.
+            - judge_prompt1_template_path (str): Path to the first step judge prompt template.
+            - judge_prompt2_template_path (str): Path to the second step judge prompt template.
+            - evaluation_dataset_name (str): Name of the evaluation dataset.
+            - evaluation_dataset_version (str): Version of the evaluation dataset.
+            - dataset_split (str): Dataset split to use (e.g., "train", "test").
+            - output_dir_path (str): Path to the directory where results will be saved.
+            - maximum_context_size (int): Maximum context size for the model input.
+            - batch_size (int): Batch size for inference.
+            - judge_maximum_context_size (int): Maximum context size for the judge model input.
+            - judge_batch_size (int): Batch size for judge evaluation.
+            - context_column_name (str): Name of the column containing context in the dataset.
+            - id_column_name (str): Name of the column containing document IDs in the dataset.
+            - gold_standard_column_name (str): Name of the column containing gold standard answers in the dataset.
+            - use_data_subset (int): Number of documents to use from the dataset (0 for full dataset).
+
+    Outputs:
+            - Inference results are saved to separate files in the specified output directory.
+            - Judge Evaluation results and inferences are saved to a file and copied to MinIO.
+    """
 
     ds = download_dataset(dataset=args.evaluation_dataset_name, version=args.evaluation_dataset_version)
 

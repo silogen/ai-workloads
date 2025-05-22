@@ -80,7 +80,7 @@ def get_metrics_parser() -> ArgumentParser:
 
 def get_judge_inference_parser() -> ArgumentParser:
     """
-    Returns an argument parser for the judge container script.
+    Returns an argument parser for the judge evaluation container script.
     """
     parser = ArgumentParser(prog="Call Inference Container")
     parser.add_argument("--model-name", type=str, help="Name of the model to be used for inference.")
