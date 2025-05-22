@@ -5,7 +5,7 @@ import time
 from argparse import Namespace
 from datetime import datetime
 from itertools import islice
-from typing import Any, AsyncGenerator, Dict, Iterable, Tuple
+from typing import Any, AsyncGenerator, Dict, Iterable, List, Tuple
 
 from datasets import load_dataset
 from jsonlines import Writer
@@ -198,14 +198,14 @@ async def batched_async(iterable, batch_size: int):
 
 
 async def get_inference_result(
-    llm_client: AsyncClient, messages: list, model_name: str, parameters: Dict[str, Any], doc_id: str
+    llm_client: AsyncClient, messages: List[Dict[str, str]], model_name: str, parameters: Dict[str, Any], doc_id: str
 ) -> Tuple[str, ChatCompletion]:
     """
     Sends a message to an LLM client to get an inference result and handles potential API errors.
 
     Args:
         llm_client (AsyncClient): The asynchronous client used to communicate with the LLM service.
-        message (str): The input message to be sent to the LLM.
+        messages (List[Dict[str, str]]): OpenAI API compatible messages to be sent to the LLM.
         model_name (str): The name of the model to be used for inference.
         parameters (Dict[str, Any]): Additional parameters to configure the LLM request.
         doc_id (str): A unique identifier for the document for this inference request.

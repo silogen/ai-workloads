@@ -37,7 +37,7 @@ def test_get_inference_result(mocker):
     doc_id, result = asyncio.run(
         get_inference_result(
             llm_client=mock_client,
-            message="Test message",
+            messages=[{"role": "system", "content": "Test message"}],
             model_name="test-model",
             parameters={"temperature": 0.7},
             doc_id="test_doc_id",
@@ -47,7 +47,7 @@ def test_get_inference_result(mocker):
     assert doc_id == "test_doc_id"
     assert result == mock_response
     mock_client.chat.completions.create.assert_called_once_with(
-        messages=[{"role": "user", "content": "Test message"}], model="test-model", temperature=0.7
+        messages=[{"role": "system", "content": "Test message"}], model="test-model", temperature=0.7
     )
 
     # Test with API error
@@ -58,7 +58,7 @@ def test_get_inference_result(mocker):
     doc_id, result = asyncio.run(
         get_inference_result(
             llm_client=mock_client,
-            message="Test message",
+            messages=[{"role": "system", "content": "Test message"}],
             model_name="test-model",
             parameters={"temperature": 0.7},
             doc_id="test_doc_id",
