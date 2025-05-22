@@ -79,22 +79,21 @@ class AggregatedJudgeResults:
 
         self.average_grade = average_grade
 
-    def print_evaluation_results(self):
+    def __str__(self):
         """
-        Prints the evaluation results.
+        Returns a string representation of the aggregated judge results for logging.
         """
-        logger.info("Evaluation results:")
-        logger.info(
-            f"Performance of {self.llm_name} on {self.evaluation_dataset_name} v{self.evaluation_dataset_version} as judged by {self.judge_name}"
-        )
-        logger.info(f"Average grade: {self.average_grade}")
         n_judgments = sum(1 for judge_result in self.judge_results.values() if judge_result.judge_grade is not None)
-        logger.info(f"Number of inferences for judging: {len(self.judge_results)}")
-        logger.info(f"Number of judgments: {n_judgments}")
-
-        logger.info(f"Prompt template step 1: {self.prompt_template_step_1}")
-        logger.info(f"Prompt template step 2: {self.prompt_template_step_2}")
-        logger.info(f"Evaluation dataset name: {self.evaluation_dataset_name}")
-        logger.info(f"Evaluation dataset version: {self.evaluation_dataset_version}")
-        logger.info(f"LLM name: {self.llm_name}")
-        logger.info(f"Judge name: {self.judge_name}")
+        return (
+            f"Evaluation results:\n"
+            f"\tPerformance of {self.llm_name} on {self.evaluation_dataset_name} v{self.evaluation_dataset_version} as judged by {self.judge_name}\n"
+            f"\tAverage grade: {self.average_grade}\n"
+            f"\tNumber of inferences for judging: {len(self.judge_results)}\n"
+            f"\tNumber of judgments: {n_judgments}\n"
+            f"\tPrompt template step 1: {self.prompt_template_step_1}\n"
+            f"\tPrompt template step 2: {self.prompt_template_step_2}\n"
+            f"\tEvaluation dataset name: {self.evaluation_dataset_name}\n"
+            f"\tEvaluation dataset version: {self.evaluation_dataset_version}\n"
+            f"\tLLM name: {self.llm_name}\n"
+            f"\tJudge name: {self.judge_name}"
+        )

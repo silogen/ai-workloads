@@ -101,7 +101,7 @@ async def main(args: Namespace):
 
     logger.info("Aggregating judge scores...")
     aggregated_judge_results.compute_average_grade()
-    aggregated_judge_results.print_evaluation_results()
+    logger.info(aggregated_judge_results)
 
     save_results(results=aggregated_judge_results, results_dir_path=results_dir_path, config=args)
     logger.info("Evaluation complete.")
