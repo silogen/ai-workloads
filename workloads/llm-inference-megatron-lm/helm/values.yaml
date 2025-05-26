@@ -1,0 +1,41 @@
+metadata:
+  labels: {}
+
+image: rocm/megatron-lm:v25.4
+imagePullPolicy: Always
+
+# get tokenizer
+remoteTokenizerPath: default-bucket/tokenizers/NousResearch/Meta-Llama-3.1-8B/
+
+# get checkpoint
+remoteModelPath: default-bucket/megatron-models/meta-llama/Llama-3.1-8B/
+
+envVars:
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  HF_HOME: /workload/.cache/huggingface
+
+storage:
+  ephemeral:
+    quantity: 100Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+deployment:
+  port: 5000
+
+gpus: 1
+memoryPerGpu: 64  # Gi
+cpuPerGpu: 4
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
