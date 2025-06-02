@@ -1,0 +1,4 @@
+apiVersion: v2
+name: llm-finetune-llama-factory
+description: A Helm chart for fine-tuning with LLaMA-Factory
+version: 0.0.1
