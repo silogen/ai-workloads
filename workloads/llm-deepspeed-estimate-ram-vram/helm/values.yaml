@@ -8,6 +8,7 @@ largestLayerParameters: -1  # if modelPath is not given and stage==3, use this, 
 
 #misc options
 trustRemoteCode: false
+memoryForPod: 1Gi
 
 kaiwo:
   enabled: false

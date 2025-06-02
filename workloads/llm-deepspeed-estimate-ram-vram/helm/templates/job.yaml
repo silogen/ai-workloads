@@ -67,7 +67,7 @@ spec:
               {{- if .Values.modelPath }}
               with init_empty_weights():
                   config = AutoConfig.from_pretrained("{{ $localConfig }}", trust_remote_code={{ ternary "True" "False" .Values.trustRemoteCode }})
-                  model = AutoModel.from_config(config)
+                  model = AutoModel.from_config(config, trust_remote_code={{ ternary "True" "False" .Values.trustRemoteCode }})
                   # Note: Shared parameters get counted multiple times.
                   #   Cannot be avoided with p.data_ptr() on the meta device
                   #   However, this is fine since we're only estimating anyway.
@@ -90,10 +90,10 @@ spec:
               EOF
           resources:
             limits:
-              memory: "1Gi"
+              memory: "{{ .Values.memoryForPod }}"
               cpu: 1
             requests:
-              memory: "1Gi"
+              memory: "{{ .Values.memoryForPod }}"
               cpu: 1
           securityContext:
             allowPrivilegeEscalation: false

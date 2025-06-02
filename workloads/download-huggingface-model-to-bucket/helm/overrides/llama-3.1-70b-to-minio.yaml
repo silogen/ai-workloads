@@ -11,7 +11,7 @@ allowOverwrite: false
 
 # Storage configuration:
 storageClass: mlstorage
-storageQuantity: "20Gi"
+storageQuantity: "160Gi"
 
 # HF Token:
 hfTokenSecret:
