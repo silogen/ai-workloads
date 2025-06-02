@@ -23,7 +23,7 @@
 
 # Container environment variables helper
 {{- define "logistics.container.env" -}}
-{{- range $key, $value := .Values.logistics.env_vars }}
+{{- range $key, $value := .Values.logistics.envVars }}
 {{- if (typeIs "string" $value) }}
 - name: {{ $key }}
   value: {{ $value | quote }}
