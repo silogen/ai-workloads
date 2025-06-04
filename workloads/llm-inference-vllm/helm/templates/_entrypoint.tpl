@@ -12,9 +12,16 @@ chmod +x /minio-binaries/mc
 export PATH="${PATH}:/minio-binaries/"
 mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
 echo '--------------------------------------------'
+echo 'Checking if model exists in MinIO storage'
+echo '--------------------------------------------'
+if ! mc ls {{$minioModel -}}/ &>/dev/null; then
+  echo "ERROR: Path '{{$minioModel -}}/' not found. Verify the model path, bucket name, and permissions."
+  exit 1
+fi
+echo '--------------------------------------------'
 echo 'Downloading the model to the local container'
 echo '--------------------------------------------'
-mc cp --recursive {{$minioModel -}}/ {{$localModel -}}/
+mc cp --recursive {{$minioModel -}}/ {{$localModel -}}/ || { echo "ERROR: Failed to download model from '{{$minioModel -}}/'."; exit 1; }
 {{- end -}}
 
 {{- define "vllm.start" -}}
