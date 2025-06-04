@@ -1,17 +1,16 @@
 # LLM Inference Service with Llama.cpp
 
-This Helm chart deploys a LLM inference service workload via [llama.cpp](https://github.com/ggml-org/llama.cpp)
+This Helm chart deploys a Large Language Model (LLM) inference service using [llama.cpp](https://github.com/ggml-org/llama.cpp). The chart clones the llama.cpp source code from GitHub and compiles it into optimized binaries based on the target GPU architecture. Upon deployment, the service downloads pre-trained GGUF models from Hugging Face and exposes an OpenAI-compatible API via an HTTP endpoint
 
 ## Prerequisites
 
-1. **Helm**: Install `helm`. Refer to the [Helm documentation](https://helm.sh/) for instructions.
-2. **Secrets**: (Optional) Create the secrets `minio-credentials` with keys `minio-access-key` and `minio-secret-key` in the namespace if you want to download pre-built executables and models from MinIO.
+**Helm**: Install `helm`. Refer to the [Helm documentation](https://helm.sh/) for instructions.
 
 ## Deploying the Workload
 
 Basic configurations are defined in the `values.yaml` file.
 
-The default model is 1.73-bit quantized [DeepSeek-R1-UD-IQ1_M](https://huggingface.co/unsloth/DeepSeek-R1-GGUF/tree/main/DeepSeek-R1-UD-IQ1_M), which  fits in one MI300X GPU and can serve with a context length of 4K.
+The default model is 1.73-bit quantized [DeepSeek-R1-UD-IQ1_M](https://huggingface.co/unsloth/DeepSeek-R1-GGUF/tree/main/DeepSeek-R1-UD-IQ1_M), which fits in one MI300X GPU (192GB VRAM) and can serve with a context length of 4K.
 
 For example: run the following command within the `helm/` folder to deploy the service:
 

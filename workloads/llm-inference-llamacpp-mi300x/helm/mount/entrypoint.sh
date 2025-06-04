@@ -1,35 +1,38 @@
-# Tested wiht image: rocm/vllm-dev:20250205_aiter
+# Tested with image: rocm/vllm-dev:20250205_aiter
 
 # References:
 # https://unsloth.ai/blog/deepseekr1-dynamic
 # https://medium.com/@alexhe.amd/deploy-deepseek-r1-in-one-gpu-amd-instinct-mi300x-7a9abeb85f78
 
 export TMPDIR=/tmp
-bash /workload/mount/minio_download_bin.sh
+cd /workload || exit
 
-# Check existing llama.cpp executables with specified ROCm architecture, or build if not found
-if [ -d /workload/bin/$ROCM_ARCH ]; then
-    cd /workload/bin/$ROCM_ARCH
-else
-    cd /workload &&
-        bash /workload/mount/build_llamacpp.sh &&
-        cd llama.cpp/build/bin/ || exit 1
-fi
+# Update package index and install required dependencies
+apt update && apt install -y curl libssl-dev libcurl4-openssl-dev
 
-# Retrieve model from Hugging Face Hub and concatenate split GGUF files if necessary
-export MODEL_TAG=$(echo $MODEL | tr '/:' '_')
-if [ -f ${MODEL_TAG}.gguf ]; then
-    echo "GGUF file already exists"
-else
-    python /workload/mount/download_model.py && bash /workload/mount/merge_bin.sh
-fi
+# Clone Llama.cpp repository and build it with HIP support
+rm -rf llama.cpp &&
+    git clone https://github.com/ggerganov/llama.cpp.git &&
+    cd llama.cpp || exit &&
+    # Configure HIP environment variables and build Llama.cpp
+    HIPCXX="$(hipconfig -l)/clang" \
+    HIP_PATH="$(hipconfig -R)" \
+        cmake -S . \
+        -B build \
+        -DGGML_HIP=ON \
+        -DAMDGPU_TARGETS=${ROCM_ARCH:-gfx942} \
+        -DCMAKE_BUILD_TYPE=Release &&
+    # Build Llama.cpp in Release configuration with multiple threads
+    cmake --build build \
+        --config Release \
+        -- -j ${NCPU:-4}
 
-# serve the model
-./llama-server \
-    -m ${MODEL_TAG}.gguf \
+# Serve the downloaded model through an OpenAI-compatible API
+/workload/llama.cpp/build/bin/llama-server \
+    -hf $MODEL \
     --host 0.0.0.0 \
     --port ${PORT:-8080} \
-    --n-gpu-layers ${GPU_LAYERS:-62} \
+    --n-gpu-layers ${GPU_LAYERS:-100} \
     --threads ${NCPU:-4} \
     --prio 2 \
     --temp ${TEMP:-0.6} \
