@@ -1,3 +1,11 @@
+# Base URL helper
+{{- define "httpRoute.baseUrl" -}}
+{{- $projectId := default "project_id" .Values.metadata.project_id -}}
+{{- $userId := default "user_id" .Values.metadata.user_id -}}
+{{- $workloadId := default (include "release.fullname" .) .Values.metadata.workload_id -}}
+{{- printf "/%s/%s/%s" $projectId $userId $workloadId }}
+{{- end -}}
+
 # Release name helper
 {{- define "release.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}

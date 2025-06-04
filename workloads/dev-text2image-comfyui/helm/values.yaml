@@ -1,14 +1,28 @@
 metadata:
   labels: {}
+  project_id: silogen
+  user_id: user
+  workload_id: # defaults to the release name
 
 image: "rocm/dev-ubuntu-22.04:6.2.4"
+# model: stabilityai/sdxl-turbo
+# tag: sd_xl_turbo_1.0
 
 imagePullPolicy: Always
 gpus: 1
 cpu_per_gpu: 16
 memory_per_gpu: 128
 
-env_vars: {}
+env_vars:
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  COMFYUI_PATH: /workload/ComfyUI
+  # MODEL_BIN_URL: "https://huggingface.co/Comfy-Org/Lumina_Image_2.0_Repackaged/resolve/main/all_in_one/lumina_2.safetensors"
 
 storage:
   ephemeral:
@@ -31,7 +45,7 @@ startupProbe:
   httpGet:
     path: /queue
     port: http
-  failureThreshold: 60  # 60 x 10s => allow for 10 minutes startup time
+  failureThreshold: 60 # 60 x 10s => allow for 10 minutes startup time
   periodSeconds: 10
 livenessProbe:
   httpGet:
@@ -42,9 +56,12 @@ readinessProbe:
     path: /queue
     port: http
 
-entrypoint: |
-  bash /workload/mount/comfyui.sh
-
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:
+  enabled: false
+
+http_route:
+  enabled: false
+
+ingress:
   enabled: false
