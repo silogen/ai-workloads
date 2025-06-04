@@ -1,7 +1,10 @@
-# image/model
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
 model: "meta-llama/Llama-3.1-8B-Instruct"
 
-# env vars (vllm ref: https://docs.vllm.ai/en/latest/serving/env_vars.html)
 env_vars:
   HF_TOKEN:
     key: hf-token

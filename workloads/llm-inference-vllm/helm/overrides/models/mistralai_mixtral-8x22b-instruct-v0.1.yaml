@@ -1,7 +1,10 @@
-# image/model
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
 model: "mistralai/Mixtral-8x22B-Instruct-v0.1"
 
-# env vars (vllm ref: https://docs.vllm.ai/en/latest/serving/env_vars.html)
 env_vars:
   HF_TOKEN:
     key: hf-token

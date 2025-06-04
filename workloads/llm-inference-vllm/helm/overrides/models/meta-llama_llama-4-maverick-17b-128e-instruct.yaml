@@ -1,5 +1,9 @@
-image: "rocm/vllm-dev:llama4-20250405"
+metadata:
+  labels:
+    pipeline_tag: "image-text-to-text"
+    chat: "true"
 
+image: "rocm/vllm-dev:llama4-20250405"
 model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
 gpus: 8
 memory_per_gpu: 64 # Gi

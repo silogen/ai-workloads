@@ -1,0 +1,12 @@
+metadata:
+  labels:
+    pipeline_tag: "image-text-to-text"
+    chat: "true"
+
+image: "rocm/vllm:rocm6.3.1_vllm_0.8.5_20250513"
+model: "google/gemma-3-12b-it"
+
+env_vars:
+  HF_TOKEN:
+    key: hf-token
+    name: hf-token

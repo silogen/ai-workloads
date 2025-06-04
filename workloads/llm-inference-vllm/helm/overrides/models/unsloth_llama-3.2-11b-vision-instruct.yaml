@@ -1,7 +1,7 @@
 metadata:
   labels:
-    pipeline_tag: "text-generation"
+    pipeline_tag: "image-text-to-text"
     chat: "true"
 
 image: "rocm/vllm:rocm6.3.1_vllm_0.8.5_20250513"
-model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+model: "unsloth/Llama-3.2-11B-Vision-Instruct"

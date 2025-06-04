@@ -3,7 +3,14 @@ metadata:
     pipeline_tag: "text-generation"
     chat: "true"
 
-model: "mistralai/Mixtral-8x7B-Instruct-v0.1"
+image: "rocm/vllm-dev:20241205-tuned"
+model: "meta-llama/Llama-3.1-405B-Instruct"
+gpus: 8
+memory_per_gpu: 64 # Gi
+cpu_per_gpu: 4
+
+vllm_engine_args:
+  gpu-memory-utilization: "0.95"
 
 env_vars:
   HF_TOKEN:
@@ -12,7 +19,7 @@ env_vars:
 
 storage:
   ephemeral:
-    quantity: 256Gi
+    quantity: 1024Gi
     storageClassName: mlstorage
     accessModes:
       - ReadWriteOnce

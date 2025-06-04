@@ -1,1 +1,6 @@
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
 model: CohereForAI/aya-expanse-32b
