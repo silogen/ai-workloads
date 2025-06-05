@@ -12,6 +12,18 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "project_id": {
+          "type": "string",
+          "description": "Project ID for the deployment"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "User ID for the deployment"
+        },
+        "workload_id": {
+          "type": ["string", "null"],
+          "description": "Workload ID for the deployment (defaults to release name if not set)"
         }
       },
       "required": ["labels"]
@@ -178,8 +190,54 @@
       "type": ["object"],
       "additionalProperties": true,
       "description": "Readiness probe configuration for the container"
+    },
+    "http_route": {
+      "type": "object",
+      "description": "HTTP route configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable HTTP route"
+        }
+      },
+      "required": ["enabled"]
+    },
+    "ingress": {
+      "type": "object",
+      "description": "Ingress configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable ingress"
+        }
+      },
+      "required": ["enabled"]
+    },
+    "replicas": {
+      "type": "integer",
+      "description": "Number of replicas to run",
+      "minimum": 1
     }
   },
-  "required": ["metadata", "image", "imagePullPolicy", "model", "gpus", "memory_per_gpu", "cpu_per_gpu", "vllm_engine_args", "env_vars", "storage", "deployment", "kaiwo", "startupProbe", "livenessProbe", "readinessProbe"],
+  "required": [
+    "metadata",
+    "image",
+    "imagePullPolicy",
+    "model",
+    "gpus",
+    "memory_per_gpu",
+    "cpu_per_gpu",
+    "vllm_engine_args",
+    "env_vars",
+    "storage",
+    "deployment",
+    "kaiwo",
+    "startupProbe",
+    "livenessProbe",
+    "readinessProbe",
+    "http_route",
+    "ingress",
+    "replicas"
+  ],
   "additionalProperties": false
 }

@@ -1,8 +1,12 @@
 metadata:
   labels: {}
+  project_id: silogen
+  user_id: user
+  workload_id: # defaults to the release name
 
 image: "rocm/vllm-dev:20241205-tuned"
 imagePullPolicy: Always
+replicas: 1
 
 model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 gpus: 1
@@ -65,4 +69,10 @@ readinessProbe:
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:
+  enabled: false
+
+http_route:
+  enabled: false
+
+ingress:
   enabled: false
