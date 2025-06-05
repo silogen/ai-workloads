@@ -30,6 +30,7 @@ The following environment variables are configured for MinIO/S3 integration:
 | `BUCKET_STORAGE_HOST`        | MinIO/S3 endpoint URL                                                | `http://minio.minio-tenant-default.svc.cluster.local:80` |
 | `BUCKET_STORAGE_ACCESS_KEY`  | MinIO/S3 access key (from secret)                                   | From `minio-credentials` secret            |
 | `BUCKET_STORAGE_SECRET_KEY`  | MinIO/S3 secret key (from secret)                                   | From `minio-credentials` secret            |
+| `PIP_DEPS`                  | Additional Python packages to install via pip (space or newline separated URLs/packages) | ROCm-compatible torchaudio wheel          |
 | `COMFYUI_PATH`              | ComfyUI installation path                                            | `/workload/ComfyUI`                       |
 | `MODEL_BIN_URL`             | Direct URL to download an additional model checkpoint (optional)                       | Not set                                    |
 

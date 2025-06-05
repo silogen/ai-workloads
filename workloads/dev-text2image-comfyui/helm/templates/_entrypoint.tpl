@@ -23,8 +23,7 @@ echo '--------------------------------------------'
 echo 'Setting up ComfyUI environment'
 echo '--------------------------------------------'
 apt-get update && apt-get install -y git
-pip install comfy-cli huggingface_hub[hf_transfer]
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/rocm6.2.4/
+pip install comfy-cli huggingface_hub[hf_transfer] hiredis $PIP_DEPS
 yes | comfy --workspace=$COMFYUI_PATH install --skip-torch-or-directml --amd
 echo '--------------------------------------------'
 {{- end }}
