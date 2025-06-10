@@ -93,7 +93,7 @@ spec:
                       --model="/local_models/judge_model" \
                       --tensor-parallel-size="{{ .Values.judge_inference_container.tensor_parallel_size }}" \
                       --served-model-name="{{ .Values.judge_inference_container.model }}" \
-                      --max-model-len={{ .Values.judge_inference_container.max_model_len }};
+                      --max-model-len={{ .Values.judge_inference_container.max_model_len }} ;
           restartPolicy: Always
           ports:
             - containerPort: 8081
@@ -161,7 +161,7 @@ spec:
                 --context-column-name="{{ .Values.judge_evaluation_container.context_column_name}}"  \
                 --id-column-name="{{ .Values.judge_evaluation_container.id_column_name}}" \
                 --gold-standard-column-name="{{ .Values.judge_evaluation_container.gold_standard_column_name}}" \
-                --use-data-subset="{{ .Values.judge_evaluation_container.use_data_subset }}" \;
+                --use-data-subset="{{ .Values.judge_evaluation_container.use_data_subset }}" ;
           env:
             - name: TRANSFORMERS_CACHE
               value: /HF_HOME
