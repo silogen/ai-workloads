@@ -21,6 +21,20 @@ spec:
               cpu: "{{ .Values.model_inference_container.cpu_count }}"
               amd.com/gpu: "{{ .Values.model_inference_container.gpu_count }}"
           env:
+            - name: BUCKET_STORAGE_HOST
+              value: "{{ .Values.storage.bucket_storage_host }}"
+            - name: BUCKET_STORAGE_BUCKET
+              value: "{{ .Values.storage.bucket_storage_bucket }}"
+            - name: BUCKET_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: minio-access-key
+            - name: BUCKET_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: minio-secret-key
             - name: VLLM_NO_USAGE_STATS
               value: "1"
             - name: DO_NOT_TRACK
@@ -37,7 +51,7 @@ spec:
             - |
               echo "Downloading model from HuggingFace...";
               cd /local_models;
-              huggingface-cli download {{ .Values.model_inference_container.model_path }} --local-dir /local_models/inference_model;
+              {{- include "modelDownload" (dict "model_download_path" .Values.model_inference_container.model_path "local_dir_path" "/local_models/inference_model" ) | nindent 14 }}
               echo "Downloaded model. Starting VLLM server...";
               python3 -m vllm.entrypoints.openai.api_server \
                       --host="0.0.0.0" \
@@ -69,6 +83,20 @@ spec:
               cpu: "{{ .Values.judge_inference_container.cpu_count }}"
               amd.com/gpu: "{{ .Values.judge_inference_container.gpu_count }}"
           env:
+            - name: BUCKET_STORAGE_HOST
+              value: "{{ .Values.storage.bucket_storage_host }}"
+            - name: BUCKET_STORAGE_BUCKET
+              value: "{{ .Values.storage.bucket_storage_bucket }}"
+            - name: BUCKET_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: minio-access-key
+            - name: BUCKET_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: minio-secret-key
             - name: VLLM_NO_USAGE_STATS
               value: "1"
             - name: DO_NOT_TRACK
@@ -83,12 +111,12 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              echo "Downloading model from HuggingFace...";
+              echo "Downloading model...";
               cd /local_models;
-              huggingface-cli download {{ .Values.judge_inference_container.model_path }} --local-dir /local_models/judge_model;
+              {{- include "modelDownload" (dict "model_download_path" .Values.judge_inference_container.model_path "local_dir_path" "/local_models/judge_model/" ) | nindent 14 }}
               echo "Downloaded model. Starting VLLM server...";
               python3 -m vllm.entrypoints.openai.api_server \
-                      --host="0.0.0.0" \
+                      --host="0.0.0.0"  \
                       --port=8081 \
                       --model="/local_models/judge_model" \
                       --tensor-parallel-size="{{ .Values.judge_inference_container.tensor_parallel_size }}" \

@@ -64,6 +64,10 @@ async def main(args: Namespace):
             - Judge Evaluation results and inferences are saved to a file and copied to MinIO.
     """
 
+    inference_model_path = args.model_path.removeprefix("s3://").removeprefix("hf://")
+    # Currently unused but here for future use
+    judge_model_path = args.judge_model_path.removeprefix("s3://").removeprefix("hf://")
+
     ds = download_dataset(dataset=args.evaluation_dataset_name, version=args.evaluation_dataset_version)
 
     logger.info("Dataset loaded...")
@@ -85,7 +89,10 @@ async def main(args: Namespace):
 
     saved_results = []
     parameters: dict = {}
-    client = get_llm_client(base_url=args.llm_base_url, port=args.llm_port, endpoint=args.llm_endpoint)
+    llm_url_no_protocol = args.llm_base_url.removeprefix("http://").removeprefix(
+        "https://"
+    )  # the Minio python client handles protocol itself
+    client = get_llm_client(base_url=llm_url_no_protocol, port=args.llm_port, endpoint=args.llm_endpoint)
 
     async for inference_result in run_call_inference_container(
         dataset=ds,
@@ -95,7 +102,7 @@ async def main(args: Namespace):
         gold_standard_column_name=args.gold_standard_column_name,
         llm_client=client,
         model_name=args.model_name,
-        model_path=args.model_path,
+        model_path=inference_model_path,
         parameters=parameters,
         max_context_size=args.maximum_context_size,
         batch_size=args.batch_size,
@@ -116,7 +123,10 @@ async def main(args: Namespace):
     logger.info(inferences_data)
     logger.info("Inference ran.")
 
-    judge_client = get_llm_client(base_url=args.judge_base_url, port=args.judge_port, endpoint=args.judge_endpoint)
+    judge_url_no_protocol = args.judge_base_url.removeprefix("http://").removeprefix(
+        "https://"
+    )  # the Minio python client handles protocol itself
+    judge_client = get_llm_client(base_url=judge_url_no_protocol, port=args.judge_port, endpoint=args.judge_endpoint)
 
     aggregated_judge_results = AggregatedJudgeResults(
         judge_results={},
