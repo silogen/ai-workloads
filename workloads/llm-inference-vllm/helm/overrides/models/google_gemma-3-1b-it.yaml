@@ -10,3 +10,4 @@ env_vars:
   HF_TOKEN:
     key: hf-token
     name: hf-token
+  VLLM_USE_V1: "1"
