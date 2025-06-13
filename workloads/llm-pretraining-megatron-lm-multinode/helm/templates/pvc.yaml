@@ -1,0 +1,17 @@
+{{- if .Values.storage.ephemeral.storageClassName -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "release.fullname" . }}
+spec:
+  {{- if .Values.storage.ephemeral.accessModes }}
+  accessModes: {{ .Values.storage.ephemeral.accessModes }}
+  {{- else }}
+  accessModes:
+    - ReadWriteOnce
+  {{- end }}
+  storageClassName: {{ .Values.storage.ephemeral.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.storage.ephemeral.quantity }}
+{{- end }}
