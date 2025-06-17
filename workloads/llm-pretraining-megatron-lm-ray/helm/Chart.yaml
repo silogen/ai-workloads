@@ -1,4 +1,4 @@
 apiVersion: v2
-name: llm-pretraining-megatron-lm-multinode
+name: llm-pretraining-megatron-lm-ray
 description: A Helm chart for multinode continuous pretraining with Megatron-LM
 version: 0.0.1

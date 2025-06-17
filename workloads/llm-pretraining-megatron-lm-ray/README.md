@@ -5,7 +5,7 @@ Workload for running Megatron based pretraining workloads on multiple nodes usin
 
 To generate manifests and print them in standard output using the default `values.yaml`, run:
 ```bash
-helm template workloads/llm-pretraining-megatron-lm-multinode/helm
+helm template workloads/llm-pretraining-megatron-lm-ray/helm
 ```
 
 
@@ -13,7 +13,7 @@ This will generate a kubernetes manifest with a RayJob, a ConfigMap and a Persis
 
 To override the default values, a specific file can be passed using `--values` flag
 ```bash
-helm template workloads/llm-pretraining-megatron-lm-multinode/helm --values workloads/llm-pretraining-megatron-lm-multinode/helm/overrides/values-llama-8b-2x2-4ddp.yaml
+helm template workloads/llm-pretraining-megatron-lm-ray/helm --values workloads/llm-pretraining-megatron-lm-ray/helm/overrides/values-llama-8b-2x2-4ddp.yaml
 ```
 
 Note:
@@ -24,7 +24,7 @@ Anything overlapping with the default `values.yaml` file can be omitted from the
 To run the workload, simply pipe the generated manifests to a `kubectl apply` command, like:
 
 ```bash
-helm template workloads/llm-pretraining-megatron-lm-multinode/helm | kubectl apply -f -
+helm template workloads/llm-pretraining-megatron-lm-ray/helm | kubectl apply -f -
 ```
 
 ## Docker image
