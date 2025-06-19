@@ -1,0 +1,46 @@
+### General chart values ###
+finetuningImage: ghcr.io/silogen/llama-factory-rocm-pytorch-training:v0.3
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
+
+# Use to add labels to the metadata of the resources created by this workload.
+labels: {}
+
+# Extra annotations such as an imagePullSecrets
+imagePullSecrets:
+  - "regcred"
+
+# Configure these to match the credentials in your cluster:
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Resources:
+checkpointsReservedSize: 512Gi
+storageClass: mlstorage # set this to use a specific storageClass for the storage.
+nodes: 1
+# worker-node resources (also used if only one node)
+cpusPerNode: 2
+gpusPerNode: 1
+memoryPerNode: 16Gi
+# head-node resources
+cpusHeadNode: 2
+gpusHeadNode: 0
+memoryHeadNode: 16Gi
+
+### llama-factory config ###
+llamaFactoryConfig:
+  stage: sft
+
+### Model output path ###
+checkpointsRemote:  # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
+
+hfTokenSecret: {} # Optional secret reference that contains the Huggingface token
+# Example:
+# hfTokenSecret:
+#   name: hf-token
+#   key: hf-token

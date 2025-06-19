@@ -1,0 +1,126 @@
+### General chart values ###
+main_workload_image: ghcr.io/silogen/megatron-lm-ray:latest
+
+remote_base_model_path: default-bucket/megatron-models/meta-llama/Llama-3.1-8B/
+remote_checkpoints_path: default-bucket/experiments/megatron-lm/llama-3.1-8b-cpt-test/
+remote_data_dir_path: default-bucket/datasets/fineweb-edu
+remote_data_name_prefix: fineweb-edu-train_text_document
+remote_tokenizer_path: default-bucket/tokenizers/NousResearch/Meta-Llama-3.1-8B
+
+# Definition of the worker group. Note we count head node as worker too.
+workers:
+  start_params: {}
+  replicas: 2 # Total number of workers (including head node) = total number of ranks
+  resources:
+    gpu: 2
+    cpu: 8
+    memory: 100Gi
+
+storage:
+  ephemeral:
+    quantity: 100Gi
+    storageClassName: multinode
+    accessModes:
+    - ReadWriteMany
+  dshm:
+    sizeLimit: 32Gi
+
+# Setting job labels
+metadata:
+  labels:
+    kaiwo.silogen.ai/managed: "true"
+
+# Logistics (IO) container setup
+logistics:
+  image: ghcr.io/silogen/logistics:v0.1r
+  env_vars:
+    BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+    BUCKET_STORAGE_ACCESS_KEY:
+      name: minio-credentials
+      key: minio-access-key
+    BUCKET_STORAGE_SECRET_KEY:
+      name: minio-credentials
+      key: minio-secret-key
+
+worker_env_vars:
+  # Set the maximum number of hardware queues for GPUs
+  GPU_MAX_HW_QUEUES: "2"
+  # Enable high-priority streams for NCCL in PyTorch
+  TORCH_NCCL_HIGH_PRIORITY: "1"
+  # Disable NCCL checks for performance optimization
+  NCCL_CHECKS_DISABLE: "1"
+  # Specify the RDMA (Remote Direct Memory Access) interfaces for NCCL
+  NCCL_IB_HCA: "rdma0,rdma1,rdma2,rdma3,rdma4,rdma5,rdma6,rdma7"
+  # Set the GID (Global Identifier) index for RDMA communication
+  NCCL_IB_GID_INDEX: "3"
+  # Disable cross-NIC (Network Interface Card) communication for NCCL
+  NCCL_CROSS_NIC: "0"
+  # Specify the network interface for NCCL communication
+  NCCL_SOCKET_IFNAME: "eth0"
+  # Specify the network interface for Gloo communication
+  GLOO_SOCKET_IFNAME: "eth0"
+  # Limit the maximum number of connections per CUDA device
+  CUDA_DEVICE_MAX_CONNECTIONS: "1"
+  # Set the NCCL protocol to Simple for performance tuning
+  NCCL_PROTO: "Simple"
+  # Disable MSCCL (Multi-System Collective Communication Library) in RCCL
+  RCCL_MSCCL_ENABLE: "0"
+  # Disable parallelism in the Tokenizers library to avoid threading issues
+  TOKENIZERS_PARALLELISM: "false"
+  # Uncomment the following lines for debugging AMD-specific issues
+  # AMD_LOG_LEVEL: "3"
+  # AMD_SERIALIZE_KERNEL: "3"
+  # Disable scratch memory reclaiming in HSA (Heterogeneous System Architecture)
+  HSA_NO_SCRATCH_RECLAIM: "1"
+  # Disable MSCCL++ (an advanced feature of RCCL)
+  RCCL_MSCCLPP_ENABLE: "0"
+  # Enable legacy IPC (Inter-Process Communication) mode in HSA
+  HSA_ENABLE_IPC_MODE_LEGACY: "1"
+
+# These can be any of the megatron native arguments from the list
+# https://github.com/ROCm/Megatron-LM/blob/rocm_dev/megatron/training/arguments.py
+megatron_arguments:
+- "--lr 1e-5"
+- "--min-lr 1e-6"
+- "--tensor-model-parallel-size 1"
+- "--pipeline-model-parallel-size 1"
+- "--context-parallel-size 1"
+- "--seq-length 2048"
+- "--micro-batch-size 2"
+- "--global-batch-size 16"
+- "--train-iters 20"
+- "--no-async-tensor-model-parallel-allreduce"
+- "--bf16"
+- "--no-masked-softmax-fusion"
+- "--tokenizer-type HuggingFaceTokenizer"
+- "--tokenizer-model /local_resources/tokenizer"
+- "--data-path /local_resources/data/fineweb-edu-train_text_document"
+- "--load /local_resources/basemodel"
+- "--save-interval 20"
+- "--eval-interval 10"
+- "--ckpt-format torch"
+- "--save /local_resources/checkpoints"
+- "--dataloader-type cyclic"
+- "--num-workers 8"
+- "--log-interval 1"
+- "--log-throughput"
+- "--no-save-optim"
+- "--no-save-rng"
+- "--eval-iters 10"
+- "--tensorboard-dir experiment/"
+- "--ckpt-format torch"
+- "--no-gradient-accumulation-fusion"
+- "--distributed-timeout-minutes 120"
+- "--use-distributed-optimizer"
+- "--overlap-param-gather"
+- "--overlap-grad-reduce"
+- "--lr-decay-iters 320000"
+- "--lr-decay-style cosine"
+- "--weight-decay 1.0e-1"
+- "--clip-grad 1.0"
+- "--optimizer adam"
+- "--exit-on-missing-checkpoint"
+- "--no-load-optim"
+- "--use-checkpoint-args"
+- "--no-load-rng"
+- "--use-flash-attn"
