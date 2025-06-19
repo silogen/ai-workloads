@@ -1,0 +1,114 @@
+{{- define "deployment" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "release.fullname" . }}
+  labels:
+    app: {{ include "release.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "release.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "release.fullname" . }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          command: ["sh", "-c"]
+          args:
+          - |
+            {{- if .Values.entrypoint }}
+            {{- .Values.entrypoint | nindent 12 }}
+            {{- end }}
+            # Start MLflow server
+            {{- if hasPrefix "s3" .Values.env_vars.MLFLOW_ARTIFACTS_DESTINATION }}
+            pip install boto3 && bash /workload/mount/install_minio.sh
+            {{- end }}
+            mlflow server \
+              --host=0.0.0.0 \
+              --port={{ .Values.deployment.ports.http }} \
+            {{- if eq .Values.backendStore.type "sqlite" }}
+              --backend-store-uri=sqlite://{{ .Values.backendStore.dbpath }}
+            {{- else if eq .Values.backendStore.type "postgres" }}
+              --backend-store-uri=postgresql://$(DATABASE_USER):$(DATABASE_PASSWORD)@{{ .Values.backendStore.host }}:{{ .Values.backendStore.port }}/{{ .Values.backendStore.database }}
+            {{- else if eq .Values.backendStore.type "mysql" }}
+              --backend-store-uri=mysql+{{ .Values.backendStore.driver }}://$(DATABASE_USER):$(DATABASE_PASSWORD)@{{ .Values.backendStore.host }}:{{ .Values.backendStore.port }}/{{ .Values.backendStore.database }}
+            {{- end }}
+          {{- if or .Values.env_vars (and (ne .Values.backendStore.type "sqlite")) }}
+          env:
+            {{- if .Values.env_vars }}
+            {{- include "container.env" . | nindent 12 }}
+            {{- end }}
+            {{- if and (ne .Values.backendStore.type "sqlite") }}
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backendStore.secret.name }}
+                  key: {{ .Values.backendStore.secret.userKey | default "username" }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backendStore.secret.name }}
+                  key: {{ .Values.backendStore.secret.passwordKey | default "password" }}
+            {{- end }}
+          {{- end }}
+          image: {{ .Values.image | quote}}
+          imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- .Values.livenessProbe | toYaml | nindent 12 -}}
+          {{- end }}
+          ports:
+            {{- range $key, $value := .Values.deployment.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $value }}
+            {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- .Values.readinessProbe | toYaml | nindent 12 -}}
+          {{- end }}
+          resources:
+            {{- include "container.resources" . | nindent 12 }}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+            {{- .Values.startupProbe | toYaml | nindent 12 -}}
+          {{- end }}
+          volumeMounts:
+            {{- include "container.volumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "container.volumes" . | nindent 8 }}
+{{- end -}}
+
+{{- define "deployment_stripped" -}}
+{{- $deployment := include "deployment" . | fromYaml }}
+{{- $ := unset $deployment "metadata" }}
+{{- $ := unset $deployment.spec.template "metadata" }}
+{{- $deployment | toYaml }}
+{{- end -}}
+
+{{- define "deployment_wrapped_with_kaiwoservice" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoService
+metadata:
+  name: {{ include "release.fullname" . }}
+  labels:
+    app: {{ include "release.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  deployment:
+    {{- include "deployment" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "deployment_wrapped_with_kaiwoservice" . }}
+{{- else -}}
+{{- include "deployment" . }}
+{{- end -}}
