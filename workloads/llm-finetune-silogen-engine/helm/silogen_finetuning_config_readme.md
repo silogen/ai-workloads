@@ -9,16 +9,17 @@ See the various sub-configs for their options. Additional properties are not all
 
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
-| method | `const` |  | `sft` | `"sft"` |  |
 | data_conf | `object` | ✅ | [ChatTrainValidConfig](#chattrainvalidconfig) |  | The data input config |
 | training_args | `object` | ✅ | [SilogenTrainingArguments](#silogentrainingarguments) |  | Transformer TrainingArguments with some restrictions |
-| overrides | `object` |  | [Overrides](#overrides) | `{"num_train_epochs": null, "lr_multiplier": 1.0, "lr_batch_size_scaling": "none"}` | Override options to simplify the config interface |
 | batchsize_conf | `object` | ✅ | [BatchsizeConfig](#batchsizeconfig) |  | Batch size configuration |
-| peft_conf | `object` | ✅ | [NoPeftConfig](#nopeftconfig) or [PretrainedPeftConfig](#pretrainedpeftconfig) or [GenericPeftConfig](#genericpeftconfig) |  | Adapter configuration |
+| peft_conf | `object` | ✅ | [GenericPeftConfig](#genericpeftconfig) and/or [NoPeftConfig](#nopeftconfig) and/or [PretrainedPeftConfig](#pretrainedpeftconfig) |  | Adapter configuration |
 | run_conf | `object` | ✅ | [RunConfig](#runconfig) |  | Model related configuration |
-| tracking | `object` or `null` |  | [FinetuningTrackingConfig](#finetuningtrackingconfig) |  | MLFlow tracking configuration |
-| quant_conf | `object` |  | [BnBQuantizationConfig](#bnbquantizationconfig) or [NoQuantizationConfig](#noquantizationconfig) | `{"quantization_type": "no-quantization"}` | Quantization configuration |
 | sft_args | `object` | ✅ | [SFTArguments](#sftarguments) |  | SFT specific arguments |
+| method | `const` |  | `sft` | `"sft"` |  |
+| overrides | `object` |  | [Overrides](#overrides) | `{"lr_multiplier": 1.0, "lr_batch_size_scaling": "none"}` | Override options to simplify the config interface |
+| tracking | `object` or `null` |  | [FinetuningTrackingConfig](#finetuningtrackingconfig) |  | MLFlow tracking configuration |
+| quant_conf | `object` |  | [BnBQuantizationConfig](#bnbquantizationconfig) and/or [NoQuantizationConfig](#noquantizationconfig) | `{"quantization_type": "no-quantization"}` | Quantization configuration |
+
 
 ---
 
@@ -33,7 +34,7 @@ Automatic validation split from the training data
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | type | `const` | ✅ | `AUTO_SPLIT` |  |  |
-| data_type | `string` |  | string | `"ChatConversation"` | generally, the data_type is automatically set based on the experiment config method |
+| data_type | `string` |  | string | `"ChatConversation"` | Generally, the data_type is automatically set based on the experiment config method. |
 | ratio | `number` |  | number | `0.2` | Ratio of the training data to use for validation |
 | seed | `integer` |  | integer | `1289525893` | Seed for the random number generator for splitting |
 
@@ -78,11 +79,20 @@ see: https://huggingface.co/docs/transformers/en/main_classes/quantization#trans
 | bnb_4bit_use_double_quant | `boolean` |  | boolean | `False` |  |
 | bnb_4bit_quant_storage | `string` or `null` |  | string |  |  |
 
+## ChatTemplateName
+
+Chat template to use.
+
+#### Type: `string`
+
+**Possible Values:** `mistral-with-system` or `chat-ml` or `poro` or `keep-original` or `simplified-llama31`
+
 ## ChatTrainValidConfig
 
-Training time data configuration.
+Training time data configuration
 
-Always defines some DataInput for training data and can include validation DataInput, though a trivial NoneDataInput is also allowed for the validation side.
+Always defines some DataInput for training data and can include validation DataInput, though a trivial NoneDataInput
+is also allowed for the validation side.
 
 Additionally includes chat template and padding configurations, as those are part of the data input pipeline.
 
@@ -90,9 +100,9 @@ Additionally includes chat template and padding configurations, as those are par
 
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
-| training_data | `object` | ✅ | [ConcatenationDataInput](#concatenationdatainput) or [WeightedMixDataInput](#weightedmixdatainput) |  |  |
-| validation_data | `object` | ✅ | [AutoSplitDataInput](#autosplitdatainput) or [ConcatenationDataInput](#concatenationdatainput) or [NoneDataInput](#nonedatainput) |  |  |
-| chat_template_name | `string` |  | `mistral-with-system` or `chat-ml` or `poro` or `keep-original` or `simplified-llama31` | `"mistral-with-system"` |  |
+| training_data | `object` | ✅ | [ConcatenationDataInput](#concatenationdatainput) and/or [WeightedMixDataInput](#weightedmixdatainput) |  |  |
+| validation_data | `object` | ✅ | [AutoSplitDataInput](#autosplitdatainput) and/or [ConcatenationDataInput](#concatenationdatainput) and/or [NoneDataInput](#nonedatainput) |  |  |
+| chat_template_name | `string` |  | [ChatTemplateName](#chattemplatename) | `"mistral-with-system"` |  |
 | padding_side | `string` |  | string | `"right"` | Padding side, right is usually right. |
 | missing_pad_token_strategy | `string` |  | [MissingPadTokenStrategy](#missingpadtokenstrategy) | `"bos-repurpose"` | See the MissingPadTokenStrategys for descriptions of the options |
 
@@ -117,7 +127,7 @@ For DPO this means lines of:
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | type | `const` | ✅ | `CONCATENATION` |  |  |
 | datasets | `array` | ✅ | [DatasetDefinition](#datasetdefinition) |  |  |
-| data_type | `string` |  | string | `"ChatConversation"` | generally, the data_type is automatically set based on the experiment config method |
+| data_type | `string` |  | string | `"ChatConversation"` | Generally, the data_type is automatically set based on the experiment config method. |
 
 ## DatasetDefinition
 
@@ -137,11 +147,11 @@ Settings that define how run details are logged
 
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
-| mlflow_server_uri | `string` | ✅ | string |  | MLflow server URI. Can be local path |
-| experiment_name | `string` | ✅ | string |  | Experiment name that is used for MLFlow tracking |
-| run_id | `string` or `null` |  | string |  | Run id, to resume logging to previousely started run |
-| run_name | `string` or `null` |  | string |  | Run name, to give meaningful name to the run to be displayed in MLFlow UI. Used only when run_id is unspecified |
-| hf_mlflow_log_artifacts | `string` |  | string | `"False"` | Whether to store model artifacts in MLFlow |
+| mlflow_server_uri | `string` | ✅ | string |  | MLflow server URI. Can be local path. |
+| experiment_name | `string` | ✅ | string |  | Experiment name that is used for MLFlow tracking. |
+| run_id | `string` or `null` |  | string |  | Run id, to resume logging to previously started run. |
+| run_name | `string` or `null` |  | string |  | Run name, to give meaningful name to the run to be displayed in MLFlow UI. Used only when run_id is unspecified. |
+| hf_mlflow_log_artifacts | `string` |  | string | `"False"` | Whether to store model artifacts in MLFlow. |
 
 ## GenericPeftConfig
 
@@ -150,7 +160,8 @@ Config for any new initialized PEFT Adapter
 See https://huggingface.co/docs/peft/tutorial/peft_model_config for the possible kwargs
 and https://github.com/huggingface/peft/blob/v0.7.1/src/peft/utils/peft_types.py for the types.
 
-### Example
+Example:
+
     >>> loaded_data = {'peft_type':'LORA', 'task_type': 'CAUSAL_LM',
     ...         'peft_kwargs': {'r': 32, 'target_modules': ['v_proj']}}
     >>> generic_conf = GenericPeftConfig(**loaded_data)
@@ -170,8 +181,6 @@ and https://github.com/huggingface/peft/blob/v0.7.1/src/peft/utils/peft_types.py
 | peft_type | `string` | ✅ | [PeftType](#pefttype) |  |  |
 | task_type | `string` |  | [TaskType](#tasktype) | `"CAUSAL_LM"` |  |
 | peft_kwargs | `object` |  | object |  |  |
-
-
 
 ## MissingPadTokenStrategy
 
@@ -207,9 +216,10 @@ See parameter docstrings and help at:
 https://huggingface.co/docs/transformers/main/en/main_classes/model#transformers.PreTrainedModel.from_pretrained
 See below in "Parameters for big model inference" too, it affects training too. Also note that this link takes you
 to the transformers main branch version - be sure to compare with the installed version of transformers (that keeps
-changing over time, and it is difficult to keep this doctstring up to date, so we wanted to link to the latest here).
+changing over time, and it is difficult to keep this docstring up to date, so we wanted to link to the latest here).
 
 Some important parameters to consider are:
+
 - device_map :
     A map that specifies where each submodule should go. It doesn’t need to be refined to each parameter/buffer
     name, once a given module name is inside, every submodule of it will be sent to the same device. If we only pass
@@ -230,26 +240,26 @@ NOTE:
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | torch_dtype | `const` |  | `auto` | `"auto"` |  |
-| device_map | `object` or `string` or `null` |  | object and/or string |  | Custom device map so that you can manually override the choices that HuggingFace would make. This can also be a string to specify "auto", "balanced_low_0", or "sequential" |
+| device_map | `object` or `string` or `null` |  | object and/or string |  | Custom device map so that you can manually override the choices that HuggingFace would make. This can also be a string to specify "auto", "balanced_low_0", or "sequential". |
 | max_memory | `object` or `null` |  | object |  |  |
 | low_cpu_mem_usage | `boolean` |  | boolean | `False` |  |
-| attn_implementation | `string` or `null` |  | string |  | Note: this can be set to "sdpa", "flash_attention_2", "eager" |
+| attn_implementation | `string` or `null` |  | string |  | Note: this can be set to "sdpa", "flash_attention_2", "eager". |
 | offload_folder | `string` or `null` |  | string |  |  |
 | offload_state_dict | `boolean` or `null` |  | boolean |  | Default is True if offloading (otherwise no effect) |
 | offload_buffers | `boolean` or `null` |  | boolean |  |  |
-| use_cache | `boolean` |  | boolean | `True` | Saves generated hidden states to speed up generation. See: https://discuss.huggingface.co/t/what-is-the-purpose-of-use-cache-in-decoder/958 use_cache is mutually exclusive with gradient_checkpointing |
+| use_cache | `boolean` |  | boolean | `true` | Saves generated hidden states to speed up generation, see: https://discuss.huggingface.co/t/what-is-the-purpose-of-use-cache-in-decoder/958 This is mutually exclusive with gradient_checkpointing. |
 | cache_dir | `string` or `null` |  | string |  |  |
-| force_download | `boolean` |  | boolean | `False`  |  |
-| local_files_only | `boolean` |  | boolean | `False`  |  |
+| force_download | `boolean` |  | boolean | `False` |  |
+| local_files_only | `boolean` |  | boolean | `False` |  |
 | proxies | `object` or `null` |  | object |  |  |
-| resume_download | `boolean` |  | boolean | `False`  |  |
+| resume_download | `boolean` |  | boolean | `False` |  |
 | revision | `string` |  | string | `"main"` |  |
 | code_revision | `string` |  | string | `"main"` |  |
 | subfolder | `string` or `null` |  | string |  |  |
 | token | `string` or `null` |  | string |  |  |
 | use_safetensors | `boolean` or `null` |  | boolean |  |  |
 | variant | `string` or `null` |  | string |  |  |
-| trust_remote_code | `boolean` |  | boolean | `False`  | Warning: if set to `True`, allows execution of downloaded remote code |
+| trust_remote_code | `boolean` |  | boolean | `False` | Warning: if set to True, allows execution of downloaded remote code. |
 
 ## NoPeftConfig
 
@@ -280,23 +290,20 @@ A special type for not using data e.g. in validation
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | type | `const` | ✅ | `NONE` |  |  |
-| data_type | `string` |  | string | `"ChatConversation"` | generally, the data_type is automatically set based on the experiment config method |
+| data_type | `string` |  | string | `"ChatConversation"` | Generally, the data_type is automatically set based on the experiment config method. |
 
 ## Overrides
 
-Override options that allow simple interfaces for charts using these configs
+Override options
 
-This is particularly useful for a helm chart interface where we include the finetuning package config
-as a part of the values.yaml file. These a more flexible helm interface with certain keys brought to the
-top level.
+These implement dynamic scaling for the learning rate.
 
 #### Type: `object`
 
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
-| num_train_epochs | `integer` or `number` or `null` |  | number |  | Overrides the number of epochs in the training_args |
 | lr_multiplier | `number` |  | number | `1.0` | Multiplier applied to the learning rate in the training_args |
-| lr_batch_size_scaling | `string` |  | `none` `sqrt` `linear` | `"none"` | Scales the learning rate in the training_args by a factor derived from the total training batch size. `none`: No scaling. `sqrt`: Multiplies learning rate by square root of batch size (a classic scaling rule). `linear`: Multiplies learning rate by the batch size (a more modern scaling rule). |
+| lr_batch_size_scaling | `string` |  | `none` `sqrt` `linear` | `"none"` | Scales the learning rate in the training_args by a factor derived from the total training batch size.             'none': No scaling.             'sqrt': Multiplies learning rate by square root of batch size (a classic scaling rule).             'linear': Multiplies learning rate by the batch size (a more modern scaling rule). |
 
 ## PeftType
 
@@ -335,7 +342,7 @@ PEFT adapter uses the config and initialisation from a pretrained adapter
 | Property | Type | Required | Possible values | Description |
 | -------- | ---- | -------- | --------------- | ----------- |
 | peft_type | `const` | ✅ | `PRETRAINED_PEFT` |  |
-| name_or_path | `string` | ✅ | string | HF ID or path to the pretrained peft |
+| name_or_path | `string` | ✅ | string | HF ID or path to the pretrained peft. |
 
 ## RunConfig
 
@@ -345,12 +352,13 @@ Experiment running configuration
 
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
-| model | `string` |  | string | `"/local_resources/basemodel"` | Local path to model to be fine-tuned. Normally this should be `/local_resources/basemodel` |
+| model | `string` |  | string | `"/local_resources/basemodel"` | Local path to model to be fine-tuned. Normally this should be /local_resources/basemodel |
 | model_args | `object` |  | [ModelArguments](#modelarguments) | `{"torch_dtype": "auto", "device_map": "auto", "max_memory": null, "low_cpu_mem_usage": false, "attn_implementation": null, "offload_folder": null, "offload_state_dict": null, "offload_buffers": null, "use_cache": true, "cache_dir": null, "force_download": false, "local_files_only": false, "proxies": null, "resume_download": false, "revision": "main", "code_revision": "main", "subfolder": null, "token": null, "use_safetensors": null, "variant": null, "trust_remote_code": false}` |  |
 | tokenizer | `string` or `null` |  | string |  | Model HuggingFace ID, or path, or None to use the one associated with the model |
-| use_fast_tokenizer | `boolean` |  | boolean | `True` | Use the Fast version of the tokenizer. The 'slow' version may be compatible with more features. |
-| resume_from_checkpoint | `boolean` or `string` | | boolean and/or string | `False`  | Normally should be set to 'auto' to continue if a checkpoint exists. Can set to `True` to always try to continue, `False` to never try, or a path to load from a specific path. |
+| use_fast_tokenizer | `boolean` |  | boolean | `true` | Use the Fast version of the tokenizer. The 'slow' version may be compatible with more features. |
+| resume_from_checkpoint | `boolean` or `string` |  | boolean and/or string |  | Normally should be set to 'auto' to continue if a checkpoint exists.        Can set to True to always try to continue, False to never try, or a path to load from a specific path. |
 | final_checkpoint_name | `string` |  | string | `"checkpoint-final"` | Name of final checkpoint. Should be left as default |
+| determinism | `string` |  | `no` `half` `full` | `"no"` | Set the level of determinism in implementations. Deterministic implementations are not always available,            and when they are, they are usually slower than their non-deterministic counterparts. Recommended for            debugging only.            'no': No determinism.            'half': Prefer deterministic implementations.            'full': Only fully deterministic implementations, error out on operations that only have non-deterministic                    implementations. |
 
 ## SFTArguments
 
@@ -425,5 +433,5 @@ For DPO this means lines of:
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | type | `const` | ✅ | `PRECOMPUTE_WEIGHTED_MIX` |  |  |
 | datasets | `array` | ✅ | [WeightedDatasetDefinition](#weighteddatasetdefinition) |  |  |
-| data_type | `string` |  | string | `"ChatConversation"` | generally, the data_type is automatically set based on the experiment config method |
+| data_type | `string` |  | string | `"ChatConversation"` | Generally, the data_type is automatically set based on the experiment config method. |
 | seed | `integer` |  | integer | `19851243` | Seed for the random number generator for interleaving draws |
