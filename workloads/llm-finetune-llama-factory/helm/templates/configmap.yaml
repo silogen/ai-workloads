@@ -4,6 +4,13 @@ metadata:
   name: "{{ .Release.Name }}-configs"
 data:
   llama_factory_config.yaml: |
+    {{- if .Values.modelRemote }}
+    model_name_or_path: /workdir/basemodel
+    {{- else }}
+    model_name_or_path: "{{ .Values.modelName }}"
+    {{- end }}
+    dataset: {{ .Values.dataset }}
+    dataset_dir: /workspace/LLaMA-Factory/data
     output_dir: /workdir/checkpoints
     {{- if ne (int $.Values.nodes) 1 }}
     ray_run_name: "{{ .Release.Name }}"
@@ -13,35 +20,74 @@ data:
       GPU: {{ .Values.gpusPerNode }}
     {{- end }}
 {{ toYaml .Values.llamaFactoryConfig | indent 4 }}
+{{ if .Values.datasetInfo }}
+  remote_dataset_info.json: |
+{{ toPrettyJson .Values.datasetInfo | indent 4 }}
+{{- end }}
   entrypoint.sh: |
     #!/bin/bash
+    set -e
     # Print GPU Info:
     rocm-smi
     mkdir -p /workdir/checkpoints
-    {{- if .Values.checkpointsRemote }}
+    mkdir -p /workdir/datasets
+    cd /workspace/LLaMA-Factory
+    cp /configs/llama_factory_config.yaml llama_factory_config.yaml
+    {{- if .Values.datasetInfo }}
+    cp /configs/remote_dataset_info.json remote_dataset_info.json
+    {{- end }}
     # Setup MinIO
     mc alias set minio-host $BUCKET_STORAGE_HOST $BUCKET_STORAGE_ACCESS_KEY $BUCKET_STORAGE_SECRET_KEY
+    {{- if .Values.modelRemote }}
+    # copy model from remote to local
+    mc cp --recursive \
+      minio-host/{{ .Values.modelRemote | trimSuffix "/" }}/ \
+      /workdir/basemodel
+    {{- end }}
+    {{- range .Values.datasetInfo }}
+    {{- if .pathRemote }}
+    # copy dataset from remote to local
+    mc cp \
+      minio-host/{{ .pathRemote }} \
+      /workdir/datasets/{{ .pathRemote | replace "/" "_" }}
+    sed -i 's;"pathRemote": "{{ .pathRemote }}";"file_name": "/workdir/datasets/{{ .pathRemote | replace "/" "_" }}";g' remote_dataset_info.json
+    {{- end }}
+    {{- end }}
+    {{- $checkpointsRemotePath := printf "minio-host/'%s'/" (.Values.checkpointsRemote | trimSuffix "/" | replace  "'" "'\\''") }}
+    {{- if .Values.checkpointsRemote }}
+    {{- if .Values.resumeFromCheckpoint }}
     # Sync checkpoints from remote to local
-    if mc mirror minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ /workdir/checkpoints 2>/dev/null; then
-      echo 'Downloaded checkpoints from {{ .Values.checkpointsRemote}} to /workdir/checkpoints'
+    if mc mirror {{ $checkpointsRemotePath }} /workdir/checkpoints 2>/dev/null; then
+      echo 'Downloaded checkpoints from' {{ $checkpointsRemotePath }} 'to /workdir/checkpoints'
       ls -lah /workdir/checkpoints
+      echo "resume_from_checkpoint: /workdir/checkpoints" >> llama_factory_config.yaml
     else
       echo 'No checkpoints found yet'
     fi
+    {{- end }}
     echo "Starting checkpoint sync process"
     mc mirror \
       --watch \
       /workdir/checkpoints \
-      minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ &
+      {{ $checkpointsRemotePath }} &
     uploadPID=$!
+    # Check if the sync process started successfully
+    sleep 1
+    if ! ps -p $uploadPID > /dev/null; then
+      echo "ERROR: Sync process failed to start"
+      exit 1
+    fi
     {{- end }}
     # Run training:
     echo "Starting training process"
-    cd LLaMA-Factory/
+    {{- if .Values.datasetInfo }}
+    jq -s add remote_dataset_info.json /workspace/LLaMA-Factory/data/dataset_info.json > dataset_info.json
+    cp dataset_info.json /workspace/LLaMA-Factory/data/dataset_info.json
+    {{- end }}
     {{- if ne (int $.Values.nodes) 1 }}
     export USE_RAY=1
     {{- end }}
-    llamafactory-cli train /configs/llama_factory_config.yaml
+    llamafactory-cli train llama_factory_config.yaml
     {{- if .Values.checkpointsRemote }}
     echo "Training done, stop the upload process"
     kill $uploadPID
@@ -50,6 +96,6 @@ data:
     echo 'Training done, syncing once more...'
     mc mirror --overwrite \
       /workdir/checkpoints \
-      minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/
+      {{ $checkpointsRemotePath }}
     {{- end }}
     echo 'All done, exiting'

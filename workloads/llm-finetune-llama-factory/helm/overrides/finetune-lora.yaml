@@ -1,8 +1,14 @@
-# Resources:
-checkpointsReservedSize: 10Gi
+### Model ###
+modelName: meta-llama/Llama-3.1-8B-Instruct
+
+### Data ###
+dataset: identity,alpaca_en_demo
 
 ### Model output path ###
 checkpointsRemote: "default-bucket/experiments/llama3-8b-llama-factory-lora"
+
+# Resources:
+checkpointsReservedSize: 10Gi
 
 hfTokenSecret:
   name: hf-token
@@ -12,7 +18,6 @@ hfTokenSecret:
 ### this example from https://github.com/hiyouga/LLaMA-Factory/blob/main/examples/train_lora/llama3_lora_sft.yaml
 llamaFactoryConfig:
   ### model
-  model_name_or_path: meta-llama/Llama-3.1-8B-Instruct
   trust_remote_code: true
 
   ### method
@@ -23,8 +28,6 @@ llamaFactoryConfig:
   lora_target: all
 
   ### dataset
-  dataset: identity,alpaca_en_demo
-  dataset_dir: REMOTE:llamafactory/demo_data  # or use local absolute path
   template: llama3
   cutoff_len: 2048
   max_samples: 1000
@@ -49,11 +52,3 @@ llamaFactoryConfig:
   warmup_ratio: 0.1
   bf16: true
   ddp_timeout: 180000000
-  resume_from_checkpoint: null
-
-  ### eval
-  # eval_dataset: alpaca_en_demo
-  # val_size: 0.1
-  # per_device_eval_batch_size: 1
-  # eval_strategy: steps
-  # eval_steps: 500

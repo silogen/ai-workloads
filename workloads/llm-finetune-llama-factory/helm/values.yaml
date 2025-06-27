@@ -1,6 +1,20 @@
 ### General chart values ###
 finetuningImage: ghcr.io/silogen/llama-factory-rocm-pytorch-training:v0.3
 
+### Model ###
+# either modelRemote OR modelName must be set
+# to use a base model directly from Hugging Face, set modelName to the model identifier (e.g., "meta-llama/Llama-3.1-8B-Instruct")
+modelName: ""
+# for remote models to be loaded from MinIO, specify the path to the model in the remote bucket as modelRemote
+modelRemote: ""
+
+### Data ###
+# list datasets to use, can include datasets predefined in LLaMA-Factory or those defined in datasetInfo
+dataset: ""
+# Additional datasets can be specified in datasetInfo, according to the LLaMA-Factory dataset format, see https://github.com/hiyouga/LLaMA-Factory/blob/main/data/README.md
+# For remote datasets to be loaded from MinIO, specify the path to the dataset in the remote bucket as pathRemote
+datasetInfo: {}
+
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:
   enabled: false
@@ -9,8 +23,10 @@ kaiwo:
 labels: {}
 
 # Extra annotations such as an imagePullSecrets
-imagePullSecrets:
-  - "regcred"
+imagePullSecrets: []
+  # Example:
+  # imagePullSecrets:
+  #   - "regcred"
 
 # Configure these to match the credentials in your cluster:
 bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
@@ -37,7 +53,8 @@ llamaFactoryConfig:
   stage: sft
 
 ### Model output path ###
-checkpointsRemote:  # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
+checkpointsRemote: "" # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
+resumeFromCheckpoint: false  # Set to true to resume from the last checkpoint in checkpointsRemote (if available)
 
 hfTokenSecret: {} # Optional secret reference that contains the Huggingface token
 # Example:

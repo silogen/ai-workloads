@@ -6,6 +6,22 @@
             "type": "string",
             "description": "Container image for finetuning"
         },
+        "modelName": {
+            "type": "string",
+            "description": "Model path in Huggginface"
+        },
+        "modelRemote": {
+            "type": "string",
+            "description": "Model path in remote MinIO storage, format: bucketName/path/in/bucket"
+        },
+        "dataset": {
+            "type": "string",
+            "description": "Name of data set used for training. Use commas to separate multiple data sets."
+        },
+        "datasetInfo": {
+            "type": "object",
+            "description": "Additional datasets can be specified in datasetInfo, according to the LLaMA-Factory dataset format, see https://github.com/hiyouga/LLaMA-Factory/blob/main/data/README.md"
+        },
         "kaiwo": {
             "type": "object",
             "properties": {
@@ -109,11 +125,13 @@
             "default": "16Gi"
         },
         "checkpointsRemote": {
-            "type": [
-                "string",
-                "null"
-            ],
+            "type": "string",
             "description": "Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket"
+        },
+        "resumeFromCheckpoint": {
+            "type": "boolean",
+            "description": "If true, resume from the last checkpoint in checkpointsRemote (if available)",
+            "default": false
         },
         "hfTokenSecret": {
             "type": "object",

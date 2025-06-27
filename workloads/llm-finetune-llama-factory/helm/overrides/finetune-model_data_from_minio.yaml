@@ -1,24 +1,31 @@
 ### Model ###
-modelName: meta-llama/Llama-3.1-8B-Instruct
+modelRemote: "default-bucket/models/tiny-llama/tinyllama-1.1b-chat-v1.0"
 
 ### Data ###
-dataset: identity,alpaca_en_demo
+# list datasets to use, can include datasets predefined in LLaMA-Factory or those defined in datasetInfo
+dataset: argilla
+# for remote datasets to be loaded from MinIO, specify the path to the dataset in the remote bucket as pathRemote
+datasetInfo:
+  argilla:
+    pathRemote: "default-bucket/datasets/argilla-mistral-large-human-prompts.jsonl"
+    formatting: sharegpt
+    columns:
+      messages: "messages"
+    tags:
+      role_tag: "role"
+      content_tag: "content"
+      user_tag: "user"
+      assistant_tag: "assistant"
+      system_tag: "system"
 
 ### Model output path ###
-checkpointsRemote: "default-bucket/experiments/llama3-8b-llama-factory-lora"
+checkpointsRemote: "default-bucket/experiments/tinyllama-argilla-llama-factory-lora"
+resumeFromCheckpoint: true
 
 # Resources:
 checkpointsReservedSize: 10Gi
-nodes: 2
-gpusPerNode: 1
-memoryPerNode: 32Gi
-
-hfTokenSecret:
-  name: hf-token
-  key: hf-token
 
 ### llama-factory config ###
-### this example adapted from https://github.com/hiyouga/LLaMA-Factory/blob/main/examples/train_lora/llama3_lora_sft_ray.yaml
 llamaFactoryConfig:
   ### model
   trust_remote_code: true
@@ -29,33 +36,22 @@ llamaFactoryConfig:
   finetuning_type: lora
   lora_rank: 8
   lora_target: all
-  deepspeed: /workspace/LLaMA-Factory/examples/deepspeed/ds_z2_config.json  # choices: [ds_z0_config.json, ds_z2_config.json, ds_z3_config
 
   ### dataset
-  template: llama3
-  cutoff_len: 2048
+  template: llama2
+  cutoff_len: 8192
   max_samples: 1000
   overwrite_cache: true
   preprocessing_num_workers: 16
   dataloader_num_workers: 4
 
   ### output
-  output_dir: tmp_dir
   logging_steps: 10
   save_steps: 500
   plot_loss: true
   overwrite_output_dir: true
   save_only_model: false
   report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
-
-  ### ray
-  placement_strategy: PACK
-  # ray_init_kwargs:
-  #   runtime_env:
-  #     env_vars:
-  #       <YOUR-ENV-VAR-HERE>: "<YOUR-ENV-VAR-HERE>"
-  #     pip:
-  #       - emoji
 
   ### train
   per_device_train_batch_size: 1
