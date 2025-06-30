@@ -53,4 +53,4 @@ chmod +x /minio-binaries/mc
 export PATH="${PATH}:/minio-binaries/"
 
 mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
-mc cp --recursive $OUTPATH minio-host/${BUCKET_RESULT_PATH}/
+mc cp --recursive $OUTPATH minio-host/"${BUCKET_RESULT_PATH}"/

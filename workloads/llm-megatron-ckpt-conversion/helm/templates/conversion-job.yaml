@@ -30,10 +30,10 @@ spec:
               mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY};
 
               echo "Listing contents of the model path:";
-              mc ls minio-host/{{ .Values.remoteSourceModelPath | trimSuffix "/" }}/ || echo "Model path not found!";
+              mc ls minio-host/'{{ .Values.remoteSourceModelPath | trimSuffix "/" | replace  "'" "'\\''" }}'/ || echo "Model path not found!";
 
               echo "Copying model checkpoint to container...";
-              mc cp -r minio-host/{{ .Values.remoteSourceModelPath | trimSuffix "/" }}/ /local-resources/sourcemodel || echo "Failed to copy model!";
+              mc cp -r minio-host/'{{ .Values.remoteSourceModelPath | trimSuffix "/" | replace  "'" "'\\''" }}'/ /local-resources/sourcemodel || echo "Failed to copy model!";
 
               echo "Listing contents of /local-resources/:";
               ls -la /local-resources/ || echo "Local resources directory not found!";
@@ -72,7 +72,7 @@ spec:
 
               echo "Conversion done, syncing checkpoint artifacts to remote storage...";
               mc mirror --overwrite \
-                /local-resources/checkpoints/ minio-host/{{ .Values.remoteDestinationModelPath | trimSuffix "/" }}/;
+                /local-resources/checkpoints/ minio-host/'{{ .Values.remoteDestinationModelPath | trimSuffix "/" | replace  "'" "'\\''" }}'/;
 
               echo "Done uploading. Signal to the main container that it can exit.";
 

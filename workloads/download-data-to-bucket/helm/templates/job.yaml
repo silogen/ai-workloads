@@ -33,8 +33,8 @@ spec:
           mkdir -p /downloads/datasets
           python /scripts/data_script.py
           ########################
-          echo 'Uploading data to the bucket, to {{ .Values.bucketDataDir | trimSuffix "/" }}'
-          mc cp -recursive /downloads/datasets/ minio-host/{{ .Values.bucketDataDir | trimSuffix "/" }}/
+          echo 'Uploading data to the bucket, to {{ .Values.bucketDataDir | trimSuffix "/" | replace  "'" "'\\''" }}'
+          mc cp -recursive /downloads/datasets/ minio-host/'{{ .Values.bucketDataDir | trimSuffix "/" | replace  "'" "'\\''" }}'/
           ########################
           echo 'Done'
         env:
