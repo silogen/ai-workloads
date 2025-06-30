@@ -33,3 +33,7 @@ storage:
       - ReadWriteOnce
   bucket_storage_host: minio.minio-tenant-default.svc.cluster.local:80
   bucket_storage_bucket: default-bucket
+  mlflow:
+    server_uri: http://10.242.3.198:8082
+    experiment_name: mlflow-experiment
+    run_name: mlflow-run

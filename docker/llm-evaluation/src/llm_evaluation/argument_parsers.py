@@ -12,7 +12,11 @@ def get_inference_parser() -> ArgumentParser:
     parser.add_argument("-p", "--llm-port", type=str, default="8080", help="Port number of the LLM service.")
     parser.add_argument("-e", "--llm-endpoint", type=str, default="v1", help="Endpoint of the LLM service.")
     parser.add_argument(
-        "-d", "--evaluation-dataset", type=str, default="abisee/cnn_dailymail", help="Name of the evaluation dataset."
+        "-d",
+        "--evaluation-dataset-name",
+        type=str,
+        default="abisee/cnn_dailymail",
+        help="Name of the evaluation dataset.",
     )
     parser.add_argument(
         "-v", "--evaluation-dataset-version", type=str, default="3.0.0", help="Version of the evaluation dataset."
@@ -64,6 +68,24 @@ def get_inference_parser() -> ArgumentParser:
         type=str,
         default="/home/evaluation/example_prompts/example_summary_prompt.txt",
         help="Path to the prompt template file.",
+    )
+    parser.add_argument(
+        "--mlflow-server-uri",
+        type=str,
+        default="",  # leave this argument empty to disable MLFlow tracking
+        help="MLFlow server URI for tracking.",
+    )
+    parser.add_argument(
+        "--mlflow-experiment-name",
+        type=str,
+        default="llm-evaluation-experiment",
+        help="MLFlow experiment name for tracking.",
+    )
+    parser.add_argument(
+        "--mlflow-run-name",
+        type=str,
+        default="llm-evaluation-run",
+        help="MLFlow run name for tracking.",
     )
     return parser
 

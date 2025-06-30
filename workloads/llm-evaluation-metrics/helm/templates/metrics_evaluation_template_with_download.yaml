@@ -83,7 +83,7 @@ spec:
               echo "Running evaluation:\nDownloading Dataset, Running inference, Evaluating inferences with bertscore...";
               python3 run_inference_and_metrics_evaluation.py \
                     --llm-base-url="http://localhost" \
-                    --evaluation-dataset="{{ .Values.evaluation_container.dataset_path }}" \
+                    --evaluation-dataset-name="{{ .Values.evaluation_container.dataset_path }}" \
                     --evaluation-dataset-version="{{ .Values.evaluation_container.dataset_version }}" \
                     --dataset-split="{{ .Values.evaluation_container.dataset_split }}" \
                     --prompt-template-path="{{ .Values.evaluation_container.prompt_template_path }}" \
@@ -95,7 +95,10 @@ spec:
                     --context-column-name="{{ .Values.evaluation_container.dataset_info.context_column_name}}" \
                     --id-column-name="{{ .Values.evaluation_container.dataset_info.id_column_name}}" \
                     --gold-standard-column-name="{{ .Values.evaluation_container.dataset_info.gold_standard_column_name}}" \
-                    --use-data-subset="{{ .Values.evaluation_container.use_data_subset}}" ;
+                    --use-data-subset="{{ .Values.evaluation_container.use_data_subset}}" \
+                    --mlflow-server-uri="{{ .Values.storage.mlflow.server_uri }}" \
+                    --mlflow-experiment-name="{{ .Values.storage.mlflow.experiment_name }}" \
+                    --mlflow-run-name="{{ .Values.storage.mlflow.run_name }}" ;
           env:
             - name: TRANSFORMERS_CACHE
               value: /HF_HOME

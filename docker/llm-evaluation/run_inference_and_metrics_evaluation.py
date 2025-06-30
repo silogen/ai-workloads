@@ -14,9 +14,9 @@ from llm_evaluation.call_inference_container.call_inference_container import run
 from llm_evaluation.call_inference_container.call_inference_container import (
     save_inference_results,
 )
-from llm_evaluation.metrics.run_metrics_evaluation import read_inference_data
+from llm_evaluation.metrics.run_metrics_evaluation import get_bert_score_distribution_graphs, read_inference_data
 from llm_evaluation.metrics.run_metrics_evaluation import run as run_metrics_evaluation
-from llm_evaluation.metrics.utils import save_results
+from llm_evaluation.metrics.utils import log_metrics_in_mlflow, save_results
 
 
 async def main(args: Namespace):
@@ -114,6 +114,20 @@ async def main(args: Namespace):
     logger.info("Data loaded, running metrics evaluation...")
 
     eval_results = run_metrics_evaluation(data)
+
+    distribution_graphs = get_bert_score_distribution_graphs(
+        scores=eval_results.scores,
+    )
+
+    if args.mlflow_server_uri:
+        logger.info("Logging results to MLFlow...")
+        log_metrics_in_mlflow(
+            distribution_graphs,
+            eval_results.scores,
+            mlflow_server_uri=args.mlflow_server_uri,
+            mlflow_experiment_name=args.mlflow_experiment_name,
+            mlflow_run_name=args.mlflow_run_name,
+        )
 
     logger.info("Evaluation results:")
     logger.info(eval_results)

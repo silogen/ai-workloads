@@ -4,13 +4,14 @@ from argparse import Namespace
 from typing import Any, Dict, List
 
 import jsonlines
+import mlflow
+import numpy as np
 from llm_evaluation import logger
 from llm_evaluation.data.data_classes import AggregatedJudgeResults, EvaluationResults
 from minio import Minio, S3Error
-from numpy import ndarray
 
 
-def convert_negatives_to_zero(array: ndarray) -> ndarray:
+def convert_negatives_to_zero(array: np.ndarray) -> np.ndarray:
     """Converts all negative values in an array to zero.
 
     Args:
@@ -129,3 +130,40 @@ def read_jsonl_data(input_file_path: str) -> List[Dict[str, Any]]:
         for line in reader.iter(type=dict, skip_invalid=True):
             generations.append(line)
     return generations
+
+
+def log_metrics_in_mlflow(distribution_graphs, scores, mlflow_server_uri, mlflow_experiment_name, mlflow_run_name):
+
+    logger.info(f"Using MLflow tracking URI: {mlflow_server_uri}")
+
+    experiment_description = "Evaluation of LLM using BERTScore metric."
+
+    experiment_tags = {
+        "project_name": mlflow_experiment_name,
+        "mlflow.note.content": experiment_description,
+    }
+
+    client = mlflow.MlflowClient(tracking_uri=mlflow_server_uri)
+
+    # Create the Experiment, providing a unique name
+    try:
+        test_experiment = client.create_experiment(name=mlflow_experiment_name, tags=experiment_tags)
+        logger.info(f"Created experiment with ID: {test_experiment}")
+    except mlflow.exceptions.MlflowException as e:
+        # If the experiment already exists, retrieve its ID
+        logger.warning(f"Experiment '{mlflow_experiment_name}' already exists. Using existing experiment.")
+        test_experiment = client.get_experiment_by_name(mlflow_experiment_name).experiment_id
+        logger.info(f"Using existing experiment with ID: {test_experiment}")
+
+    mlflow.set_tracking_uri(mlflow_server_uri)
+    mlflow.set_experiment(experiment_name=mlflow_experiment_name)
+    with mlflow.start_run(run_name=mlflow_run_name, experiment_id=test_experiment) as run:
+
+        for name, file in distribution_graphs.items():
+            mlflow.log_metric("bert_score_mean_precision" + name, np.mean(scores.precision_avg_bert))
+            mlflow.log_metric("bert_score_mean_recall" + name, np.mean(scores.recall_avg_bert))
+            mlflow.log_metric("bert_score_mean_f1" + name, np.mean(scores.f1_avg_bert))
+            logger.info(
+                f"Saving artifact {file} (abs path: {os.path.abspath(file)}) to MLflow run {run.info.run_id}..."
+            )
+            mlflow.log_artifact(os.path.abspath(file), artifact_path="metrics_distributions")
