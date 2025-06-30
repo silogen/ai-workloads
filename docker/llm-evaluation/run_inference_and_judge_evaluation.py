@@ -89,10 +89,8 @@ async def main(args: Namespace):
 
     saved_results = []
     parameters: dict = {}
-    llm_url_no_protocol = args.llm_base_url.removeprefix("http://").removeprefix(
-        "https://"
-    )  # the Minio python client handles protocol itself
-    client = get_llm_client(base_url=llm_url_no_protocol, port=args.llm_port, endpoint=args.llm_endpoint)
+
+    client = get_llm_client(base_url=args.llm_base_url, port=args.llm_port, endpoint=args.llm_endpoint)
 
     async for inference_result in run_call_inference_container(
         dataset=ds,
@@ -123,10 +121,7 @@ async def main(args: Namespace):
     logger.info(inferences_data)
     logger.info("Inference ran.")
 
-    judge_url_no_protocol = args.judge_base_url.removeprefix("http://").removeprefix(
-        "https://"
-    )  # the Minio python client handles protocol itself
-    judge_client = get_llm_client(base_url=judge_url_no_protocol, port=args.judge_port, endpoint=args.judge_endpoint)
+    judge_client = get_llm_client(base_url=args.judge_base_url, port=args.judge_port, endpoint=args.judge_endpoint)
 
     aggregated_judge_results = AggregatedJudgeResults(
         judge_results={},
