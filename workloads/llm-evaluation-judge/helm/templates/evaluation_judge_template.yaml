@@ -144,16 +144,6 @@ spec:
             requests:
               memory: "{{ .Values.judge_evaluation_container.memory }}"
               cpu: "{{ .Values.judge_evaluation_container.cpu_count }}"
-          startupProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - |
-                  curl -sf http://localhost:8080/health && curl -sf http://localhost:8081/health
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            failureThreshold: 30
           command: ["sh", "-c"]
           args:
             - |
