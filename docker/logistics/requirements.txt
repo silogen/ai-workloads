@@ -4,3 +4,4 @@ google-cloud-storage
 hf_transfer
 huggingface_hub[cli]
 minio
+wandb
