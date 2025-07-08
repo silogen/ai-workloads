@@ -1,0 +1,11 @@
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
+image: "rocm/vllm:rocm6.3.1_vllm_0.8.5_20250513"
+model: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
+
+vllm_engine_args:
+  gpu-memory-utilization: "0.95"
+  max-model-len: "65536"

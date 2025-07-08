@@ -1,0 +1,138 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "finetuningImage": {
+            "type": "string",
+            "description": "Container image for finetuning"
+        },
+        "modelName": {
+            "type": "string",
+            "description": "Model path in HuggingFace"
+        },
+        "modelRemote": {
+            "type": "string",
+            "description": "Model path in remote MinIO storage, format: bucketName/path/in/bucket"
+        },
+        "dataset": {
+            "type": "string",
+            "description": "Name of data set to use for training"
+        },
+        "datasetRemote": {
+            "type": "string",
+            "description": "Dataset path in remote MinIO storage, format: bucketName/path/in/bucket"
+        },
+        "kaiwo": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "If true, use Kaiwo CRDs to have Kaiwo operator manage the workload",
+                    "default": false
+                }
+            },
+            "default": {}
+        },
+        "labels": {
+            "type": "object",
+            "description": "Any labels to add for the manifest, recommended: kueue",
+            "additionalProperties": {
+                "type": "string"
+            },
+            "default": {}
+        },
+        "imagePullSecrets": {
+            "type": "array",
+            "description": "Any imagePullSecrets to use",
+            "items": {
+                "type": "string"
+            },
+            "default": []
+        },
+        "bucketStorageHost": {
+            "type": "string",
+            "description": "The cloud storage host URL"
+        },
+        "bucketCredentialsSecret": {
+            "type": "object",
+            "description": "Bucket storage credential secret values, required to have the secret already setup in the cluster (e.g. via external secrets)",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the secret in the cluster that contains the bucket storage credentials",
+                    "default": "minio-credentials"
+                },
+                "accessKeyKey": {
+                    "type": "string",
+                    "description": "The key in the secret that contains the access key",
+                    "default": "minio-access-key"
+                },
+                "secretKeyKey": {
+                    "type": "string",
+                    "description": "The key in the secret that contains the access key",
+                    "default": "minio-secret-key"
+                }
+            }
+        },
+        "checkpointsReservedSize": {
+            "type": "string",
+            "description": "How much space to reserve for model and data downloads"
+        },
+        "storageClass": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "Optionally set this to use a specific storageClass for the storage"
+        },
+        "cpusPerGpu": {
+            "type": "integer",
+            "description": "How many CPUs to use, per GPU",
+            "default": 8,
+            "minimum": 1
+        },
+        "finetuningGpus": {
+            "type": "integer",
+            "description": "How many GPUs to use for finetuning",
+            "default": 1,
+            "minimum": 0
+        },
+        "memoryPerGpu": {
+            "type": "integer",
+            "description": "How much memory to use in GB, per GPU",
+            "default": 64
+        },
+        "checkpointsRemote": {
+            "type": "string",
+            "description": "Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket"
+        },
+        "resumeFromCheckpoint": {
+            "type": "boolean",
+            "description": "If true, resume from the last checkpoint in checkpointsRemote (if available)",
+            "default": false
+        },
+        "hfTokenSecret": {
+            "type": "object",
+            "description": "Optional secret reference that contains a HuggingFace token",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the secret in the cluster that contains the HuggingFace token"
+                },
+                "key": {
+                    "type": "string",
+                    "description": "The key in the secret that contains the HuggingFace token"
+                }
+            },
+            "default": {}
+        },
+        "verlConfig": {
+            "type": "object",
+            "description": "VeRL configurations to use"
+        }
+    },
+    "required": [
+        "finetuningImage",
+        "verlConfig"
+    ]
+}

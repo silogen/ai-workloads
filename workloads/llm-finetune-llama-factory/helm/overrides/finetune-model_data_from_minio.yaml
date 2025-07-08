@@ -1,0 +1,64 @@
+### Model ###
+modelRemote: "default-bucket/models/tiny-llama/tinyllama-1.1b-chat-v1.0"
+
+### Data ###
+# list datasets to use, can include datasets predefined in LLaMA-Factory or those defined in datasetInfo
+dataset: argilla
+# for remote datasets to be loaded from MinIO, specify the path to the dataset in the remote bucket as pathRemote
+datasetInfo:
+  argilla:
+    pathRemote: "default-bucket/datasets/argilla-mistral-large-human-prompts.jsonl"
+    formatting: sharegpt
+    columns:
+      messages: "messages"
+    tags:
+      role_tag: "role"
+      content_tag: "content"
+      user_tag: "user"
+      assistant_tag: "assistant"
+      system_tag: "system"
+
+### Model output path ###
+checkpointsRemote: "default-bucket/experiments/tinyllama-argilla-llama-factory-lora"
+resumeFromCheckpoint: true
+
+# Resources:
+checkpointsReservedSize: 10Gi
+
+### llama-factory config ###
+llamaFactoryConfig:
+  ### model
+  trust_remote_code: true
+
+  ### method
+  stage: sft
+  do_train: true
+  finetuning_type: lora
+  lora_rank: 8
+  lora_target: all
+
+  ### dataset
+  template: llama2
+  cutoff_len: 8192
+  max_samples: 1000
+  overwrite_cache: true
+  preprocessing_num_workers: 16
+  dataloader_num_workers: 4
+
+  ### output
+  logging_steps: 10
+  save_steps: 500
+  plot_loss: true
+  overwrite_output_dir: true
+  save_only_model: false
+  report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+  ### train
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 1.0e-4
+  num_train_epochs: 3.0
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.1
+  bf16: true
+  ddp_timeout: 180000000

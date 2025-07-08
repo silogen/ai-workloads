@@ -1,0 +1,22 @@
+metadata:
+  labels:
+    pipeline_tag: ""
+    chat: "true"
+
+image: "rocm/vllm:rocm6.3.1_vllm_0.8.5_20250513"
+model: "mistralai/Mistral-Large-Instruct-2411"
+gpus: 2
+
+env_vars:
+  HF_TOKEN:
+    key: hf-token
+    name: hf-token
+
+storage:
+  ephemeral:
+    quantity: 512Gi  # observed peak usage: ~457Gi (2 copies of the model)
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 64Gi
