@@ -10,10 +10,12 @@ from llm_evaluation import logger
 @dataclass_json
 @dataclass
 class EvaluationScores:
-    precision_bert: float
-    recall_bert: float
-    f1_bert: float
-    f1_list: List[float]
+    precision_avg_bert: float
+    recall_avg_bert: float
+    f1_avg_bert: float
+    precision_list_bert: List[float]
+    recall_list_bert: List[float]
+    f1_list_bert: List[float]
     bleu_score: float
     accuracy: float
 

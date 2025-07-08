@@ -47,13 +47,14 @@ spec:
             {{- end }}
             --local-dir local_models/downloaded_model
           ###################################
-          echo 'Uploading the model to the bucket, to {{ .Values.bucketPath | trimSuffix "/" }}'
+          echo 'Uploading the model to the bucket, to {{ .Values.bucketPath | trimSuffix "/" | replace  "'" "'\\''" }}'
+          {{- $remotePath := printf "minio-host/'%s'/" (.Values.bucketPath | trimSuffix "/" | replace  "'" "'\\''") }}
           mc mirror --exclude '.cache/huggingface/*' \
             --exclude '.gitattributes' \
             {{- if .Values.allowOverwrite }}
             --overwrite \
             {{- end }}
-            local_models/downloaded_model/ minio-host/{{ .Values.bucketPath | trimSuffix "/" }}
+            local_models/downloaded_model/ {{ $remotePath }}
         env:
           {{- if .Values.hfTokenSecret }}
           - name: HF_TOKEN

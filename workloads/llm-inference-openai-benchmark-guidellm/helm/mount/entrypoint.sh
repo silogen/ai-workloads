@@ -5,8 +5,14 @@ mkdir -p /workload/output
 curl https://dl.min.io/client/mc/release/linux-amd64/mc -o /workload/mc
 chmod +x /workload/mc
 /workload/mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
-/workload/mc mirror --watch /workload/output/ minio-host/${BUCKET_RESULT_PATH} &
+/workload/mc mirror --watch /workload/output/ minio-host/"${BUCKET_RESULT_PATH}" &
 MINIOPID=$!
+sleep 1 # Give some time for the process to start
+# Check if the sync process started successfully
+if ! ps -p $MINIOPID > /dev/null; then
+  echo "ERROR: Sync process failed to start"
+  exit 1
+fi
 
 OPENAI_API_BASE_URL=${OPENAI_API_BASE_URL%/}
 MODEL=$(curl -s ${OPENAI_API_BASE_URL}/models | jq -r '.data[0].id')
@@ -28,5 +34,5 @@ guidellm benchmark --target $OPENAI_API_BASE_URL \
 echo -e "<==========================\nBenchmarking completed"
 kill $MINIOPID
 wait $MINIOPID || true
-/workload/mc mirror /workload/output/ minio-host/${BUCKET_RESULT_PATH}
+/workload/mc mirror /workload/output/ minio-host/"${BUCKET_RESULT_PATH}"
 echo "All data uploaded successfully"

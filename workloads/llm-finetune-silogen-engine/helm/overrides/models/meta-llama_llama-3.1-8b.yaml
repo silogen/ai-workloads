@@ -13,8 +13,6 @@ finetuning_config:
   data_conf:
     training_data:
       type: CONCATENATION
-      datasets:
-        - path: "PLACEHOLDER"
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1

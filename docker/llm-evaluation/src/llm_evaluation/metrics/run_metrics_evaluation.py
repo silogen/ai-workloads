@@ -6,6 +6,9 @@ from argparse import Namespace
 from typing import Any, Dict, List
 
 import jsonlines
+import matplotlib.pyplot as plt
+import mlflow
+import numpy as np
 from llm_evaluation import logger
 from llm_evaluation.argument_parsers import get_metrics_parser
 from llm_evaluation.data.data_classes import EvaluationResults, EvaluationScores
@@ -28,7 +31,13 @@ def compute_scores(predictions: List[str], references: List[str]) -> EvaluationS
 
     bert_score_start_time = time.time()
 
-    precision_bert, recall_bert, f1_bert, f1_list = compute_bertscore(predictions=predictions, references=references)
+    precision_list_bert, recall_list_bert, f1_list_bert = compute_bertscore(
+        predictions=predictions, references=references
+    )
+
+    precision_avg_bert = round(np.average(precision_list_bert), 4)
+    recall_avg_bert = round(np.average(recall_list_bert), 4)
+    f1_avg_bert = round(np.average(f1_list_bert), 4)
 
     logger.info(f"BERT-score computation took {time.time() - bert_score_start_time:.2f} seconds")
 
@@ -45,13 +54,51 @@ def compute_scores(predictions: List[str], references: List[str]) -> EvaluationS
     logger.info(f"Exact match computation took {time.time() - exact_match_start_time:.2f} seconds")
 
     return EvaluationScores(
-        precision_bert=precision_bert,
-        recall_bert=recall_bert,
-        f1_bert=f1_bert,
-        f1_list=f1_list,
+        precision_avg_bert=precision_avg_bert,
+        recall_avg_bert=recall_avg_bert,
+        f1_avg_bert=f1_avg_bert,
+        precision_list_bert=precision_list_bert,
+        recall_list_bert=recall_list_bert,
+        f1_list_bert=f1_list_bert,
         bleu_score=bleu_score,
         accuracy=accuracy,
     )
+
+
+def get_bert_score_distribution_graphs(scores: EvaluationScores) -> Dict[str, str]:
+    """
+    Generate PNG images of the distributions of BERTScore precision, recall, and F1,
+    each with the mean value marked.
+
+    Args:
+        precision_list (list of float): List of BERTScore precision values.
+        recall_list (list of float): List of BERTScore recall values.
+        f1_list (list of float): List of BERTScore F1 values.
+
+    Returns:
+        dict: Dictionary with keys 'precision', 'recall', 'f1', each containing PNG image bytes.
+    """
+    results = {}
+    metrics = [
+        ("precision", scores.precision_list_bert),
+        ("recall", scores.recall_list_bert),
+        ("f1", scores.f1_list_bert),
+    ]
+    for name, values in metrics:
+        fig, ax = plt.subplots()
+        values = np.array(values)
+        mean_val = np.mean(values)
+        ax.hist(values, bins=20, alpha=0.7, color="skyblue", edgecolor="black")
+        ax.axvline(mean_val, color="red", linestyle="dashed", linewidth=2, label=f"Mean: {mean_val:.4f}")
+        ax.set_title(f"BERTScore {name.capitalize()} Distribution")
+        ax.set_xlabel(name.capitalize())
+        ax.set_ylabel("Frequency")
+        ax.legend()
+        plt.tight_layout()
+        plt.savefig(f"{name}_distribution.png", format="png")
+        plt.close(fig)
+        results[name] = f"{name}_distribution.png"
+    return results
 
 
 def read_inference_data(input_path: str) -> List[Dict[str, Any]]:

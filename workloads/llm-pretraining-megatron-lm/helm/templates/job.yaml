@@ -26,18 +26,19 @@ spec:
               # Setup MinIO, Download resources:
               mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY};
               echo "Copying data to container...";
-              mc cp -r minio-host/{{ .Values.remoteDataDirPath | trimSuffix "/" }}/{{ .Values.remoteDataNamePrefix }} /local-resources/data;
+              mc cp -r minio-host/'{{ .Values.remoteDataDirPath | trimSuffix "/" | replace  "'" "'\\''"  }}'/'{{ .Values.remoteDataNamePrefix }}' /local-resources/data;
               echo "Copying tokenizer to container...";
-              mc cp -r minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/ /local-resources/tokenizer;
+              mc cp -r minio-host/'{{ .Values.remoteTokenizerPath | trimSuffix "/" | replace  "'" "'\\''"  }}'/ /local-resources/tokenizer;
               echo "Copying model checkpoint to container...";
-              if last_ckpt=$(mc cat minio-host/{{ .Values.remoteCheckpointsPath | trimSuffix "/" }}/latest_checkpointed_iteration.txt); then
+              {{- $remotePath := printf "minio-host/'%s'/" (.Values.remoteCheckpointsPath | trimSuffix "/" | replace  "'" "'\\''") }}
+              if last_ckpt=$(mc cat {{ $remotePath }}/latest_checkpointed_iteration.txt); then
                 last_ckpt=$(printf 'iter_%07d' "$last_ckpt")
                 echo "Found checkpoint at iteration $last_ckpt. Downloading ..."
-                mc mirror minio-host/{{ .Values.remoteCheckpointsPath | trimSuffix "/" }}/$last_ckpt/ /local-resources/basemodel/$last_ckpt
-                mc cp minio-host/{{ .Values.remoteCheckpointsPath | trimSuffix "/" }}/latest_checkpointed_iteration.txt /local-resources/basemodel/latest_checkpointed_iteration.txt
+                mc mirror {{ $remotePath }}/$last_ckpt/ /local-resources/basemodel/$last_ckpt
+                mc cp {{ $remotePath }}/latest_checkpointed_iteration.txt /local-resources/basemodel/latest_checkpointed_iteration.txt
               else
                 echo "No checkpoints found yet. Downloading basemodel ..."
-                mc cp -r minio-host/{{ .Values.remoteBaseModelPath | trimSuffix "/" }}/ /local-resources/basemodel;
+                mc cp -r minio-host/'{{ .Values.remoteBaseModelPath | trimSuffix "/" | replace  "'" "'\\''" }}'/ /local-resources/basemodel;
               fi
           resources:
             limits:

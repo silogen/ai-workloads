@@ -88,4 +88,8 @@ spec:
           mode: 0777
         - key: llama_factory_config.yaml
           path: llama_factory_config.yaml
+        {{- if .Values.datasetInfo }}
+        - key: remote_dataset_info.json
+          path: remote_dataset_info.json
+        {{- end }}
 {{- end }}

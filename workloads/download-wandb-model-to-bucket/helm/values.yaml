@@ -1,0 +1,34 @@
+### General chart values ###
+image: ghcr.io/silogen/logistics:v0.2
+
+# Use to add labels to the metadata of the resources created by this workload.
+labels: {}
+  # Example:
+  # labels:
+  #   kaiwo.silogen.ai/managed: "true"
+
+# Extra annotations such as an imagePullSecrets
+imagePullSecrets: []
+  # Example:
+  # imagePullSecrets:
+  #   - "regcred"
+
+# Configure these to match the credentials in your cluster:
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Secret reference that contains the Weights and Biases token
+wandbTokenSecret:
+  name: wandb-token
+  key: wandb-token
+
+# Inputs:
+artifactPath: "" # wandb artifact path which is in the format of project/artifact-name
+artifactType: model # wandb artifact type, e.g. model or dataset
+bucketPath: "" # Path in the bucket storage where this model should be stored. In the format bucket-name/path/separated/by/slashes/name-for-resulting-directory
+allowOverwrite: false # Optionally set to true to allow overiwriting existing files in the bucket
+storageQuantity: 64Gi  # How much space needs to be allocated to store the model in the container (before pushing to bucket storage).
+storageClass: mlstorage # Set this to use a specific storageClass for the storage. If not specified, will simply use an ephemeral_storage request.

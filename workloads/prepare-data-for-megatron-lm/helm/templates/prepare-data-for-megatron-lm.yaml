@@ -86,10 +86,10 @@ spec:
                 sleep 60
               done
 
-              echo "Preprocessing done, syncing data to remote storage {{ .Values.bucketDataDir | trimSuffix "/" }}...";
-              mc cp --recursive /downloads/datasets/ minio-host/{{ .Values.bucketDataDir | trimSuffix "/" }}/;
+              echo "Preprocessing done, syncing data to remote storage {{ .Values.bucketDataDir | trimSuffix "/" | replace  "'" "'\\''" }}...";
+              mc cp --recursive /downloads/datasets/ minio-host/'{{ .Values.bucketDataDir | trimSuffix "/" | replace  "'" "'\\''" }}'/;
               mc mirror --overwrite --exclude "**/.cache/*" \
-                /downloads/tokenizer/ minio-host/{{ .Values.bucketTokenizersDir | trimSuffix "/" }}/;
+                /downloads/tokenizer/ minio-host/'{{ .Values.bucketTokenizersDir | trimSuffix "/" | replace  "'" "'\\''" }}'/;
               echo "Done uploading. Signal to the main container that it can exit.";
               touch /downloads/done_uploading;
           resources:

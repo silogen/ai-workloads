@@ -7,7 +7,7 @@ from llm_evaluation.metrics.utils import convert_negatives_to_zero
 
 def compute_bertscore(
     predictions: List[str], references: List[str], language: str = "en"
-) -> Tuple[float, float, float, List[float]]:
+) -> Tuple[List[float], List[float], List[float]]:
     """
     Computes the BERTScore for a set of predictions and references.
 
@@ -32,13 +32,7 @@ def compute_bertscore(
     recall_list = convert_negatives_to_zero(array=np.array(results["recall"]))
     f1_list = convert_negatives_to_zero(array=np.array(results["f1"]))
 
-    precision_bert = round(np.average(precision_list), 4)
-    recall_bert = round(np.average(recall_list), 4)
-    f1_bert = round(np.average(f1_list), 4)
-
-    f1_list = [round(f1, 4) for f1 in f1_list]
-
-    return precision_bert, recall_bert, f1_bert, f1_list
+    return precision_list, recall_list, f1_list
 
 
 def compute_exact_match(

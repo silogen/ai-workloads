@@ -3,9 +3,10 @@
 # Setup MinIO
 mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY}
 # Sync checkpoints from remote to local
+{{- $checkpointsRemotePath := printf "minio-host/'%s'/" (.Values.checkpointsRemote | trimSuffix "/" | replace  "'" "'\\''") }}
 {{- if .Values.checkpointsRemote }}
-if mc mirror minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ /workdir/checkpoints 2>/dev/null; then
-  echo 'Downloaded checkpoints from {{ .Values.checkpointsRemote}} to /workdir/checkpoints'
+if mc mirror {{ $checkpointsRemotePath }} /workdir/checkpoints 2>/dev/null; then
+  echo 'Downloaded checkpoints from {{ .Values.checkpointsRemote | trimSuffix "/" | replace  "'" "'\\''"}} to /workdir/checkpoints'
   ls -lah /workdir/checkpoints
 else
   echo 'No checkpoints found yet'
@@ -17,12 +18,13 @@ fi
 {{- define "finetuningAndUploadEntrypoint" -}}
 # Print GPU Info:
 rocm-smi
+{{- $checkpointsRemotePath := printf "minio-host/'%s'/" (.Values.checkpointsRemote | trimSuffix "/" | replace  "'" "'\\''") }}
 {{- if .Values.checkpointsRemote }}
 echo "Starting checkpoint sync process"
 mc mirror \
   --watch \
   /workdir/checkpoints \
-  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/ &
+  {{ $checkpointsRemotePath }} &
 uploadPID=$!
 {{- end }}
 # Run training:
@@ -36,7 +38,7 @@ wait $uploadPID || true
 echo 'Training done, syncing once more...'
 mc mirror \
   /workdir/checkpoints \
-  minio-host/{{ .Values.checkpointsRemote | trimSuffix "/" }}/
+  {{ $checkpointsRemotePath }}
 {{- end }}
 echo 'All done, exiting'
 {{- end }}

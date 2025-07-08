@@ -15,8 +15,14 @@ chmod +x $WORKPATH/bin/mc
 mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
 
 # Start a background process that watches for changes and uploads them
-mc mirror --watch $WORKPATH/output/ minio-host/${BUCKET_RESULT_PATH} &
+mc mirror --watch $WORKPATH/output/ minio-host/"${BUCKET_RESULT_PATH}" &
 MINIOPID=$!
+sleep 1 # Give some time for the process to start
+# Check if the sync process started successfully
+if ! ps -p $MINIOPID > /dev/null; then
+  echo "ERROR: Sync process failed to start"
+  exit 1
+fi
 
 bash $WORKPATH/mount/minio_download_models.sh
 
@@ -53,5 +59,5 @@ kill $MINIOPID
 wait $MINIOPID || true
 
 # Run a final mirror command to ensure all data is uploaded
-mc mirror $WORKPATH/output/ minio-host/${BUCKET_RESULT_PATH}
+mc mirror $WORKPATH/output/ minio-host/"${BUCKET_RESULT_PATH}"
 echo 'All data uploaded successfully'

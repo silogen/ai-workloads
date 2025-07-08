@@ -47,8 +47,17 @@ entrypoint: |
   pip install pipx ipykernel
   pipx install --include-deps jupyter
   pipx inject --include-deps jupyter jupyterlab-lsp 'python-lsp-server[all]' ipywidgets jupyterlab-git jupyterlab_code_formatter
-  python -m ipykernel install --user --name=default-python3
-  jupyter-lab --ServerApp.token='' --ServerApp.ip='0.0.0.0' --ServerApp.allow_root=True --ServerApp.base_url=$BASE_URL --no-browser --ServerApp.root_dir='/workload'
+  python -m ipykernel install --user --name=default-python3 --display-name="Python 3 (default)"
+
+  jupyter-lab --no-browser \
+    --IdentityProvider.token='' \
+    --ServerApp.ip='0.0.0.0' \
+    --ServerApp.allow_root=True \
+    --ServerApp.base_url=$BASE_URL \
+    --ServerApp.root_dir='/workload' \
+    --MultiKernelManager.default_kernel_name=default-python3 \
+    --KernelSpecManager.allowed_kernelspecs=default-python3 \
+    --KernelSpecManager.ensure_native_kernel=False
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:

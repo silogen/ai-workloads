@@ -27,4 +27,4 @@ finetuningGpus: 1
 configFile:  # name of config file to use, include the file in the mount/ directory
 
 ### Model output path ###
-checkpointsRemote:  # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
+checkpointsRemote: ""  # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
