@@ -27,7 +27,10 @@ spec:
           command: ["sh", "-c"]
           args:
           - |
-            bash /workload/mount/download_files.sh {{ .Values.remoteModelPath }} {{ .Values.remoteTokenizerPath}}
+            bash /workload/mount/download_files.sh {{ .Values.remoteModelPath }} {{ .Values.remoteTokenizerPath | trimSuffix "/" }}
+            git checkout fd6f0d11
+            # git apply /workload/mount/megatron-lm-inference-llama3-1-70b.patch
+            # echo "Patch applied successfully"
             bash /workload/mount/run_megatron.sh
           ports:
             - containerPort: {{ .Values.deployment.port }}
