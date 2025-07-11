@@ -5,7 +5,7 @@ image: rocm/megatron-lm:v25.4
 imagePullPolicy: Always
 
 remoteTokenizerPath: default-bucket/models/meta-llama/Llama-3.1-8B/
-remoteModelPath: default-bucket/megatron-models/meta-llama/Llama-3.1-8B/
+remoteModelPath: default-bucket/experiments/megatron-lm/llama-3.1-8b-cpt-test/
 
 envVars:
   BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
