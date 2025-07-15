@@ -4,7 +4,7 @@ metadata:
   user_id: user
   workload_id: # defaults to the release name
 
-image: "rocm/vllm-dev:20241205-tuned"
+image: "rocm/vllm:rocm6.4.1_vllm_0.9.0.1_20250605"
 imagePullPolicy: Always
 replicas: 1
 
@@ -22,10 +22,11 @@ vllm_engine_args:
   # served-model-name: "{{ .Values.model }}"
   # enforce-eager: "true"
   gpu-memory-utilization: "0.95"
+  distributed_executor_backend: "mp"
+  no-enable-chunked-prefill:
 
 # env vars (vllm ref: https://docs.vllm.ai/en/latest/serving/env_vars.html)
 env_vars:
-  VLLM_DO_NOT_TRACK: "1"
   BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
   BUCKET_STORAGE_ACCESS_KEY:
     name: minio-credentials
@@ -34,6 +35,17 @@ env_vars:
     name: minio-credentials
     key: minio-secret-key
   HF_HOME: /workload/.cache/huggingface
+
+  # vLLM optimized settings: https://blog.vllm.ai/2024/10/23/vllm-serving-amd.html
+  VLLM_DO_NOT_TRACK: "1"
+  VLLM_USE_V1: "0"
+  VLLM_USE_TRITON_FLASH_ATTN: "0" # Use Composable Kernel (CK) Flash Attention instead of Triton Flash Attention
+  HIP_FORCE_DEV_KERNARG: "1"
+  NCCL_MIN_NCHANNELS: "112"
+  TORCH_BLAS_PREFER_HIPBLASLT: "1"
+  PYTORCH_TUNABLEOP_ENABLED: "1"
+  PYTORCH_TUNABLEOP_VERBOSE: "1"
+  PYTORCH_TUNABLEOP_TUNING: "0"
 
 storage:
   ephemeral:

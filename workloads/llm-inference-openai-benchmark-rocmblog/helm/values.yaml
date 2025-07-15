@@ -1,7 +1,7 @@
 metadata:
   labels: {}
 
-image: "rocm/vllm-dev:20250205_aiter"
+image: "rocm/vllm:rocm6.4.1_vllm_0.9.0.1_20250605"
 imagePullPolicy: Always
 
 env_vars:
