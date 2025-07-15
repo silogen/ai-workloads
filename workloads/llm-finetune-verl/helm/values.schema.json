@@ -102,6 +102,11 @@
             "description": "How much memory to use in GB, per GPU",
             "default": 64
         },
+        "shmSize": {
+            "type": "string",
+            "description": "How much shared memory to use, e.g. 12Gi",
+            "default": "12Gi"
+        },
         "checkpointsRemote": {
             "type": "string",
             "description": "Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket"

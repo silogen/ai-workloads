@@ -70,6 +70,7 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory # equivalent to `docker run --shm-size=(total_memory/2)`
+            sizeLimit: "{{ .Values.shmSize }}"
         {{- if .Values.storageClass }}
         - name: checkpoints
           ephemeral:
