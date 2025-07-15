@@ -47,12 +47,15 @@ limits:
 {{- if (typeIs "string" $value) }}
 - name: {{ $key }}
   value: {{ $value | quote }}
-{{- else }}
+{{- else if and $value (kindIs "map" $value) (hasKey $value "name") (hasKey $value "key") }}
 - name: {{ $key }}
   valueFrom:
     secretKeyRef:
       name: {{ $value.name }}
       key: {{ $value.key }}
+{{- else }}
+- name: {{ $key }}
+  value: {{ $value | toString | quote }}
 {{- end }}
 {{- end }}
 {{- end -}}

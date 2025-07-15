@@ -3,7 +3,6 @@ metadata:
     pipeline_tag: "image-text-to-text"
     chat: "true"
 
-image: "rocm/vllm:rocm6.3.1_vllm_0.8.5_20250513"
 model: "mistralai/Mistral-Small-3.1-24B-Instruct-2503"
 
 vllm_engine_args:

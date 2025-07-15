@@ -18,6 +18,18 @@ This Helm chart defines a batch job to benchmark LLM performance using vLLM's be
 
 5. **HuggingFace Token** (optional): Set the `env_vars.HF_TOKEN` environment variable if using gated tokenizers (e.g., Mistral and Llama models) from HuggingFace.
 
+## Benchmark Configuration
+
+The benchmark behavior can be customized using the following environment variables:
+
+- **`INPUT_LENGTH`** (default: `2048`): Sets the input token length for benchmark requests
+- **`OUTPUT_LENGTH`** (default: `2048`): Sets the output token length for benchmark requests
+- **`QPS`** (default: `inf`): Sets the queries per second rate. Can be:
+  - A single value: `"10"`, `"inf"` (unlimited)
+  - Multiple space-separated values: `"1 5 10 inf"` (runs tests at each rate)
+
+The benchmark automatically tests with request concurrency levels of 1, 2, 4, 8, 16, 32, 64, 128, and 256.
+
 ## Deployment Example
 
 To deploy the chart, run the following command in the `helm/` directory:
@@ -25,6 +37,9 @@ To deploy the chart, run the following command in the `helm/` directory:
 ```bash
 helm template . \
     --set env_vars.OPENAI_API_BASE_URL="http://example-open-ai-api-server.com/v1/" \
-    --set env_vars.TOKENIZER="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" | \
+    --set env_vars.TOKENIZER="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" \
+    --set env_vars.INPUT_LENGTH="1024" \
+    --set env_vars.OUTPUT_LENGTH="512" \
+    --set env_vars.QPS="1 5 10 inf" | \
     kubectl apply -f -
 ```

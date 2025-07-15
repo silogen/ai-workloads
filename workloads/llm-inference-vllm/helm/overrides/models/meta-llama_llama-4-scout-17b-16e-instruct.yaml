@@ -3,7 +3,6 @@ metadata:
     pipeline_tag: "image-text-to-text"
     chat: "true"
 
-image: "rocm/vllm-dev:llama4-20250405"
 model: "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 gpus: 2
 memory_per_gpu: 64 # Gi

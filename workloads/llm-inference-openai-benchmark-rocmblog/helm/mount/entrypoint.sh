@@ -12,10 +12,18 @@ OUTPATH=/workload/output
 mkdir -p $OUTPATH
 
 modelname=$(echo "${OPENAI_API_BASE_URL}_${MODEL}" | sed 's/[^a-zA-Z0-9]/_/g')
-QPS="inf"
-Req_In_Out=("1:2048:2048" "2:2048:2048" "4:2048:2048" "8:2048:2048" "16:2048:2048" "32:2048:2048" "64:2048:2048" "128:2048:2048" "256:2048:2048")
-#Req_In_Out=("1:128:2048" "2:128:2048" "4:128:2048" "8:128:2048" "16:128:2048" "32:128:2048" "64:128:2048" "128:128:2048" "256:128:2048")
-#Req_In_Out=("1:5000:500" "2:5000:500" "4:5000:500" "8:5000:500" "16:5000:500" "32:5000:500" "64:5000:500" "128:5000:500" "256:5000:500")
+
+# Use environment variables for input, output lengths, and QPS with defaults
+INPUT_LENGTH=${INPUT_LENGTH:-2048}
+OUTPUT_LENGTH=${OUTPUT_LENGTH:-2048}
+# QPS can be a single value (e.g., "10", "inf") or multiple space-separated values (e.g., "1 5 10 inf")
+QPS=${QPS:-inf}
+
+# Generate Req_In_Out array with request counts from 1 to 256
+Req_In_Out=()
+for req_count in 1 2 4 8 16 32 64 128 256; do
+    Req_In_Out+=("${req_count}:${INPUT_LENGTH}:${OUTPUT_LENGTH}")
+done
 
 for req_in_out in "${Req_In_Out[@]}"; do
     con=$(echo "$req_in_out" | awk -F':' '{ print $1 }')
@@ -34,7 +42,7 @@ for req_in_out in "${Req_In_Out[@]}"; do
             --num-prompts 256 \
             --random-input-len \"$inp\" \
             --random-output-len \"$out\" \
-            --random-range-ratio 1.0 \
+            --random-range-ratio 0.99 \
             --ignore-eos \
             --max-concurrency \"$con\" \
             --percentile-metrics ttft,tpot,itl,e2el \

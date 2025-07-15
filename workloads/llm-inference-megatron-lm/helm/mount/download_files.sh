@@ -31,4 +31,6 @@ mc cp --recursive minio-host/$model_path /workload/model/
 echo '--------------------------------------------'
 echo 'Downloading the tokenizer to the local container'
 echo '--------------------------------------------'
-mc cp --recursive minio-host/$tokenizer_path /workload/tokenizer/
+mc cp minio-host/$tokenizer_path/special_tokens_map.json /workload/tokenizer/special_tokens_map.json
+mc cp minio-host/$tokenizer_path/tokenizer.json /workload/tokenizer/tokenizer.json
+mc cp minio-host/$tokenizer_path/tokenizer_config.json /workload/tokenizer/tokenizer_config.json

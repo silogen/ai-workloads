@@ -35,7 +35,7 @@ storage:
     quantity: 100Gi
     storageClassName: mlstorage
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
   dshm:
     sizeLimit: 32Gi
 
