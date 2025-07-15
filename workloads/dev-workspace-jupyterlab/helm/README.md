@@ -37,7 +37,12 @@ To access JupyterLab locally, forward the service port to your machine:
 kubectl port-forward services/dev-workspace-jupyterlab-example 8080:80
 ```
 
-Then, open your browser and navigate to `http://localhost:8080`.
+The complete url can be found by checking the container logs. You should see a message like:
+[.... ServerApp] Jupyter Server 2.16.0 is running at:
+[.... ServerApp] http://dev-workspace-jupyterlab-...
+[.... ServerApp]     http://127.0.0.1:8080/silogen/user/dev-workspace-jupyterlab-.../lab
+
+Open your browser and navigate to the second url, `http://localhost:8080/silogen...`.
 
 ## Accessing the Workload via URL
 
