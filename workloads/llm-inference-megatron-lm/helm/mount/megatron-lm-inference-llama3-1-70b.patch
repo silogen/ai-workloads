@@ -1,17 +1,17 @@
 diff --git a/megatron/training/arguments.py b/megatron/training/arguments.py
-index 5ac0747e..4f24ce38 100644
+index 5ac0747e..69a3dd75 100644
 --- a/megatron/training/arguments.py
 +++ b/megatron/training/arguments.py
 @@ -710,9 +710,9 @@ def validate_args(args, defaults={}):
      if args.num_experts is not None:
          assert args.spec is None, "Model Spec must be None when using MoEs"
-
+     
 -    if args.tensor_model_parallel_size > 1:
 -            assert args.sequence_parallel, \
 -                "When using MoE and tensor parallelism, sequence parallelism must be used."
 +    #if args.tensor_model_parallel_size > 1:
-+            #assert args.sequence_parallel, \
-+                #"When using MoE and tensor parallelism, sequence parallelism must be used."
-
++    #        assert args.sequence_parallel, \
++    #            "When using MoE and tensor parallelism, sequence parallelism must be used."
+                 
      if args.moe_ffn_hidden_size is None:
          args.moe_ffn_hidden_size = args.ffn_hidden_size

@@ -1,3 +1,6 @@
+# Global exclude pattern applies to all hooks
+exclude: \.patch$
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
