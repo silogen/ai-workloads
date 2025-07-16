@@ -79,15 +79,9 @@ spec:
           requests:
             memory: 1Gi
             cpu: 1
-            {{- if not .Values.storageClass }}
-            ephemeral_storage: {{ .Values.storageQuantity }}
-            {{- end }}
           limits:
             memory: 1Gi
             cpu: 1
-            {{- if not .Values.storageClass }}
-            ephemeral_storage: {{ .Values.storageQuantity }}
-            {{- end }}
         {{- if .Values.storageClass }}
         volumeMounts:
           - mountPath: /app
@@ -105,8 +99,8 @@ spec:
       securityContext:
         fsGroup: 1000
       volumes:
-        {{- if .Values.storageClass }}
         - name: {{ .Release.Name }}-volume
+        {{- if .Values.storageClass }}
           ephemeral:
             volumeClaimTemplate:
               spec:
@@ -115,4 +109,7 @@ spec:
                 resources:
                   requests:
                     storage: "{{ .Values.storageQuantity }}"
+        {{- else }}
+          emptyDir:
+            sizeLimit: "{{ .Values.storageQuantity }}"
         {{- end }}
