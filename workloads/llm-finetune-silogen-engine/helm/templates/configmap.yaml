@@ -109,7 +109,7 @@ data:
       {{- toYaml .quant_conf | nindent 6 }}
     run_conf:
       model: /local_resources/basemodel
-      final_checkpoint_name: {{ ternary "checkpoint-final" "checkpoint-final-adapter" (eq .peft_conf.type "NO_PEFT") }}
+      final_checkpoint_name: {{ ternary "checkpoint-final" "checkpoint-final-adapter" (eq .peft_conf.peft_type "NO_PEFT") }}
       {{- toYaml .run_conf | nindent 6 }}
     {{- if (eq .method "sft") }}
     sft_args:
