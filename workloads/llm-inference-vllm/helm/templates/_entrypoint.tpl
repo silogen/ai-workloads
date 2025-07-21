@@ -14,10 +14,15 @@ mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BU
 echo '--------------------------------------------'
 echo 'Checking if model exists in MinIO storage'
 echo '--------------------------------------------'
-if ! mc ls {{$minioModel -}}/ &>/dev/null; then
-  echo "ERROR: Path '{{$minioModel -}}/' not found. Verify the model path, bucket name, and permissions."
+echo "Looking for files at: {{$minioModel -}}/"
+FILE_COUNT=$(mc ls {{$minioModel -}}/ 2>/dev/null | wc -l)
+if [ "$FILE_COUNT" -eq 0 ]; then
+  echo "ERROR: No files found at '{{$minioModel -}}/' or path does not exist."
+  echo "DEBUG: mc ls command output:"
+  mc ls {{$minioModel -}}/ 2>&1
   exit 1
 fi
+echo "✓ Found $FILE_COUNT files at {{$minioModel -}}/"
 echo '--------------------------------------------'
 echo 'Downloading the model to the local container'
 echo '--------------------------------------------'

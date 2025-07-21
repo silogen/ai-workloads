@@ -81,15 +81,21 @@ wait $uploadPID || true
 kill $logsPID
 wait $logsPID || true
 {{- end }}
-# Post process:
-echo "Running post-processing"
-create_vllm_compatible_adapter --training-config /configs/finetuning_config.yaml ./checkpoints/checkpoint-final
-{{- if (and .Values.mergeAdapter (not (eq .Values.finetuning_config.peft_conf.peft_type "NO_PEFT" ))) }}
+{{- if (not (eq .Values.finetuning_config.peft_conf.peft_type "NO_PEFT")) }}
+echo "Running adapter post-processing:"
+create_vllm_compatible_adapter --training-config /configs/finetuning_config.yaml ./checkpoints/checkpoint-final-adapter
+# Sync the final checkpoint with overwrite to carry over vLLM-compatibility changes
+mc mirror \
+  --overwrite \
+  /workdir/checkpoints/checkpoint-final-adapter \
+  {{ $checkpointsRemotePath }}checkpoint-final-adapter/
+{{- if .Values.mergeAdapter }}
 merge_base=/local_resources/basemodel
 if [ -d ./checkpoints/checkpoint-new-basemodel ]; then
   merge_base=./checkpoints/checkpoint-new-basemodel
 fi
-merge_adapter $merge_base ./checkpoints/checkpoint-final ./checkpoints/checkpoint-final-merged
+merge_adapter $merge_base ./checkpoints/checkpoint-final-adapter ./checkpoints/checkpoint-final
+{{- end }}
 {{- end }}
 # Once more to ensure everything gets uploaded
 echo 'Training done, syncing once more...'
@@ -101,10 +107,5 @@ mc mirror \
   /workdir/logs \
   {{ $logsRemotePath }}
 {{- end }}
-# Sync the final checkpoint with overwrite to carry over vLLM-compatibility changes
-mc mirror \
-  --overwrite \
-  /workdir/checkpoints/checkpoint-final \
-  {{ $checkpointsRemotePath }}checkpoint-final/
 echo 'All done, exiting'
 {{- end }}
