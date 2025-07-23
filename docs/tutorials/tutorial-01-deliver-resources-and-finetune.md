@@ -149,7 +149,7 @@ The workload `workloads/download-huggingface-model-to-bucket/helm` delivers [Hug
 
 The bucket storage used in this tutorial is a MinIO server hosted inside the cluster itself. To use some other S3-compatible bucket storage, we need to change the `bucketStorageHost` field, add our credentials (HMAC keys) as a Secret in our namespace (this is generally achieved via an External Secret that in turn fetches the info from some secret store that we have access to), and then refer to that bucket storage credentials Secret in the `bucketCredentialsSecret` nested fields.
 
-To prepare our own model, we create a values file that is similar to `workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-01-tiny-llama-to-minio.yaml`. The key field is `modelID`, which defins which model is downloaded. The field `bucketModelPath` determines where the model is stored in the bucket storage.
+To prepare our own model, we create a values file that is similar to `workloads/download-huggingface-model-to-bucket/helm/overrides/tutorial-01-tiny-llama-to-minio.yaml`. The key field is `modelID`, which defines which model is downloaded. The field `bucketModelPath` determines where the model is stored in the bucket storage.
 
 To prepare our own data, we structure our values file like `workloads/download-data-to-bucket/helm/overrides/tutorial-01-argilla-to-minio.yaml`. It may be easiest to write a Python script separately, potentially test it locally, and then put the script as a block text value for `dataScript`. The dataset upload location is set with the `bucketDataDir` field.
 

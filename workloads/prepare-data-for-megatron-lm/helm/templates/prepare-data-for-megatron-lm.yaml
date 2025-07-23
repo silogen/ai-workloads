@@ -40,13 +40,8 @@ spec:
           args:
             - |
               # Download data and tokenizer
-              mkdir -p /downloads/tokenizer
-
-              {{- if .Values.hfTokenSecret }}
-              HF_TOKEN=$HF_TOKEN \
-              {{- end }}
               bash /scripts/download_data_tokenizer.sh \
-              {{ .Values.tokenizer }}
+              {{ .Values.tokenizer | trimSuffix "/" }}
           resources:
           resources:
             {{- with .Values.resources.downloadContainer }}
@@ -58,6 +53,18 @@ spec:
               cpu: "{{ .cpu }}"
             {{- end }}
           env:
+            - name: BUCKET_STORAGE_HOST
+              value: {{ .Values.bucketStorageHost }}
+            - name: BUCKET_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.accessKeyKey }}
+            - name: BUCKET_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
             {{- if .Values.hfTokenSecret }}
             - name: HF_TOKEN
               valueFrom:
@@ -88,8 +95,12 @@ spec:
 
               echo "Preprocessing done, syncing data to remote storage {{ .Values.bucketDataDir | trimSuffix "/" | replace  "'" "'\\''" }}...";
               mc cp --recursive /downloads/datasets/ minio-host/'{{ .Values.bucketDataDir | trimSuffix "/" | replace  "'" "'\\''" }}'/;
+
+              {{- if not (hasPrefix "s3://" .Values.tokenizer) }}
+              echo "Uploading tokenizer files ..."
               mc mirror --overwrite --exclude "**/.cache/*" \
                 /downloads/tokenizer/ minio-host/'{{ .Values.bucketTokenizersDir | trimSuffix "/" | replace  "'" "'\\''" }}'/;
+              {{- end }}
               echo "Done uploading. Signal to the main container that it can exit.";
               touch /downloads/done_uploading;
           resources:
@@ -131,7 +142,7 @@ spec:
               {{ .Values.dataset.fileName }} \
               {{ .Values.dataset.outputPrefix }} \
               {{ .Values.dataset.jsonKey }} \
-              {{ .Values.tokenizer }}
+              {{ .Values.tokenizer | trimSuffix "/" }}
 
               # Exchange signals with upload container to wrap up the run
               touch /downloads/done_preprocessing;
