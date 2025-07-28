@@ -66,3 +66,7 @@ pretrainingSettings:
 megatronArguments:
 - "--lr 1e-5"
 - "--min-lr 1e-6"
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

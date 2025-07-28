@@ -1,3 +1,4 @@
+{{- define "job" -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -30,12 +31,12 @@ spec:
               echo "Copying tokenizer to container...";
               mc cp -r minio-host/'{{ .Values.remoteTokenizerPath | trimSuffix "/" | replace  "'" "'\\''"  }}'/ /local-resources/tokenizer;
               echo "Copying model checkpoint to container...";
-              {{- $remotePath := printf "minio-host/'%s'/" (.Values.remoteCheckpointsPath | trimSuffix "/" | replace  "'" "'\\''") }}
-              if last_ckpt=$(mc cat {{ $remotePath }}/latest_checkpointed_iteration.txt); then
+              {{- $remoteCheckpointsPath := printf "minio-host/'%s'" (.Values.remoteCheckpointsPath | trimSuffix "/" | replace  "'" "'\\''") }}
+              if last_ckpt=$(mc cat {{ $remoteCheckpointsPath }}/latest_checkpointed_iteration.txt); then
                 last_ckpt=$(printf 'iter_%07d' "$last_ckpt")
                 echo "Found checkpoint at iteration $last_ckpt. Downloading ..."
-                mc mirror {{ $remotePath }}/$last_ckpt/ /local-resources/basemodel/$last_ckpt
-                mc cp {{ $remotePath }}/latest_checkpointed_iteration.txt /local-resources/basemodel/latest_checkpointed_iteration.txt
+                mc mirror {{ $remoteCheckpointsPath }}/$last_ckpt/ /local-resources/basemodel/$last_ckpt
+                mc cp {{ $remoteCheckpointsPath }}/latest_checkpointed_iteration.txt /local-resources/basemodel/latest_checkpointed_iteration.txt
               else
                 echo "No checkpoints found yet. Downloading basemodel ..."
                 mc cp -r minio-host/'{{ .Values.remoteBaseModelPath | trimSuffix "/" | replace  "'" "'\\''" }}'/ /local-resources/basemodel;
@@ -130,3 +131,20 @@ spec:
               mountPath: /local-resources
             - name: workload-mount
               mountPath: /local-resources/mount
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: {{ include "release.fullname" . }}
+spec:
+  job:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}
