@@ -1,3 +1,4 @@
+{{- define "job" -}}
 apiVersion: ray.io/v1
 kind: RayJob
 metadata:
@@ -12,10 +13,10 @@ spec:
   backoffLimit: 0
   shutdownAfterJobFinishes: true
   submissionMode: K8sJobMode
-  ttlSecondsAfterFinished: 3600
+  ttlSecondsAfterFinished: 0
   entrypoint: >
     python /local_resources/mount/ray_entrypoint.py --num-nodes {{ .Values.workers.replicas }} --gpus-per-node {{ .Values.workers.resources.gpu }}
-    {{- range $index, $arg := .Values.megatron_arguments }}
+    {{- range $index, $arg := .Values.megatronArguments }}
     {{- $arg | nindent 4 }}
     {{- end }}
   rayClusterSpec:
@@ -29,7 +30,7 @@ spec:
           volumes:
             {{- include "container.volumes" . | nindent 12 }}
           containers:
-            - image: "{{ .Values.main_workload_image }}"
+            - image: "{{ .Values.mainWorkloadImage }}"
               imagePullPolicy: Always
               name: ray-head
               env:
@@ -68,15 +69,17 @@ spec:
             args:
               - |
                 # Handle cleanup of kubernetes resources: ConfigMap, PVC
-                bash /local_resources/mount/gc.sh {{ include "release.fullname" . }}
+                bash /local_resources/mount/gc.sh{{- if and .Values.kaiwo.storageEnabled .Values.kaiwo.enabled}} --skip-pvc{{- end }} {{ include "release.fullname" . }}
                 # Setup MinIO, Download resources:
                 mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY};
                 echo "Copying data to container...";
-                mc cp -r minio-host/{{ .Values.remote_data_dir_path | trimSuffix "/" }}/{{ .Values.remote_data_name_prefix }} /local_resources/data;
+                mc cp -r minio-host/{{ .Values.remoteDataDirPath | trimSuffix "/" }}/{{ .Values.remoteDataNamePrefix }} /local_resources/data;
                 echo "Copying tokenizer to container...";
-                mc cp -r minio-host/{{ .Values.remote_tokenizer_path | trimSuffix "/" }}/ /local_resources/tokenizer;
+                mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/special_tokens_map.json /local_resources/tokenizer/special_tokens_map.json
+                mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/tokenizer.json /local_resources/tokenizer/tokenizer.json
+                mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/tokenizer_config.json /local_resources/tokenizer/tokenizer_config.json
                 echo "Copying model checkpoint to container...";
-                mc cp -r minio-host/{{ .Values.remote_base_model_path | trimSuffix "/" }}/ /local_resources/basemodel;
+                mc cp -r minio-host/{{ .Values.remoteBaseModelPath | trimSuffix "/" }}/ /local_resources/basemodel;
             resources:
               limits:
                 memory: "1Gi"
@@ -99,7 +102,7 @@ spec:
             command: ["sh", "-euc"]
             args:
               - |
-                bash /local_resources/mount/checkpoints_upload.sh {{ .Values.remote_checkpoints_path | trimSuffix "/" }}
+                bash /local_resources/mount/checkpoints_upload.sh {{ .Values.remoteCheckpointsPath | trimSuffix "/" }}
             resources:
               limits:
                 memory: "1Gi"
@@ -121,7 +124,7 @@ spec:
       minReplicas: {{ sub .Values.workers.replicas 1 }}
       replicas: {{ sub .Values.workers.replicas 1 }}
       rayStartParams:
-      {{- .Values.workers.start_params | default dict | toYaml | nindent 8 }}
+      {{- .Values.workers.startParams | default dict | toYaml | nindent 8 }}
       numOfHosts: 1
       template:
         spec:
@@ -137,7 +140,7 @@ spec:
               value: "expandable_segments:True"
             - name: HIP_VISIBLE_DEVICES
               value: "{{ int .Values.workers.resources.gpu | until | join "," }}"
-            image: "{{ .Values.main_workload_image }}"
+            image: "{{ .Values.mainWorkloadImage }}"
             imagePullPolicy: Always
             resources:
             {{- with .Values.workers.resources }}
@@ -159,3 +162,28 @@ spec:
             - mountPath: /local_resources/mount
               name: workload-mount
           restartPolicy: Never
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: {{ include "release.fullname" . }}
+spec:
+  ray: true
+  storage:
+    storageEnabled: {{ .Values.kaiwo.storageEnabled }}
+    storageClassName: {{ .Values.storage.ephemeral.storageClassName }}
+    accessMode: {{ index .Values.storage.ephemeral.accessModes 0 | default "ReadWriteOnce" }}
+    data:
+      mountPath: /local_resources
+      storageSize: {{ .Values.storage.ephemeral.quantity }}
+  rayJob:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

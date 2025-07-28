@@ -23,7 +23,7 @@
 
 # Container environment variables helper
 {{- define "logistics.container.env" -}}
-{{- range $key, $value := .Values.logistics.env_vars }}
+{{- range $key, $value := .Values.logistics.envVars }}
 {{- if (typeIs "string" $value) }}
 - name: {{ $key }}
   value: {{ $value | quote }}
@@ -39,7 +39,7 @@
 
 # Container environment variables helper
 {{- define "worker.container.env" -}}
-{{- range $key, $value := .Values.worker_env_vars }}
+{{- range $key, $value := .Values.workerEnvVars }}
 {{- if (typeIs "string" $value) }}
 - name: {{ $key }}
   value: {{ $value | quote }}
