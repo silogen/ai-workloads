@@ -13,7 +13,7 @@ from llm_evaluation import logger
 from llm_evaluation.argument_parsers import get_metrics_parser
 from llm_evaluation.data.data_classes import EvaluationResults, EvaluationScores
 from llm_evaluation.metrics.metrics import compute_bertscore, compute_bleu_score, compute_exact_match
-from llm_evaluation.metrics.utils import save_results
+from llm_evaluation.metrics.utils import get_score_distribution_graphs, save_results
 
 
 def compute_scores(predictions: List[str], references: List[str]) -> EvaluationScores:
@@ -78,27 +78,13 @@ def get_bert_score_distribution_graphs(scores: EvaluationScores) -> Dict[str, st
     Returns:
         dict: Dictionary with keys 'precision', 'recall', 'f1', each containing PNG image bytes.
     """
-    results = {}
-    metrics = [
-        ("precision", scores.precision_list_bert),
-        ("recall", scores.recall_list_bert),
-        ("f1", scores.f1_list_bert),
-    ]
-    for name, values in metrics:
-        fig, ax = plt.subplots()
-        values = np.array(values)
-        mean_val = np.mean(values)
-        ax.hist(values, bins=20, alpha=0.7, color="skyblue", edgecolor="black")
-        ax.axvline(mean_val, color="red", linestyle="dashed", linewidth=2, label=f"Mean: {mean_val:.4f}")
-        ax.set_title(f"BERTScore {name.capitalize()} Distribution")
-        ax.set_xlabel(name.capitalize())
-        ax.set_ylabel("Frequency")
-        ax.legend()
-        plt.tight_layout()
-        plt.savefig(f"{name}_distribution.png", format="png")
-        plt.close(fig)
-        results[name] = f"{name}_distribution.png"
-    return results
+    metrics = {
+        "precision": scores.precision_list_bert,
+        "recall": scores.recall_list_bert,
+        "f1": scores.f1_list_bert,
+    }
+
+    return get_score_distribution_graphs(metrics)
 
 
 def read_inference_data(input_path: str) -> List[Dict[str, Any]]:

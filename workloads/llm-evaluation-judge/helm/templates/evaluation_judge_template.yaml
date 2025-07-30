@@ -179,7 +179,10 @@ spec:
                 --context-column-name="{{ .Values.judge_evaluation_container.context_column_name}}"  \
                 --id-column-name="{{ .Values.judge_evaluation_container.id_column_name}}" \
                 --gold-standard-column-name="{{ .Values.judge_evaluation_container.gold_standard_column_name}}" \
-                --use-data-subset="{{ .Values.judge_evaluation_container.use_data_subset }}" ;
+                --use-data-subset="{{ .Values.judge_evaluation_container.use_data_subset }}" \
+                --mlflow-server-uri="{{ .Values.storage.mlflow.server_uri }}" \
+                --mlflow-experiment-name="{{ .Values.storage.mlflow.experiment_name }}" \
+                --mlflow-run-name="{{ .Values.storage.mlflow.run_name }}" ;
           env:
             - name: TRANSFORMERS_CACHE
               value: /HF_HOME

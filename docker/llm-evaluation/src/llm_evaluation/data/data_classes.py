@@ -1,8 +1,9 @@
 import json
 import os
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List
 
+import numpy as np
 from dataclasses_json import dataclass_json
 from llm_evaluation import logger
 
@@ -25,6 +26,13 @@ class EvaluationScores:
 class EvaluationResults:
     prompts: List[str]
     scores: EvaluationScores
+
+    def get_scores_dict(self) -> Dict[str, float]:
+        return {
+            "mean_precision": self.scores.precision_avg_bert,
+            "mean_recall": self.scores.recall_avg_bert,
+            "mean_f1": self.scores.f1_avg_bert,
+        }
 
 
 @dataclass_json
@@ -53,8 +61,8 @@ class JudgeResult:
 @dataclass_json
 @dataclass
 class AggregatedJudgeResults:
-    judge_results: dict[str, JudgeResult]
-    average_grade: float
+    judge_results: Dict[str, JudgeResult]
+    average_judge_grade: float
     prompt_template_step_1: str
     prompt_template_step_2: str
     evaluation_dataset_name: str
@@ -62,24 +70,8 @@ class AggregatedJudgeResults:
     llm_name: str
     judge_name: str
 
-    def compute_average_grade(self):
-        """
-        Aggregates scores from judge
-        Args:
-            judge_inferences_filepath (str): Path to the JSONL file containing judge inferences.
-
-        Returns:
-            Dict[str, Any]: A dictionary containing the average grade across all judge inferences."""
-
-        judge_grades = [judge_result.judge_grade for judge_result in self.judge_results.values()]
-
-        try:
-            average_grade = sum(judge_grades) / len(judge_grades)
-        except ZeroDivisionError:
-            logger.error("No judge grades found. Cannot compute average grade.")
-            average_grade = 0
-
-        self.average_grade = average_grade
+    def get_scores_dict(self) -> Dict[str, float]:
+        return {"mean_grade": np.mean([res.judge_grade for res in self.judge_results.values()])}
 
     def __str__(self):
         """
@@ -89,7 +81,7 @@ class AggregatedJudgeResults:
         return (
             f"Evaluation results:\n"
             f"\tPerformance of {self.llm_name} on {self.evaluation_dataset_name} v{self.evaluation_dataset_version} as judged by {self.judge_name}\n"
-            f"\tAverage grade: {self.average_grade}\n"
+            f"\tAverage grade: {self.get_scores_dict()['mean_grade']}\n"
             f"\tNumber of inferences for judging: {len(self.judge_results)}\n"
             f"\tNumber of judgments: {n_judgments}\n"
             f"\tPrompt template step 1: {self.prompt_template_step_1}\n"

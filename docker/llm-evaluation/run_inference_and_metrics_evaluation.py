@@ -123,10 +123,11 @@ async def main(args: Namespace):
         logger.info("Logging results to MLFlow...")
         log_metrics_in_mlflow(
             distribution_graphs,
-            eval_results.scores,
+            eval_results.get_scores_dict(),
             mlflow_server_uri=args.mlflow_server_uri,
             mlflow_experiment_name=args.mlflow_experiment_name,
             mlflow_run_name=args.mlflow_run_name,
+            mlflow_experiment_description="LLM Metrics Evaluation",
         )
 
     logger.info("Evaluation results:")

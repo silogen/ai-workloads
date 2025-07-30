@@ -44,3 +44,7 @@ storage:
   bucket_storage_host: default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
   bucket_storage_bucket: default-bucket
   configmap_mount_path: /local_resources/mount
+  mlflow:
+    server_uri: http://10.242.3.198:8082
+    experiment_name: mlflow-experiment-judge
+    run_name: mlflow-run-judge

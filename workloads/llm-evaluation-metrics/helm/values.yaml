@@ -35,5 +35,5 @@ storage:
   bucket_storage_bucket: default-bucket
   mlflow:
     server_uri: http://10.242.3.198:8082
-    experiment_name: mlflow-experiment
-    run_name: mlflow-run
+    experiment_name: mlflow-experiment-metrics
+    run_name: mlflow-run-metrics

@@ -183,4 +183,22 @@ def get_judge_inference_parser() -> ArgumentParser:
         default=0,
         help="Use a subset of the data for evaluation. 0 (default) for full data, n>0 for n documents.",
     )
+    parser.add_argument(
+        "--mlflow-server-uri",
+        type=str,
+        default="",  # leave this argument empty to disable MLFlow tracking
+        help="MLFlow server URI for tracking.",
+    )
+    parser.add_argument(
+        "--mlflow-experiment-name",
+        type=str,
+        default="llm-evaluation-experiment-judge",
+        help="MLFlow experiment name for tracking.",
+    )
+    parser.add_argument(
+        "--mlflow-run-name",
+        type=str,
+        default="llm-evaluation-run-judge",
+        help="MLFlow run name for tracking.",
+    )
     return parser

@@ -2,6 +2,7 @@ import asyncio
 import os
 from argparse import Namespace
 from datetime import datetime
+from typing import Dict, List
 
 from llm_evaluation import logger
 from llm_evaluation.argument_parsers import get_judge_inference_parser
@@ -14,10 +15,25 @@ from llm_evaluation.call_inference_container.call_inference_container import run
 from llm_evaluation.call_inference_container.call_inference_container import (
     save_inference_results,
 )
-from llm_evaluation.data.data_classes import AggregatedJudgeResults
+from llm_evaluation.data.data_classes import AggregatedJudgeResults, JudgeResult
 from llm_evaluation.judge.run_judge_evaluation import run_2step_judge_on_inferences
 from llm_evaluation.metrics.run_metrics_evaluation import read_inference_data
-from llm_evaluation.metrics.utils import save_results
+from llm_evaluation.metrics.utils import get_score_distribution_graphs, log_metrics_in_mlflow, save_results
+
+
+def get_judge_score_distribution_graphs(scores: List[JudgeResult]) -> Dict[str, str]:
+    """
+    Generates distribution graphs for judge scores.
+    Args:
+        scores (List[JudgeResult]): List of JudgeResult objects containing judge scores.
+    Returns:
+        Dict[str, str]: A dictionary containing paths to the generated distribution graphs.
+    """
+    metrics = {
+        "judge_scores": [r.judge_grade for r in scores],
+    }
+
+    return get_score_distribution_graphs(metrics)
 
 
 async def main(args: Namespace):
@@ -125,7 +141,7 @@ async def main(args: Namespace):
 
     aggregated_judge_results = AggregatedJudgeResults(
         judge_results={},
-        average_grade=0.0,
+        average_judge_grade=0.0,
         prompt_template_step_1=args.judge_prompt1_template_path,
         prompt_template_step_2=args.judge_prompt2_template_path,
         evaluation_dataset_name=args.evaluation_dataset_name,
@@ -146,8 +162,24 @@ async def main(args: Namespace):
         aggregated_judge_results.judge_results[judge_result.context_document_id] = judge_result
         logger.info(f"Processed judge result for document {judge_result.context_document_id}")
 
+    distribution_graphs = get_judge_score_distribution_graphs(
+        scores=list(aggregated_judge_results.judge_results.values())
+    )
+
+    aggregated_judge_results.average_judge_grade = aggregated_judge_results.get_scores_dict()["mean_grade"]
+
+    if args.mlflow_server_uri:
+        logger.info("Logging results to MLFlow...")
+        log_metrics_in_mlflow(
+            distribution_graphs,
+            aggregated_judge_results.get_scores_dict(),
+            mlflow_server_uri=args.mlflow_server_uri,
+            mlflow_experiment_name=args.mlflow_experiment_name,
+            mlflow_run_name=args.mlflow_run_name,
+            mlflow_experiment_description="Evaluation of LLM using Judge Model",
+        )
+
     logger.info("Aggregating judge scores...")
-    aggregated_judge_results.compute_average_grade()
     logger.info(aggregated_judge_results)
 
     save_results(results=aggregated_judge_results, results_dir_path=results_dir_path, config=args)
