@@ -39,6 +39,8 @@ repos:
         args: ["--config-file=pyproject.toml"]
         exclude: kaiwo|mount
         language_version: python3.12
+        additional_dependencies:
+          - types-PyYAML
 
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: v0.1.26

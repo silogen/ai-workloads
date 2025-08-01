@@ -1,14 +1,17 @@
 # Canonical model name:
-model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+model: Qwen/Qwen3-8B
+
+finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.6
 
 # Resources:
-downloadsReservedSize: 10Gi
-checkpointsReservedSize: 128Gi
+downloadsReservedSize: 24Gi
+checkpointsReservedSize: 160Gi
 finetuningGpus: 1
+memoryPerGpu: 192
+cpuPerGpu: 8
 
-# Run configuration:
-distributedType: "auto-deepspeed-stage1"
-mergeAdapter: false
+# Runtime configuration:
+distributedType: "auto-deepspeed-stage3"
 
 ### Finetuning config section ###
 finetuning_config:
@@ -19,31 +22,31 @@ finetuning_config:
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1
-    chat_template_name: "chat-ml"
+    chat_template_name: "keep-original"
     missing_pad_token_strategy: "bos-repurpose"
   training_args:
-    learning_rate: 0.00005
-    max_grad_norm: 7.0
-    weight_decay: 0.00001
+    learning_rate: 0.000005
+    max_grad_norm: 1.0
+    weight_decay: 0.000001
     optim: "adamw_torch"
     num_train_epochs: 1
     lr_scheduler_type: cosine
-    warmup_ratio: 0.05
+    warmup_ratio: 0.01
     logging_strategy: steps
     logging_steps: 0.01
     save_strategy: "no"
     seed: 42
     bf16: true
-    report_to:
-      - none
     push_to_hub: false
-    gradient_checkpointing: false
+    gradient_checkpointing: true
+    gradient_checkpointing_kwargs:
+      use_reentrant: true
     eval_steps: 0.2
     eval_strategy: "steps"
     metric_for_best_model: "loss"
     greater_is_better: false
+    load_best_model_at_end: false
   batchsize_conf:
-    total_train_batch_size: 8
     max_per_device_train_batch_size: 1
   peft_conf:
     peft_type: "NO_PEFT"
@@ -54,4 +57,4 @@ finetuning_config:
       attn_implementation: "flash_attention_2"
     resume_from_checkpoint: auto
   sft_args:
-    max_seq_length: 2048
+    max_seq_length: 8192

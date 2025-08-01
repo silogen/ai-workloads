@@ -3,9 +3,17 @@
 # Setup MinIO, Download resources:
 echo 'Copying resources to container...';
 mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY}
+{{- if (hasPrefix "hf://" .Values.basemodel) }}
+huggingface-cli download '{{ trimPrefix "hf://" .Values.basemodel }}' \
+  {{- if .Values.hfDownloadExcludeGlob }}
+  --exclude '{{ .Values.hfDownloadExcludeGlob }}' \
+  {{- end }}
+  --local-dir /local_resources/basemodel
+{{- else }}
 mc cp --recursive \
   minio-host/'{{ .Values.basemodel | trimSuffix "/" }}'/ \
   /local_resources/basemodel
+{{- end }}
 {{- if $.Values.trainingData }}
 mc cp \
   minio-host/'{{ $.Values.trainingData | replace  "'" "'\\''" }}' \

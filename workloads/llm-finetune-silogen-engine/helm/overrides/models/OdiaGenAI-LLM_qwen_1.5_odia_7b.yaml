@@ -1,5 +1,8 @@
+# Canonical model name:
+model: "OdiaGenAI-LLM/qwen_1.5_odia_7b"
+
 # Resources:
-downloadsReservedSize: 512Gi
+downloadsReservedSize: 30Gi
 checkpointsReservedSize: 720Gi
 finetuningGpus: 8 # 1 or 8, values in between are not robust at the moment
 

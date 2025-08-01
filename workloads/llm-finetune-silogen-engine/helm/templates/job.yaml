@@ -27,6 +27,13 @@ spec:
           imagePullPolicy: Always
           env:
             # download
+            {{- if .Values.hfTokenSecret }}
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hfTokenSecret.name }}
+                  key: {{ .Values.hfTokenSecret.key }}
+            {{- end }}
             - name: BUCKET_STORAGE_HOST
               value: {{ .Values.bucketStorageHost }}
             - name: BUCKET_STORAGE_ACCESS_KEY

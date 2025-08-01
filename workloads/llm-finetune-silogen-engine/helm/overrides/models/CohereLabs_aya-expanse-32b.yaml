@@ -1,15 +1,12 @@
 # Canonical model name:
-model: meta-llama/Llama-3.1-70B
+model: CohereLabs/aya-expanse-32b
 
-# To use this with the Llama 3.1 70B downloaded with the workload workloads/download-huggingface-model-to-bucket/helm
-# and the override file workloads/download-huggingface-model-to-bucket/helm/overrides/llama-3.1-70b-to-minio.yaml
-# Specify: --set basemodel=default-bucket/models/meta-llama/Llama-3.1-70B in your helm template command.
 finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.5
 
 # Resources:
-downloadsReservedSize: 160Gi
+downloadsReservedSize: 80Gi
 checkpointsReservedSize: 160Gi
-finetuningGpus: 8
+finetuningGpus: 1
 memoryPerGpu: 192
 cpuPerGpu: 8
 
@@ -25,7 +22,7 @@ finetuning_config:
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1
-    chat_template_name: "simplified-llama31"
+    chat_template_name: "keep-original"
     missing_pad_token_strategy: "bos-repurpose"
   training_args:
     learning_rate: 0.000005
@@ -52,7 +49,22 @@ finetuning_config:
   batchsize_conf:
     max_per_device_train_batch_size: 1
   peft_conf:
-    peft_type: "NO_PEFT"
+    peft_type: "LORA"
+    task_type: "CAUSAL_LM"
+    peft_kwargs:
+      r: 64
+      lora_alpha: 16.0
+      lora_dropout: 0.05
+      target_modules:
+        - q_proj
+        - k_proj
+        - v_proj
+        - o_proj
+        - up_proj
+        - down_proj
+        - gate_proj
+        - lm_head
+        - embed_token
   run_conf:
     model_args:
       torch_dtype: bfloat16
@@ -60,4 +72,4 @@ finetuning_config:
       attn_implementation: "flash_attention_2"
     resume_from_checkpoint: auto
   sft_args:
-    max_seq_length: 4096
+    max_seq_length: 8192

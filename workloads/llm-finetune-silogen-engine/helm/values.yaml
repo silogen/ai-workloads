@@ -37,6 +37,14 @@ mergeAdapter: true
 ### Model input and output, required args ###
 checkpointsRemote:  # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
 basemodel:  # Path to basemodel directory in the bucket storage
+# Auxiliary model download args:
+model: "" # Canonical model name, e.g. "meta-llama/llama-3.1-8b-instruct" or "OdiaGenAI-LLM/qwen_1.5_odia_7b"
+hfDownloadExcludeGlob: ""
+hfTokenSecret:
+# Example:
+# hfTokenSecret:
+#   name: hf-token
+#   key: hf-token
 
 # Reporting
 # Set runTensorboard to true to run tensorboard in the background in the same container.

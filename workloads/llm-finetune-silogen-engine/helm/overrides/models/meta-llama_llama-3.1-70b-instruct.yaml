@@ -1,5 +1,5 @@
 # Canonical model name:
-model: meta-llama/Llama-3.1-70B
+model: meta-llama/Llama-3.1-70B-Instruct
 
 # To use this with the Llama 3.1 70B downloaded with the workload workloads/download-huggingface-model-to-bucket/helm
 # and the override file workloads/download-huggingface-model-to-bucket/helm/overrides/llama-3.1-70b-to-minio.yaml
@@ -25,7 +25,7 @@ finetuning_config:
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1
-    chat_template_name: "simplified-llama31"
+    chat_template_name: "keep-original"
     missing_pad_token_strategy: "bos-repurpose"
   training_args:
     learning_rate: 0.000005

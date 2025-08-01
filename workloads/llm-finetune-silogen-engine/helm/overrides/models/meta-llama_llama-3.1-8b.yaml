@@ -1,5 +1,8 @@
+# Canonical model name:
+model: "meta-llama/Llama-3.1-8B"
+
 # Resources:
-downloadsReservedSize: 64Gi
+downloadsReservedSize: 24Gi
 checkpointsReservedSize: 512Gi
 finetuningGpus: 1
 
