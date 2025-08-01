@@ -1,11 +1,12 @@
 ### General chart values ###
 image: ghcr.io/silogen/logistics:v0.1
 
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
+
 # Use to add labels to the metadata of the resources created by this workload.
 labels: {}
-  # Example:
-  # labels:
-  #   kaiwo.silogen.ai/managed: "true"
 
 # Extra annotations such as an imagePullSecrets
 imagePullSecrets: []
