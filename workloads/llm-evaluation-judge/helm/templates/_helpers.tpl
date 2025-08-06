@@ -26,7 +26,7 @@ echo 'Downloading the model to the local container'
 echo '--------------------------------------------'
 mc --debug cp --recursive \
   minio-host/{{ $modelDownloadPath | trimSuffix "/" }}/ \
-  /local_models/judge_model
+  {{ .local_dir_path }}
 {{- else if hasPrefix "hf://" .model_download_path }} # HuggingFace
 {{- $modelDownloadPath := (trimPrefix "hf://" .model_download_path | trimSuffix "/") }}
 echo 'HuggingFace model path. Downloading from HuggingFace...'

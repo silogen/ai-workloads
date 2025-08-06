@@ -10,6 +10,7 @@ model_inference_container:
   tensor_parallel_size: 1
   max_model_len: 2048
   batch_size: 32
+  local_model_dir_path: /local_models/inference_model/
 judge_inference_container:
   image: rocm/vllm-dev:20241205-tuned
   memory: 24Gi
@@ -20,6 +21,7 @@ judge_inference_container:
   tensor_parallel_size: 1
   max_model_len: 2048
   batch_size: 32
+  local_model_dir_path: /local_models/judge_model/
 judge_evaluation_container:
   image: rocm/vllm-dev:20241205-tuned
   memory: 24Gi
@@ -45,6 +47,6 @@ storage:
   bucket_storage_bucket: default-bucket
   configmap_mount_path: /local_resources/mount
   mlflow:
-    server_uri: http://10.242.3.198:8082
+    server_uri:  #  http://10.242.3.198:8082
     experiment_name: mlflow-experiment-judge
     run_name: mlflow-run-judge

@@ -107,6 +107,7 @@ def get_judge_inference_parser() -> ArgumentParser:
     parser = ArgumentParser(prog="Call Inference Container")
     parser.add_argument("--model-name", type=str, help="Name of the model to be used for inference.")
     parser.add_argument("--model-path", type=str, help="Path to the model.")
+    parser.add_argument("--local-model-dir-path", type=str, help="Local path to the model.")
     parser.add_argument("--judge-model-name", type=str, help="Name of the model to be used for judging.")
     parser.add_argument("--judge-model-path", type=str, help="Path to the judge model.")
     parser.add_argument("--llm-base-url", type=str, default="http://localhost", help="Base URL of the LLM service.")

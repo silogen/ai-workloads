@@ -80,9 +80,9 @@ async def main(args: Namespace):
             - Judge Evaluation results and inferences are saved to a file and copied to MinIO.
     """
 
-    inference_model_path = args.model_path.removeprefix("s3://").removeprefix("hf://")
+    # inference_model_path = args.model_path.removeprefix("s3://").removeprefix("hf://")
     # Currently unused but here for future use
-    judge_model_path = args.judge_model_path.removeprefix("s3://").removeprefix("hf://")
+    # judge_model_path = args.judge_model_path.removeprefix("s3://").removeprefix("hf://")
 
     ds = download_dataset(dataset=args.evaluation_dataset_name, version=args.evaluation_dataset_version)
 
@@ -116,7 +116,7 @@ async def main(args: Namespace):
         gold_standard_column_name=args.gold_standard_column_name,
         llm_client=client,
         model_name=args.model_name,
-        model_path=inference_model_path,
+        model_path=args.local_model_dir_path,
         parameters=parameters,
         max_context_size=args.maximum_context_size,
         batch_size=args.batch_size,

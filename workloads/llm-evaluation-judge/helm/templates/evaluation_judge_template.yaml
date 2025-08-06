@@ -51,12 +51,12 @@ spec:
             - |
               echo "Downloading model from HuggingFace...";
               cd /local_models;
-              {{- include "modelDownload" (dict "model_download_path" .Values.model_inference_container.model_path "local_dir_path" "/local_models/inference_model" ) | nindent 14 }}
+              {{- include "modelDownload" (dict "model_download_path" .Values.model_inference_container.model_path "local_dir_path" .Values.model_inference_container.local_model_dir_path ) | nindent 14 }}
               echo "Downloaded model. Starting VLLM server...";
               python3 -m vllm.entrypoints.openai.api_server \
                       --host="0.0.0.0" \
                       --port=8080 \
-                      --model="/local_models/inference_model" \
+                      --model="{{.Values.model_inference_container.local_model_dir_path}}" \
                       --tensor-parallel-size="{{ .Values.model_inference_container.tensor_parallel_size }}" \
                       --served-model-name="{{ .Values.model_inference_container.model }}" \
                       --max-model-len={{ .Values.model_inference_container.max_model_len }};
@@ -69,7 +69,7 @@ spec:
               port: 8080
           volumeMounts:
             - name: inference-model-volume
-              mountPath: /local_models/inference_model
+              mountPath: "{{.Values.model_inference_container.local_model_dir_path}}"
               readOnly: false
         - name: judge-inference-vllm
           image: "{{ .Values.judge_inference_container.image }}"
@@ -113,12 +113,12 @@ spec:
             - |
               echo "Downloading model...";
               cd /local_models;
-              {{- include "modelDownload" (dict "model_download_path" .Values.judge_inference_container.model_path "local_dir_path" "/local_models/judge_model/" ) | nindent 14 }}
+              {{- include "modelDownload" (dict "model_download_path" .Values.judge_inference_container.model_path "local_dir_path" .Values.judge_inference_container.local_model_dir_path ) | nindent 14 }}
               echo "Downloaded model. Starting VLLM server...";
               python3 -m vllm.entrypoints.openai.api_server \
                       --host="0.0.0.0"  \
                       --port=8081 \
-                      --model="/local_models/judge_model" \
+                      --model="{{.Values.judge_inference_container.local_model_dir_path}}" \
                       --tensor-parallel-size="{{ .Values.judge_inference_container.tensor_parallel_size }}" \
                       --served-model-name="{{ .Values.judge_inference_container.model }}" \
                       --max-model-len={{ .Values.judge_inference_container.max_model_len }} ;
@@ -131,7 +131,7 @@ spec:
               port: 8081
           volumeMounts:
             - name: judge-model-volume
-              mountPath: /local_models/judge_model
+              mountPath: "{{.Values.judge_inference_container.local_model_dir_path}}"
               readOnly: false
       containers:
         - name: evaluate-with-judge
@@ -156,7 +156,7 @@ spec:
               echo "Both models ready. Running evaluation with judge...";
               python3 run_inference_and_judge_evaluation.py \
                 --model-name="{{ .Values.model_inference_container.model }}" \
-                --model-path="{{ .Values.model_inference_container.model_path }}" \
+                --local-model-dir-path="{{ .Values.model_inference_container.local_model_dir_path }}" \
                 --judge-model-name="{{ .Values.judge_inference_container.model }}" \
                 --judge-model-path="{{ .Values.judge_inference_container.model_path }}" \
                 --llm-base-url="http://localhost" \
@@ -213,6 +213,9 @@ spec:
               readOnly: false
             - mountPath: "{{ .Values.storage.configmap_mount_path }}"
               name: configmap-mount
+            - name: inference-model-volume
+              mountPath: "{{.Values.model_inference_container.local_model_dir_path}}"
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true

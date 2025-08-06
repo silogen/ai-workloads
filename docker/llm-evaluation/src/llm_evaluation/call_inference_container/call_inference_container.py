@@ -313,6 +313,8 @@ async def run(
         - Results within a batch are yielded as soon as they become available through async processing.
         - The next batch is not processed until all tasks in the current batch have completed or yielded results.
     """
+
+    logger.info(f"Loading tokenizer from model path: {model_path}")
     tokenizer = AutoTokenizer.from_pretrained(model_path)
 
     counter = 0  # Used for running a subset of the dataset for testing purposes
