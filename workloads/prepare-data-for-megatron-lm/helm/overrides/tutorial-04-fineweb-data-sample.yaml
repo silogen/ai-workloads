@@ -59,7 +59,7 @@ hfTokenSecret: {} # Optional secret reference that contains the Huggingface toke
 #   key: hf-token
 
 # Huggingface model id or s3 path that has Huggingface tokenizer files: special_tokens_map.json, tokenizer.json, tokenizer_config.json
-tokenizer: s3://default-bucket/models/meta-llama/Llama-3.1-8B
+tokenizer: s3://default-bucket/models/meta-llama/Llama-3.1-70B
 
 # Parameters required to preprocess dataset
 dataset:

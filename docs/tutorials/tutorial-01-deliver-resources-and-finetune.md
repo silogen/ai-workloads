@@ -8,7 +8,7 @@ We train it with some additional instruction data in the form of single prompt-a
 
 ## 1. Setup
 
-Follow the setup in the [tutorial pre-requisites section](./tutorial-prereqs.md).
+Follow the setup in the [tutorial pre-requisites section](./tutorial-00-prerequisites.md).
 
 ## 2. Run workloads to deliver data and a model
 
@@ -27,7 +27,7 @@ helm template workloads/download-data-to-bucket/helm \
   | kubectl apply -f -
 ```
 
-The [logs](./tutorial-prereqs.md#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload for the model delivery workload, and data download, preprocessing, and upload for the data delivery.
+The [logs](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload for the model delivery workload, and data download, preprocessing, and upload for the data delivery.
 
 ## 3. Scaling fine-tuning: hyperparameter tuning with parallel jobs
 
@@ -50,7 +50,7 @@ for r in 4 6 8 10 12 16 20 24 32 64; do
 done
 ```
 
-For each job we can see logs, a progress bar, and that job's GPU utilization following the [instructions above](./tutorial-prereqs.md#monitoring-progress-logs-and-gpu-utilization-with-k9s). If these jobs get relaunched, they are setup to continue from the existing checkpoints. If we instead want to re-run from scratch, we can just change the `run_id` variable that is defined before the for loop.
+For each job we can see logs, a progress bar, and that job's GPU utilization following the [instructions above](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s). If these jobs get relaunched, they are setup to continue from the existing checkpoints. If we instead want to re-run from scratch, we can just change the `run_id` variable that is defined before the for loop.
 
 ## 4. Scaling fine-tuning: multi-GPU training
 
@@ -68,7 +68,7 @@ helm template workloads/llm-finetune-silogen-engine/helm \
   | kubectl apply -f -
 ```
 
-We can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions above](./tutorial-prereqs.md#monitoring-progress-logs-and-gpu-utilization-with-k9s). The training steps of this multi-gpu training run take merely 75 seconds, which reflects the nature of fine-tuning: fast, iterative, with a focus on flexible experimentation.
+We can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions above](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s). The training steps of this multi-gpu training run take merely 75 seconds, which reflects the nature of fine-tuning: fast, iterative, with a focus on flexible experimentation.
 
 If we want to compare to an equivalent single-GPU run, we can run:
 

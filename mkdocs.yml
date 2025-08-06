@@ -8,94 +8,100 @@ theme:
   icon: material/developer-board
   name: material
   palette:
-    # Palette toggle for automatic mode
-    - media: "(prefers-color-scheme)"
-      primary: black
-      accent: black
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
+  # Palette toggle for automatic mode
+  - media: "(prefers-color-scheme)"
+    primary: black
+    accent: black
+    toggle:
+      icon: material/brightness-auto
+      name: Switch to light mode
 
-    # Palette toggle for light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: black
-      accent: black
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
+  # Palette toggle for light mode
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: black
+    accent: black
+    toggle:
+      icon: material/brightness-7
+      name: Switch to dark mode
 
-    # Palette toggle for dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: black
-      accent: black
-      toggle:
-        icon: material/brightness-4
-        name: Switch to system preference
+  # Palette toggle for dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: black
+    accent: black
+    toggle:
+      icon: material/brightness-4
+      name: Switch to system preference
 
   features:
-    - navigation.tabs
-    - navigation.sections
-    - toc.integrate
-    - search.suggest
-    - search.highlight
-    - content.code.copy
-    - content.action.edit
+  - navigation.tabs
+  - navigation.sections
+  - toc.integrate
+  - search.suggest
+  - search.highlight
+  - content.code.copy
+  - content.action.edit
 
 plugins:
-  - same-dir
-  - multirepo
-  - search
+- same-dir
+- multirepo
+- search
 
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.superfences
-  - pymdownx.inlinehilite
-  - pymdownx.tabbed
-  - pymdownx.snippets:
-      base_path: !relative $docs_dir
-  - admonition
-  - footnotes
-  - attr_list
-  - toc:
-      permalink: true
+- pymdownx.highlight:
+    anchor_linenums: true
+- pymdownx.superfences
+- pymdownx.inlinehilite
+- pymdownx.tabbed
+- pymdownx.snippets:
+    base_path: !relative $docs_dir
+- admonition
+- footnotes
+- attr_list
+- toc:
+    permalink: true
 
 nav:
-  - Home: README.md
-  - Getting Started: docs/getting-started.md
+- Home: README.md
+- Getting Started: docs/getting-started.md
+- Tutorials:
+  - Overview: docs/tutorials.md
   - Tutorials:
-    - Overview: docs/tutorials.md
-    - Tutorials:
-      - Tutorial 0: docs/tutorials/tutorial-prereqs.md
-      - Deliver Resources and Finetune: docs/tutorials/tutorial-01-deliver-resources-and-finetune.md
-      - "Language extension: Odia-finetuning": docs/tutorials/tutorial-02-language-extension-finetune.md
-      - "Deliver Resources and Run Megatron-LM Continuous Pretraining": docs/tutorials/tutorial-03-deliver-resources-and-run-megatron-cpt.md
+    - Tutorial 0: docs/tutorials/tutorial-00-prerequisites.md
+    - Deliver Resources and Finetune: docs/tutorials/tutorial-01-deliver-resources-and-finetune.md
+    - "Language extension: Odia-finetuning": docs/tutorials/tutorial-02-language-extension-finetune.md
+    - Megatron-LM continuous pretraining of Llama-3.1-8B: docs/tutorials/tutorial-03-deliver-resources-and-run-megatron-cpt.md
+    - Megatron-LM continuous pretraining of Llama-3.1-70B: docs/tutorials/tutorial-04-deliver-llama70b-and-run-megatron-cpt-with-tp8-ddp2.md
+- Workloads:
+  - Overview: docs/workloads.md
   - Workloads:
-    - Overview: docs/workloads.md
-    - Workloads:
-      - dev-chatui-aiaio: workloads/dev-chatui-aiaio/helm/README.md
-      - dev-chatui-openwebui: workloads/dev-chatui-openwebui/helm/README.md
-      - dev-openvscode-server: workloads/dev-openvscode-server/helm/README.md
-      - dev-text2image-comfyui: workloads/dev-text2image-comfyui/helm/README.md
-      - dev-workspace-jupyterlab: workloads/dev-workspace-jupyterlab/helm/README.md
-      - download-data-to-bucket: workloads/download-data-to-bucket/helm/README.md
-      - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/README.md
-      - k8s-namespace-setup: workloads/k8s-namespace-setup/helm/README.md
-      - llm-evaluation-metrics: workloads/llm-evaluation-metrics/helm/README.md
-      - llm-finetune-silogen-engine:
-        - Overview: workloads/llm-finetune-silogen-engine/helm/README.md
-        - Finetuning Config: workloads/llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md
-      - llm-inference-llamacpp-mi300x: workloads/llm-inference-llamacpp-mi300x/helm/README.md
-      - llm-inference-sglang: workloads/llm-inference-sglang/helm/README.md
-      - llm-inference-vllm: workloads/llm-inference-vllm/helm/README.md
-      - llm-inference-vllm-benchmark-mad: workloads/llm-inference-vllm-benchmark-mad/helm/README.md
-      - llm-inference-vllm-benchmark-rocmblog: workloads/llm-inference-vllm-benchmark-rocmblog/helm/README.md
-      - llm-inference-openai-benchmark-rocmblog: workloads/llm-inference-openai-benchmark-rocmblog/helm/README.md
-      - llm-inference-openai-benchmark-guidellm: workloads/llm-inference-openai-benchmark-guidellm/helm/README.md
-      - rag-embedding-infinity: workloads/rag-embedding-infinity/helm/README.md
-  - Contributing: docs/contributing.md
+    - dev-chatui-aiaio: workloads/dev-chatui-aiaio/helm/README.md
+    - dev-chatui-openwebui: workloads/dev-chatui-openwebui/helm/README.md
+    - dev-openvscode-server: workloads/dev-openvscode-server/helm/README.md
+    - dev-text2image-comfyui: workloads/dev-text2image-comfyui/helm/README.md
+    - dev-workspace-jupyterlab: workloads/dev-workspace-jupyterlab/helm/README.md
+    - download-data-to-bucket: workloads/download-data-to-bucket/helm/README.md
+    - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/README.md
+    - k8s-namespace-setup: workloads/k8s-namespace-setup/helm/README.md
+    - llm-evaluation-metrics: workloads/llm-evaluation-metrics/helm/README.md
+    - llm-finetune-silogen-engine:
+      - Overview: workloads/llm-finetune-silogen-engine/helm/README.md
+      - Finetuning Config: workloads/llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md
+    - llm-inference-llamacpp-mi300x: workloads/llm-inference-llamacpp-mi300x/helm/README.md
+    - llm-inference-sglang: workloads/llm-inference-sglang/helm/README.md
+    - llm-inference-vllm: workloads/llm-inference-vllm/helm/README.md
+    - llm-inference-vllm-benchmark-mad: workloads/llm-inference-vllm-benchmark-mad/helm/README.md
+    - llm-inference-vllm-benchmark-rocmblog: workloads/llm-inference-vllm-benchmark-rocmblog/helm/README.md
+    - llm-inference-openai-benchmark-rocmblog: workloads/llm-inference-openai-benchmark-rocmblog/helm/README.md
+    - llm-inference-openai-benchmark-guidellm: workloads/llm-inference-openai-benchmark-guidellm/helm/README.md
+    - rag-embedding-infinity: workloads/rag-embedding-infinity/helm/README.md
+    - prepare-data-for-megatron-lm: workloads/prepare-data-for-megatron-lm/helm/README.md
+    - llm-megatron-ckpt-conversion: workloads/llm-megatron-ckpt-conversion/helm/README.md
+    - llm-pretraining-megatron-lm: workloads/llm-pretraining-megatron-lm/helm/README.md
+    - llm-pretraining-megatron-lm-ray: workloads/llm-pretraining-megatron-lm-ray/helm/README.md
+    - llm-inference-megatron-lm: workloads/llm-inference-megatron-lm/helm/README.md
+- Contributing: docs/contributing.md
 
 #extra_css:
 #  - docs/stylesheets/extra.css

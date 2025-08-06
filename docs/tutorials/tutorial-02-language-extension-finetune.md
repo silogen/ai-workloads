@@ -14,7 +14,7 @@ We should start with a working cluster, setup by a cluster administrator using [
 
 ## 1: Setup
 
-Follow the setup in the [tutorial pre-requisites section](./tutorial-prereqs.md).
+Follow the setup in the [tutorial pre-requisites section](./tutorial-00-prerequisites.md).
 
 !!! warning
     This tutorial does not handle adding the HuggingFace token to the cluster yet. Coming soon. Before then, to run this tutorial, you are responsible for adding your HuggingFace token as a secret called `hf-token` with the key `hf-token` in the `silo-tutorial` namespace.
@@ -38,7 +38,7 @@ helm template workloads/download-data-to-bucket/helm \
   | kubectl apply -f -
 ```
 
-The [logs](./tutorial-prereqs.md#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload, then data download, preprocessing, and upload.
+The [logs](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s) will show a model staging download and upload, then data download, preprocessing, and upload.
 
 ## 3. Fine-tune an Odia model on 8 GPUs
 
@@ -58,7 +58,7 @@ helm template workloads/llm-finetune-silogen-engine/helm \
   | kubectl apply -f -
 ```
 
-We can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions ](./tutorial-prereqs.md#monitoring-progress-logs-and-gpu-utilization-with-k9s).
+We can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions ](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s).
 
 ## 4. Compare the official Qwen1.5-7B-Chat model, the Odia continued pretraining basemodel, and the Odia-fine-tuned model:
 
