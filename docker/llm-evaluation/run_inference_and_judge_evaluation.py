@@ -108,6 +108,8 @@ async def main(args: Namespace):
 
     client = get_llm_client(base_url=args.llm_base_url, port=args.llm_port, endpoint=args.llm_endpoint)
 
+    total_candidate_inferences = args.use_data_subset if args.use_data_subset > 0 else len(ds[args.dataset_split])
+    inferenced_docs = 0
     async for inference_result in run_call_inference_container(
         dataset=ds,
         prompt_template=prompt_template,
@@ -128,7 +130,10 @@ async def main(args: Namespace):
             output_dir_path=results_dir_path,
         )
         saved_results.append(result_path)
-        logger.info(f"Saved inference result for document {inference_result['doc_id']}")
+        inferenced_docs += 1
+        logger.info(
+            f"Saved inference result for document {inferenced_docs}/{total_candidate_inferences} with id {inference_result['doc_id']}"
+        )
 
     logger.info(f"Loading file with generated inferences: {results_dir_path}")
     inferences_data = read_inference_data(results_dir_path)
@@ -141,7 +146,8 @@ async def main(args: Namespace):
 
     aggregated_judge_results = AggregatedJudgeResults(
         judge_results={},
-        average_judge_grade=0.0,
+        average_grade=0.0,
+        total_candidate_judgments=len(inferences_data),
         prompt_template_step_1=args.judge_prompt1_template_path,
         prompt_template_step_2=args.judge_prompt2_template_path,
         evaluation_dataset_name=args.evaluation_dataset_name,
@@ -150,6 +156,8 @@ async def main(args: Namespace):
         judge_name=args.judge_model_name,
     )
 
+    total_inferences = len(inferences_data)
+    judged_docs = 0
     async for judge_result in run_2step_judge_on_inferences(
         inferences_data=inferences_data,
         judge_model_name=args.judge_model_name,
@@ -160,13 +168,16 @@ async def main(args: Namespace):
         output_dir_path=args.output_dir_path,
     ):
         aggregated_judge_results.judge_results[judge_result.context_document_id] = judge_result
-        logger.info(f"Processed judge result for document {judge_result.context_document_id}")
+        judged_docs += 1
+        logger.info(
+            f"Processed judge result {judged_docs}/{total_inferences} for document {judge_result.context_document_id}"
+        )
 
     distribution_graphs = get_judge_score_distribution_graphs(
         scores=list(aggregated_judge_results.judge_results.values())
     )
 
-    aggregated_judge_results.average_judge_grade = aggregated_judge_results.get_scores_dict()["mean_grade"]
+    aggregated_judge_results.average_grade = aggregated_judge_results.get_scores_dict()["mean_grade"]
 
     if args.mlflow_server_uri:
         logger.info("Logging results to MLFlow...")

@@ -13,6 +13,7 @@ from llm_evaluation import logger
 from llm_evaluation.argument_parsers import get_inference_parser
 from openai import APIError, AsyncClient
 from openai.types.chat import ChatCompletion
+from tqdm import tqdm
 from transformers import AutoTokenizer
 
 
@@ -328,13 +329,15 @@ async def run(
 
     inference_start_time = time.time()
 
-    logger.info(f"Starting inference on batches with batch size {batch_size}...")
-
-    for batch_number, batch in enumerate(batched(dataset[dataset_split], batch_size)):
+    num_batches = (
+        use_data_subset // batch_size + 1 if use_data_subset > 0 else len(dataset[dataset_split]) // batch_size + 1
+    )
+    logger.info(f"Starting inference on {num_batches} batches with batch size {batch_size}...")
+    for batch_number, batch in tqdm(enumerate(batched(dataset[dataset_split], batch_size)), total=num_batches):
         inference_tasks = []
         batch_doc_ids = []
 
-        logger.info(f"Processing batch {batch_number}...")
+        logger.info(f"Processing inference batch {batch_number}/{num_batches}...")
 
         batch_start_time = time.time()
 
@@ -343,7 +346,7 @@ async def run(
             correct_answers_map[doc_id] = datum[gold_standard_column_name]
             documents_map[doc_id] = datum[context_column_name]
 
-            logger.info(f"Running async inference on document: {doc_id}")
+            logger.info(f"Running async inference. Batch {batch_number}/{num_batches}. Document: {doc_id}")
             batch_doc_ids.append(doc_id)
 
             # Format the prompt with the context document
@@ -352,7 +355,7 @@ async def run(
             # Exclude messages that are longer than the context length
             tokens = tokenizer(message)["input_ids"]
             if len(tokens) > max_context_size:
-                logger.warning(f"Message exceeds max content size of {max_context_size} tokens. Skipping...")
+                logger.warning(f"Message exceeds max context size of {max_context_size} tokens. Skipping...")
                 logger.warning(f"Token length: {len(tokens)}, Character length: {len(message)}")
                 length_exclusion_counter += 1
                 continue

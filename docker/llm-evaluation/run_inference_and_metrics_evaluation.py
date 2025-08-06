@@ -87,6 +87,8 @@ async def main(args: Namespace):
 
     saved_results = []
 
+    total_candidate_inferences = args.use_data_subset if args.use_data_subset > 0 else len(ds[args.dataset_split])
+    inferenced_docs = 0
     async for inference_result in run_call_inference_container(
         dataset=ds,
         prompt_template=prompt_template,
@@ -107,7 +109,10 @@ async def main(args: Namespace):
             output_dir_path=results_dir_path,
         )
         saved_results.append(result_path)
-        logger.info(f"Saved inference result for document {inference_result['doc_id']}")
+        inferenced_docs += 1
+        logger.info(
+            f"Saved inference result for document {inferenced_docs}/{total_candidate_inferences} with id {inference_result['doc_id']}"
+        )
 
     logger.info(f"Loading file with generated inferences: {results_dir_path}")
     data = read_inference_data(results_dir_path)

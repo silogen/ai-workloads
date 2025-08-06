@@ -124,11 +124,12 @@ async def run_2step_judge_on_inferences(
     judge_start_time = time.time()
 
     batch_number = 0
+    total_batches = len(inferences_data) // batch_size + 1
     judge_errors_counter = 0
     async for inferences_batch in batched_async(inferences_data, batch_size):
         judge_tasks = []
 
-        logger.info(f"Processing batch {batch_number}...")
+        logger.info(f"Processing judgment batch {batch_number}/{total_batches}...")
         batch_number += 1
         batch_start_time = time.time()
         for i, inference_result in enumerate(inferences_batch):
@@ -152,6 +153,7 @@ async def run_2step_judge_on_inferences(
                     judge_errors_counter += 1
                     continue
                 judge_result.save_dataclass_result(output_dir_path=output_dir_path)
+                judged_documents_counter += 1
                 yield judge_result
 
         logger.info(f"Batch {batch_number} processed in {time.time() - batch_start_time:.2f} seconds.")

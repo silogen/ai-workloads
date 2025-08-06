@@ -52,7 +52,9 @@ spec:
               echo "Downloading model from HuggingFace...";
               cd /local_models;
               {{- include "modelDownload" (dict "model_download_path" .Values.model_inference_container.model_path "local_dir_path" .Values.model_inference_container.local_model_dir_path ) | nindent 14 }}
-              echo "Downloaded model. Starting VLLM server...";
+              echo "Downloaded model. Checking GPUs:"
+              rocm-smi
+              echo "Starting VLLM server..."
               python3 -m vllm.entrypoints.openai.api_server \
                       --host="0.0.0.0" \
                       --port=8080 \
@@ -114,7 +116,9 @@ spec:
               echo "Downloading model...";
               cd /local_models;
               {{- include "modelDownload" (dict "model_download_path" .Values.judge_inference_container.model_path "local_dir_path" .Values.judge_inference_container.local_model_dir_path ) | nindent 14 }}
-              echo "Downloaded model. Starting VLLM server...";
+              echo "Downloaded model. Checking GPUs:"
+              rocm-smi
+              echo "Starting VLLM server..."
               python3 -m vllm.entrypoints.openai.api_server \
                       --host="0.0.0.0"  \
                       --port=8081 \
@@ -149,9 +153,11 @@ spec:
             - |
               ls -lh /;
               echo $(whoami);
+              start_time=$(date +%s)
               until curl -sf http://localhost:8080/health && curl -sf http://localhost:8081/health; do
-                echo "Waiting for models to be ready..."
-                sleep 5
+                elapsed=$(( $(date +%s) - start_time ))
+                echo "Waiting for models to be ready... Time passed: $((elapsed / 60)) min $((elapsed % 60)) sec"
+                sleep 10
               done;
               echo "Both models ready. Running evaluation with judge...";
               python3 run_inference_and_judge_evaluation.py \

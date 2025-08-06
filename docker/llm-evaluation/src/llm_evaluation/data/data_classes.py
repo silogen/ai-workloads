@@ -61,8 +61,9 @@ class JudgeResult:
 @dataclass_json
 @dataclass
 class AggregatedJudgeResults:
-    judge_results: Dict[str, JudgeResult]
-    average_judge_grade: float
+    judge_results: dict[str, JudgeResult]
+    average_grade: float
+    total_candidate_judgments: int
     prompt_template_step_1: str
     prompt_template_step_2: str
     evaluation_dataset_name: str
@@ -81,8 +82,8 @@ class AggregatedJudgeResults:
         return (
             f"Evaluation results:\n"
             f"\tPerformance of {self.llm_name} on {self.evaluation_dataset_name} v{self.evaluation_dataset_version} as judged by {self.judge_name}\n"
-            f"\tAverage grade: {self.get_scores_dict()['mean_grade']}\n"
-            f"\tNumber of inferences for judging: {len(self.judge_results)}\n"
+            f"\tAverage grade: {self.average_grade}\n"
+            f"\tNumber of inferences for judging: {self.total_candidate_judgments}\n"
             f"\tNumber of judgments: {n_judgments}\n"
             f"\tPrompt template step 1: {self.prompt_template_step_1}\n"
             f"\tPrompt template step 2: {self.prompt_template_step_2}\n"

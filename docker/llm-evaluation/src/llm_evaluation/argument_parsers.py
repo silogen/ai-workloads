@@ -1,4 +1,14 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
+
+
+def check_nonnegative(value):
+    try:
+        value = int(value)
+        if value < 0:
+            raise ArgumentTypeError("{} is a negative integer. Use a non-negative integer.".format(value))
+    except ValueError:
+        raise Exception("{} is not an integer".format(value))
+    return value
 
 
 def get_inference_parser() -> ArgumentParser:
@@ -58,7 +68,7 @@ def get_inference_parser() -> ArgumentParser:
     parser.add_argument(
         "-s",
         "--use-data-subset",
-        type=int,
+        type=check_nonnegative,
         default=0,
         help="Use a subset of the data for evaluation. 0 (default) for full data, n>0 for n documents.",
     )
@@ -180,7 +190,7 @@ def get_judge_inference_parser() -> ArgumentParser:
     )
     parser.add_argument(
         "--use-data-subset",
-        type=int,
+        type=check_nonnegative,
         default=0,
         help="Use a subset of the data for evaluation. 0 (default) for full data, n>0 for n documents.",
     )
