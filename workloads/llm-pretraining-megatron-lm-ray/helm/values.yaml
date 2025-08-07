@@ -8,7 +8,7 @@ metadata:
   labels: {}
 
 ### General chart values ###
-mainWorkloadImage: ghcr.io/silogen/megatron-lm-ray:latest
+mainWorkloadImage: ghcr.io/silogen/megatron-lm-ray:v25.4
 
 remoteBaseModelPath: default-bucket/megatron-models/meta-llama/Llama-3.1-8B/
 remoteCheckpointsPath: default-bucket/experiments/megatron-lm/llama-3.1-8b-cpt-test/
