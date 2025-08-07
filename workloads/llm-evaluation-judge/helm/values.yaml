@@ -6,7 +6,7 @@ model_inference_container:
   gpu_count: 1
   cpu_count: 2
   model: llama-3.1-8B
-  model_path: meta-llama/Llama-3.1-8B-Instruct
+  model_path: hf://meta-llama/Llama-3.1-8B-Instruct
   tensor_parallel_size: 1
   max_model_len: 2048
   batch_size: 32
@@ -17,7 +17,7 @@ judge_inference_container:
   gpu_count: 1
   cpu_count: 2
   model: llama-3.1-8B
-  model_path: meta-llama/Llama-3.1-8B-Instruct
+  model_path: hf://meta-llama/Llama-3.1-8B-Instruct
   tensor_parallel_size: 1
   max_model_len: 2048
   batch_size: 32

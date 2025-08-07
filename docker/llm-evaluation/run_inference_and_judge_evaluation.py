@@ -51,6 +51,7 @@ async def main(args: Namespace):
         args (Namespace): Command-line arguments containing configuration for the evaluation process.
             - model_name (str): Name of the model to use for inference.
             - model_path (str): Path to the model checkpoint or configuration.
+            - local_model_dir_path (str): Local directory path where the model is stored.
             - judge_model_name (str): Name of the judge model.
             - judge_model_path (str): Path to the judge model checkpoint or configuration.
             - llm_base_url (str): Base URL of the LLM inference service.
@@ -79,10 +80,6 @@ async def main(args: Namespace):
             - Inference results are saved to separate files in the specified output directory.
             - Judge Evaluation results and inferences are saved to a file and copied to MinIO.
     """
-
-    # inference_model_path = args.model_path.removeprefix("s3://").removeprefix("hf://")
-    # Currently unused but here for future use
-    # judge_model_path = args.judge_model_path.removeprefix("s3://").removeprefix("hf://")
 
     ds = download_dataset(dataset=args.evaluation_dataset_name, version=args.evaluation_dataset_version)
 

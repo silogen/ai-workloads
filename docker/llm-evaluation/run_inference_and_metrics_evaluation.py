@@ -35,6 +35,7 @@ async def main(args: Namespace):
             - gold_standard_column_name (str): Name of the column containing gold standard data in the dataset.
             - model_name (str): Name of the model to be used for inference.
             - model_path (str): Path to the model.
+            - local_model_dir_path (str): Local directory path where the model is stored.
             - maximum_context_size (int): Maximum size of the context for inference.
             - batch_size (int): Batch size for inference.
             - use_data_subset (int): Number of documents to use for evaluation. If > 0, limits to this many documents.
@@ -97,7 +98,7 @@ async def main(args: Namespace):
         gold_standard_column_name=args.gold_standard_column_name,
         llm_client=client,
         model_name=args.model_name,
-        model_path=args.model_path,
+        model_path=args.local_model_dir_path,
         parameters=parameters,
         max_context_size=args.maximum_context_size,
         batch_size=args.batch_size,

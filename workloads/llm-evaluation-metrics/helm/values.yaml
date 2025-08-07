@@ -6,9 +6,10 @@ model_inference_container:
   gpu_count: 1
   cpu_count: 2
   model: llama-3.1-8B
-  model_path: meta-llama/Llama-3.1-8B-Instruct
+  model_path: hf://meta-llama/Llama-3.1-8B-Instruct
   tensor_parallel_size: 1
   max_model_len: 2048
+  local_model_dir_path: /local_models/inference_model/
 evaluation_container:
   image: ghcr.io/silogen/evaluation-workloads-metrics:v0.1
   memory: 24Gi
@@ -34,6 +35,6 @@ storage:
   bucket_storage_host: minio.minio-tenant-default.svc.cluster.local:80
   bucket_storage_bucket: default-bucket
   mlflow:
-    server_uri: http://10.242.3.198:8082
+    server_uri:  #  http://10.242.3.198:8082
     experiment_name: mlflow-experiment-metrics
     run_name: mlflow-run-metrics

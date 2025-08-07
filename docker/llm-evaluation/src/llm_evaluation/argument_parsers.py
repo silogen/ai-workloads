@@ -43,6 +43,7 @@ def get_inference_parser() -> ArgumentParser:
     )
     parser.add_argument("-m", "--model-name", type=str, help="Name of the model to be used for inference.")
     parser.add_argument("-a", "--model-path", type=str, help="Path to the model.")
+    parser.add_argument("--local-model-dir-path", type=str, help="Local path to the model.")
     parser.add_argument(
         "-x", "--maximum-context-size", type=int, help="Maximum size of the context to be used for inference."
     )
