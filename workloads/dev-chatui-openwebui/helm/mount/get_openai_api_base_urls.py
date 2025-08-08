@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -16,13 +17,20 @@ def endpoint_check(endpoint):
 
 
 def get_services(separator=";"):
-    configuration = config.load_incluster_config()
-    v1 = client.CoreV1Api(client.ApiClient(configuration))
-    namespace = open("/var/run/secrets/kubernetes.io/serviceaccount/namespace").read()
-    services = v1.list_namespaced_service(namespace)
-    filtered_services = [
-        f"http://{svc.metadata.name}/v1" for svc in services.items if svc.metadata.name.startswith("llm-inference")
-    ]
+    try:
+        configuration = config.load_incluster_config()
+        v1 = client.CoreV1Api(client.ApiClient(configuration))
+        with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace") as f:
+            namespace = f.read().strip()
+        services = v1.list_namespaced_service(namespace)
+        filtered_services = [
+            f"http://{svc.metadata.name}/v1" for svc in services.items if svc.metadata.name.startswith("llm-inference")
+        ]
+    except Exception as e:
+        logging.warning("Kubernetes service discovery failed: %s", e)
+        # Skip Kubernetes service discovery on permission errors
+        filtered_services = []
+
     filtered_services = [
         url
         for url in set(filtered_services).union(
