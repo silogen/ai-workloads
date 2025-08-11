@@ -10,7 +10,7 @@ bucketPath: default-bucket/models/OdiaGenAI-LLM/qwen_1.5_odia_7b
 bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
 
 # Download & Upload configuration:
-downloadExcludeGlob: "original/*"  # Exclude things from the HuggingFace download with this
+downloadExcludeGlob: "original/*" # Exclude things from the HuggingFace download with this
 allowOverwrite: false
 
 # Storage configuration:

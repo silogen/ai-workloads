@@ -10,7 +10,7 @@ bucketPath: default-bucket/models/tiny-llama/tinyllama-1.1b-chat-v1.0
 bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
 
 # Download & Upload configuration:
-downloadExcludeGlob: "original/*"  # Exclude things from the HuggingFace download with this
+downloadExcludeGlob: "original/*" # Exclude things from the HuggingFace download with this
 allowOverwrite: false
 
 # Bucket credentials from a secret:
