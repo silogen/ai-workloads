@@ -1,0 +1,15 @@
+name: "ComfyUI Text-to-Image"
+slug: "comfyui"
+shortDescription: "Node-based AI image generation"
+longDescription: 'ComfyUI is a powerful node-based interface for stable diffusion that provides advanced workflows for AI image and video generation. It offers a modular approach to creating complex image generation pipelines with features like ControlNet, LoRA models, and custom workflows.\n\nThis deployment provides a web-based ComfyUI interface with GPU acceleration, model management, and integration with cloud storage for seamless AI image generation workflows.'
+category: GENERATIVE_AI
+tags: ["comfyui", "text-to-image"]
+featuredImage: "https://mintlify.s3-us-west-1.amazonaws.com/dripart/_generated/favicon/favicon.ico?v=3"
+requiredResources:
+  gpuCount: 1
+  gpuMemory: 16
+  cpuCoreCount: 1
+  systemMemory: 32
+type: "WORKSPACE"
+id: "dev-text2image-comfyui"
+externalUrl: "https://github.com/comfyanonymous/ComfyUI"

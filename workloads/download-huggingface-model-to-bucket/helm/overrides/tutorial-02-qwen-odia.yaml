@@ -3,7 +3,7 @@ labels:
   kueue.x-k8s.io/queue-name: kaiwo
 
 # Which model to download
-modelID: OdiaGenAI-LLM/qwen_1.5_odia_7b
+modelId: OdiaGenAI-LLM/qwen_1.5_odia_7b
 
 # Where the resources should be stored:
 bucketPath: default-bucket/models/OdiaGenAI-LLM/qwen_1.5_odia_7b

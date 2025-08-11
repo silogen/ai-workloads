@@ -27,7 +27,7 @@ hfTokenSecret: {} # Optional secret reference that contains the Huggingface toke
 #   key: hf-token
 
 # Inputs:
-modelID: "yujiepan/llama-3.1-tiny-random" # Huggingface model id, which is in the format of organization/model-name
+modelId: "yujiepan/llama-3.1-tiny-random" # Huggingface model id, which is in the format of organization/model-name
 bucketPath: default-bucket/models/yujiepan/llama-3.1-tiny-random # Path in the bucket storage where this model should be stored. In the format bucket-name/path/separated/by/slashes/name-for-resulting-directory
 modelRevision: # Optional string that specifies which revision of the model should be downloaded.
 downloadExcludeGlob: "original/*" # Optional string that specifies which files in the huggingface model repository should be excluded from the download

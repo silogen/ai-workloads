@@ -41,7 +41,7 @@ spec:
           mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
           ###################################
           echo 'Downloading the model to the local container'
-          huggingface-cli download {{ .Values.modelID }} \
+          huggingface-cli download {{ .Values.modelId }} \
             --exclude '{{ .Values.downloadExcludeGlob }}' \
             {{- if .Values.modelRevision }}
             --revision {{ .Values.modelRevision }}

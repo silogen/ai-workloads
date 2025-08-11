@@ -6,7 +6,7 @@ kaiwo:
 bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
 
 # Inputs:
-modelID: "yujiepan/llama-3.1-tiny-random"
+modelId: "yujiepan/llama-3.1-tiny-random"
 bucketPath: "default-bucket/models/yujiepan/llama-3.1-tiny-random"
 storageQuantity: 5Gi
 storageClass: mlstorage

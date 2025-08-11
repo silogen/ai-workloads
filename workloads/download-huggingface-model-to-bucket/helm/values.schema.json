@@ -59,7 +59,7 @@
         }
       }
     },
-    "modelID": {
+    "modelId": {
       "type": "string",
       "description": "Huggingface model id, which is in the format of organization/model-name"
     },
@@ -100,5 +100,5 @@
         }
       }
   },
-  "required": ["image", "bucketStorageHost", "bucketCredentialsSecret", "modelID", "bucketPath"]
+  "required": ["image", "bucketStorageHost", "bucketCredentialsSecret", "modelId", "bucketPath"]
 }

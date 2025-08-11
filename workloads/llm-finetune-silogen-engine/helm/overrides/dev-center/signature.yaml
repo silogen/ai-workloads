@@ -1,3 +1,8 @@
+# Config
+kaiwo:
+  enabled: true
+runTensorboard: false
+
 ### Required inputs, provided by developer console:
 # Path where to sync checkpoints in bucket storage
 checkpointsRemote:
