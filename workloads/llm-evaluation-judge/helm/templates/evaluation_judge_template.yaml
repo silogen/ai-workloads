@@ -177,7 +177,7 @@ spec:
                 --evaluation-dataset-name="{{ .Values.judge_evaluation_container.dataset_path }}"\
                 --evaluation-dataset-version="{{ .Values.judge_evaluation_container.dataset_version }}" \
                 --dataset-split="{{ .Values.judge_evaluation_container.dataset_split }}" \
-                --output-dir-path="{{ .Values.judge_evaluation_container.output_dir_path }}" \
+                --minio-output-dir-path="{{ .Values.judge_evaluation_container.minio_output_dir_path }}" \
                 --maximum-context-size={{ .Values.model_inference_container.max_model_len}} \
                 --judge-maximum-context-size={{ .Values.judge_inference_container.max_model_len}} \
                 --batch-size="{{ .Values.model_inference_container.batch_size }}" \

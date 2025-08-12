@@ -39,7 +39,7 @@ def get_inference_parser() -> ArgumentParser:
         default="test",
     )
     parser.add_argument(
-        "-o", "--output-dir-path", type=str, help="Path to the directory where output files will be saved."
+        "-o", "--minio-output-dir-path", type=str, help="Path to the directory where output files will be saved."
     )
     parser.add_argument("-m", "--model-name", type=str, help="Name of the model to be used for inference.")
     parser.add_argument("-a", "--model-path", type=str, help="Path to the model.")
@@ -107,7 +107,7 @@ def get_metrics_parser() -> ArgumentParser:
     """
     parser = ArgumentParser(prog="Compute Metrics")
     parser.add_argument("-i", "--input-file-path", help="Input file path for the JSON with LLM generated text.")
-    parser.add_argument("-o", "--output-dir-path", help="Output directory for the results.")
+    parser.add_argument("-o", "--minio-output-dir-path", help="Output directory for the results.")
     return parser
 
 
@@ -157,7 +157,9 @@ def get_judge_inference_parser() -> ArgumentParser:
         help="Dataset split to use for evaluation (e.g., train, test, validation).",
         default="test",
     )
-    parser.add_argument("--output-dir-path", type=str, help="Path to the directory where output files will be saved.")
+    parser.add_argument(
+        "--minio-output-dir-path", type=str, help="Path to the directory where output files will be saved."
+    )
     parser.add_argument(
         "--maximum-context-size", type=int, help="Maximum size of the context to be used for inference."
     )

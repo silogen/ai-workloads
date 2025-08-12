@@ -13,12 +13,18 @@ from llm_evaluation.call_inference_container.call_inference_container import (
 )
 from llm_evaluation.call_inference_container.call_inference_container import run as run_call_inference_container
 from llm_evaluation.call_inference_container.call_inference_container import (
-    save_inference_results,
+    save_local_results,
 )
 from llm_evaluation.data.data_classes import AggregatedJudgeResults, JudgeResult
 from llm_evaluation.judge.run_judge_evaluation import run_2step_judge_on_inferences
-from llm_evaluation.metrics.run_metrics_evaluation import read_inference_data
-from llm_evaluation.metrics.utils import get_score_distribution_graphs, log_metrics_in_mlflow, save_results
+from llm_evaluation.metrics.run_metrics_evaluation import read_local_inference_data
+from llm_evaluation.metrics.utils import (
+    copy_results_files_to_minio,
+    get_score_distribution_graphs,
+    log_metrics_in_mlflow,
+    save_json_object_to_minio,
+)
+from minio import Minio
 
 
 def get_judge_score_distribution_graphs(scores: List[JudgeResult]) -> Dict[str, str]:
@@ -66,7 +72,7 @@ async def main(args: Namespace):
             - evaluation_dataset_name (str): Name of the evaluation dataset.
             - evaluation_dataset_version (str): Version of the evaluation dataset.
             - dataset_split (str): Dataset split to use (e.g., "train", "test").
-            - output_dir_path (str): Path to the directory where results will be saved.
+            - minio_output_dir_path (str): Path to the directory where results will be saved.
             - maximum_context_size (int): Maximum context size for the model input.
             - batch_size (int): Batch size for inference.
             - judge_maximum_context_size (int): Maximum context size for the judge model input.
@@ -90,17 +96,15 @@ async def main(args: Namespace):
     prompt_template = read_prompt_template(args.prompt_template_path)
     logger.info(f"Prompt template has been read in from {args.prompt_template_path}")
 
-    results_dir_path = os.path.join(
-        args.output_dir_path,
-        f"inferences_{args.model_name}--{args.evaluation_dataset_name.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
-        "inference_results",
-    )
-    logger.info(f"Results will be saved to {results_dir_path}")
-    if not os.path.exists(results_dir_path):
-        logger.info(f"Creating path {results_dir_path}")
-        os.makedirs(results_dir_path)
+    evaluation_dir_name = f"judge--{args.model_name}--{args.evaluation_dataset_name.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}"
+    minio_results_dir_path = os.path.join(args.minio_output_dir_path, evaluation_dir_name)
+    local_results_dir_path = os.path.join("/home/evaluation", evaluation_dir_name)
+    if not os.path.exists(local_results_dir_path):
+        logger.info(f"Creating path {local_results_dir_path}")
+        os.makedirs(local_results_dir_path)
 
-    saved_results = []
+    logger.info(f"Results will be saved locally to {local_results_dir_path}")
+
     parameters: dict = {}
 
     client = get_llm_client(base_url=args.llm_base_url, port=args.llm_port, endpoint=args.llm_endpoint)
@@ -122,31 +126,34 @@ async def main(args: Namespace):
         use_data_subset=args.use_data_subset,
         dataset_split=args.dataset_split,
     ):
-        result_path = save_inference_results(
+        save_local_results(
             result=inference_result,
-            output_dir_path=results_dir_path,
+            output_dir_path=local_results_dir_path,
+            subdir="inferences",
         )
-        saved_results.append(result_path)
         inferenced_docs += 1
         logger.info(
-            f"Saved inference result for document {inferenced_docs}/{total_candidate_inferences} with id {inference_result['doc_id']}"
+            f"Saved inference result for document {inferenced_docs}/{total_candidate_inferences} with id {inference_result['context_document_id']}"
         )
 
-    logger.info(f"Loading file with generated inferences: {results_dir_path}")
-    inferences_data = read_inference_data(results_dir_path)
-    logger.info("Data loaded, running metrics evaluation...")
+    logger.info(f"Loading file with generated inferences: {local_results_dir_path}")
+    inferences_data = read_local_inference_data(os.path.join(local_results_dir_path, "inferences"))
+    logger.info("Data loaded, running judge evaluation...")
 
     logger.info(inferences_data)
     logger.info("Inference ran.")
 
     judge_client = get_llm_client(base_url=args.judge_base_url, port=args.judge_port, endpoint=args.judge_endpoint)
 
+    judge_prompt_step1_template = read_prompt_template(args.judge_prompt1_template_path)
+    judge_prompt_step2_template = read_prompt_template(args.judge_prompt2_template_path)
+
     aggregated_judge_results = AggregatedJudgeResults(
         judge_results={},
         average_grade=0.0,
         total_candidate_judgments=len(inferences_data),
-        prompt_template_step_1=args.judge_prompt1_template_path,
-        prompt_template_step_2=args.judge_prompt2_template_path,
+        judge_prompt_step1_template=judge_prompt_step1_template,
+        judge_prompt_step2_template=judge_prompt_step2_template,
         evaluation_dataset_name=args.evaluation_dataset_name,
         evaluation_dataset_version=args.evaluation_dataset_version,
         llm_name=args.model_name,
@@ -158,16 +165,22 @@ async def main(args: Namespace):
     async for judge_result in run_2step_judge_on_inferences(
         inferences_data=inferences_data,
         judge_model_name=args.judge_model_name,
-        prompt_template_step1_path=args.judge_prompt1_template_path,
-        prompt_template_step2_path=args.judge_prompt2_template_path,
+        judge_prompt_step1_template=judge_prompt_step1_template,
+        judge_prompt_step2_template=judge_prompt_step2_template,
         judge_client=judge_client,
         batch_size=args.judge_batch_size,
-        output_dir_path=args.output_dir_path,
+        output_dir_path=local_results_dir_path,
     ):
         aggregated_judge_results.judge_results[judge_result.context_document_id] = judge_result
         judged_docs += 1
         logger.info(
             f"Processed judge result {judged_docs}/{total_inferences} for document {judge_result.context_document_id}"
+        )
+
+        save_local_results(
+            result=judge_result.to_dict(),  # type: ignore
+            output_dir_path=local_results_dir_path,
+            subdir="judge_results",
         )
 
     distribution_graphs = get_judge_score_distribution_graphs(
@@ -190,7 +203,38 @@ async def main(args: Namespace):
     logger.info("Aggregating judge scores...")
     logger.info(aggregated_judge_results)
 
-    save_results(results=aggregated_judge_results, results_dir_path=results_dir_path, config=args)
+    logger.info("Writing evaluation results to MinIO...")
+    minio_client = Minio(
+        endpoint=os.environ["BUCKET_STORAGE_HOST"],
+        access_key=os.environ["BUCKET_STORAGE_ACCESS_KEY"],
+        secret_key=os.environ["BUCKET_STORAGE_SECRET_KEY"],
+        secure=False,
+        cert_check=False,
+    )
+    for json_object, destination_file in [
+        (aggregated_judge_results.get_summary_dict(), os.path.join(minio_results_dir_path, "summary_results.json")),  # type: ignore
+        (aggregated_judge_results.judge_prompt_step1_template, os.path.join(minio_results_dir_path, "step1_template.json")),  # type: ignore
+        (aggregated_judge_results.judge_prompt_step2_template, os.path.join(minio_results_dir_path, "step2_template.json")),  # type: ignore
+        (vars(args), os.path.join(minio_results_dir_path, "config.json")),
+    ]:
+        save_json_object_to_minio(json_object=json_object, destination_file=destination_file, client=minio_client)
+
+    # Copying model inference results to MinIO
+    copy_results_files_to_minio(
+        local_results_dir_path=local_results_dir_path,
+        subdir="inferences",
+        minio_results_dir_path=minio_results_dir_path,
+        minio_client=minio_client,
+    )
+
+    # Copying judge inference results to MinIO
+    copy_results_files_to_minio(
+        local_results_dir_path=local_results_dir_path,
+        subdir="judge_results",
+        minio_results_dir_path=minio_results_dir_path,
+        minio_client=minio_client,
+    )
+
     logger.info("Evaluation complete.")
 
 

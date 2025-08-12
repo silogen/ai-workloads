@@ -20,6 +20,7 @@ evaluation_container:
   dataset_version: 3.0.0
   dataset_split: test
   prompt_template_path: /workload/mount/summarization_prompt_template.txt
+  minio_output_dir_path: /evaluation
   batch_size: 50
   dataset_info:
     context_column_name: article
@@ -35,6 +36,6 @@ storage:
   bucket_storage_host: minio.minio-tenant-default.svc.cluster.local:80
   bucket_storage_bucket: default-bucket
   mlflow:
-    server_uri:  #  http://10.242.3.198:8082
+    server_uri: #  http://10.242.3.198:8082
     experiment_name: mlflow-experiment-metrics
     run_name: mlflow-run-metrics

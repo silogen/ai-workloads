@@ -8,7 +8,6 @@ from llm_evaluation.call_inference_container.call_inference_container import (
     batched_async,
     get_inference_result,
     handle_llm_inference_result,
-    read_prompt_template,
 )
 from llm_evaluation.data.data_classes import JudgeResult
 from openai import AsyncClient
@@ -38,7 +37,7 @@ async def run_2step_judge(
     """
     # JUDGE STEP 1: explanation request
     explanation_message = judge_prompt_step1_template.format(
-        context=inference_result["document"], answer=inference_result["inference_result"]
+        context=inference_result["context_document"], answer=inference_result["llm_inference"]
     )
     explanation_messages = [{"role": "user", "content": explanation_message}]
     parameters: Dict[str, Any] = {}
@@ -48,7 +47,7 @@ async def run_2step_judge(
         messages=explanation_messages,
         model_name=judge_model_name,
         parameters=parameters,
-        doc_id=inference_result["doc_id"],
+        doc_id=inference_result["context_document_id"],
     )
     judge_explanation = handle_llm_inference_result(doc_id=doc_id, result=judge_explanation_response)
     if judge_explanation is None or judge_explanation.startswith("**ERROR**"):
@@ -67,7 +66,7 @@ async def run_2step_judge(
         messages=grade_messages,
         model_name=judge_model_name,
         parameters=parameters,
-        doc_id=inference_result["doc_id"],
+        doc_id=inference_result["context_document_id"],
     )
     judge_grade_inference = handle_llm_inference_result(doc_id=doc_id, result=judge_grade_inference_response)
     if judge_grade_inference is None or judge_grade_inference.startswith("**ERROR**"):
@@ -81,10 +80,10 @@ async def run_2step_judge(
         return None
 
     judge_result = JudgeResult(
-        context_document=inference_result["document"],
-        context_document_id=inference_result["doc_id"],
-        gold_standard=inference_result["gold_standard_result"],
-        llm_inference=inference_result["inference_result"],
+        context_document=inference_result["context_document"],
+        context_document_id=inference_result["context_document_id"],
+        gold_standard_result=inference_result["gold_standard_result"],
+        llm_inference=inference_result["llm_inference"],
         judge_explanation=judge_explanation,
         judge_grade=judge_grade,
     )
@@ -94,8 +93,8 @@ async def run_2step_judge(
 async def run_2step_judge_on_inferences(
     inferences_data: List[Dict],
     judge_model_name: str,
-    prompt_template_step1_path: str,
-    prompt_template_step2_path: str,
+    judge_prompt_step1_template: str,
+    judge_prompt_step2_template: str,
     judge_client: AsyncClient,
     batch_size: int,
     output_dir_path: str,
@@ -116,8 +115,6 @@ async def run_2step_judge_on_inferences(
         JudgeResult: The result of the evaluation for each inference.
     """
 
-    judge_prompt_step1_template = read_prompt_template(prompt_template_step1_path)
-    judge_prompt_step2_template = read_prompt_template(prompt_template_step2_path)
     grade_regex = "Grade: \\[\\[([1-9]|10)\\]\\]"  # We may want to parameterize this
 
     judged_documents_counter = 0
@@ -134,7 +131,7 @@ async def run_2step_judge_on_inferences(
         batch_start_time = time.time()
         for i, inference_result in enumerate(inferences_batch):
 
-            logger.info(f"Judging inference {i}: {inference_result['inference_result']}")
+            logger.info(f"Judging inference {i}: {inference_result['llm_inference']}")
             judge_tasks.append(
                 run_2step_judge(
                     inference_result=inference_result,
@@ -152,7 +149,6 @@ async def run_2step_judge_on_inferences(
                 if judge_result is None:
                     judge_errors_counter += 1
                     continue
-                judge_result.save_dataclass_result(output_dir_path=output_dir_path)
                 judged_documents_counter += 1
                 yield judge_result
 

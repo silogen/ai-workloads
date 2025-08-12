@@ -35,7 +35,7 @@ judge_evaluation_container:
   context_column_name: article
   id_column_name: id
   gold_standard_column_name: highlights
-  output_dir_path: /home/evaluation/results
+  minio_output_dir_path: /evaluation
   use_data_subset: 0
 storage:
   ephemeral:
@@ -47,6 +47,6 @@ storage:
   bucket_storage_bucket: default-bucket
   configmap_mount_path: /local_resources/mount
   mlflow:
-    server_uri:  #  http://10.242.3.198:8082
+    server_uri: #  http://10.242.3.198:8082
     experiment_name: mlflow-experiment-judge
     run_name: mlflow-run-judge

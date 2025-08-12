@@ -100,7 +100,7 @@ spec:
                     --evaluation-dataset-version="{{ .Values.evaluation_container.dataset_version }}" \
                     --dataset-split="{{ .Values.evaluation_container.dataset_split }}" \
                     --prompt-template-path="{{ .Values.evaluation_container.prompt_template_path }}" \
-                    --output-dir-path="/home/evaluation/results" \
+                    --minio-output-dir-path="{{ .Values.evaluation_container.minio_output_dir_path }}" \
                     --model-name="{{ .Values.model_inference_container.model }}" \
                     --model-path="{{ .Values.model_inference_container.model_path }}" \
                     --local-model-dir-path="{{ .Values.model_inference_container.local_model_dir_path }}" \
