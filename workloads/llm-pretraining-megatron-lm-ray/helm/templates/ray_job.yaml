@@ -14,11 +14,8 @@ spec:
   shutdownAfterJobFinishes: true
   submissionMode: K8sJobMode
   ttlSecondsAfterFinished: 0
-  entrypoint: >
-    python /local_resources/mount/ray_entrypoint.py --num-nodes {{ .Values.workers.replicas }} --gpus-per-node {{ .Values.workers.resources.gpu }}
-    {{- range $index, $arg := .Values.megatronArguments }}
-    {{- $arg | nindent 4 }}
-    {{- end }}
+  entrypoint:
+    {{- include "entrypoint" . | nindent 4 }}
   rayClusterSpec:
     enableInTreeAutoscaling: false
     headGroupSpec:
@@ -72,14 +69,18 @@ spec:
                 bash /local_resources/mount/gc.sh{{- if and .Values.kaiwo.storageEnabled .Values.kaiwo.enabled}} --skip-pvc{{- end }} {{ include "release.fullname" . }}
                 # Setup MinIO, Download resources:
                 mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY};
+              {{- if and .Values.remoteDataDirPath .Values.remoteDataNamePrefix }}
                 echo "Copying data to container...";
                 mc cp -r minio-host/{{ .Values.remoteDataDirPath | trimSuffix "/" }}/{{ .Values.remoteDataNamePrefix }} /local_resources/data;
+              {{- end }}
                 echo "Copying tokenizer to container...";
                 mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/special_tokens_map.json /local_resources/tokenizer/special_tokens_map.json
                 mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/tokenizer.json /local_resources/tokenizer/tokenizer.json
                 mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/tokenizer_config.json /local_resources/tokenizer/tokenizer_config.json
+              {{- if .Values.remoteBaseModelPath }}
                 echo "Copying model checkpoint to container...";
                 mc cp -r minio-host/{{ .Values.remoteBaseModelPath | trimSuffix "/" }}/ /local_resources/basemodel;
+              {{- end }}
             resources:
               limits:
                 memory: "1Gi"
