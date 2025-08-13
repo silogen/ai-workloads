@@ -1,11 +1,11 @@
 general:
   job_name: evaluation-metrics
 model_inference_container:
-  image: rocm/vllm-dev:20241205-tuned
+  image: rocm/vllm-dev:nightly_main_20250430
   memory: 24Gi
   gpu_count: 1
   cpu_count: 2
-  model: llama-3.1-8B
+  model: llama-3.1-8B-Instruct
   model_path: hf://meta-llama/Llama-3.1-8B-Instruct
   tensor_parallel_size: 1
   max_model_len: 2048
@@ -26,7 +26,6 @@ evaluation_container:
     context_column_name: article
     id_column_name: id
     gold_standard_column_name: highlights
-  use_data_subset: 0
 storage:
   ephemeral:
     quantity: 100Gi
@@ -36,6 +35,6 @@ storage:
   bucket_storage_host: minio.minio-tenant-default.svc.cluster.local:80
   bucket_storage_bucket: default-bucket
   mlflow:
-    server_uri: #  http://10.242.3.198:8082
+    server_uri:
     experiment_name: mlflow-experiment-metrics
     run_name: mlflow-run-metrics

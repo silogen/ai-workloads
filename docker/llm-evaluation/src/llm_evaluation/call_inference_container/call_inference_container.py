@@ -321,7 +321,7 @@ async def run(
     logger.info(f"Loading tokenizer from model path: {model_path}")
     tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-    counter = 0  # Used for running a subset of the dataset for testing purposes
+    counter = 0  # Used as data sample index if there is no id_column_name, and for running a subset of the dataset
     length_exclusion_counter = 0
     inference_errors_counter = 0
     processed_documents_counter = 0
@@ -345,7 +345,10 @@ async def run(
         batch_start_time = time.time()
 
         for datum in batch:
-            doc_id = datum[id_column_name]
+            if id_column_name is None or id_column_name == "":
+                doc_id = str(counter)
+            else:
+                doc_id = datum[id_column_name]
             correct_answers_map[doc_id] = datum[gold_standard_column_name]
             documents_map[doc_id] = datum[context_column_name]
 
