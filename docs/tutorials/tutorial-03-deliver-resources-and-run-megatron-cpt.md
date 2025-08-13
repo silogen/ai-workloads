@@ -94,10 +94,25 @@ Navigate using the `arrow keys` to select a the pod containg the keyword "infere
 
 #### 2.4.3 Connect to the inference service and query it to sample prompt continuations
 
-Forward the service port to your local machine:
+First, check the deployment status:
 
 ```bash
-kubectl port-forward svc/llm-inference-megatron-lm 5000:80
+kubectl get deployment
+```
+You should see a deployment with a name in the format `llm-inference-megatron-lm-YYYYMMDD-HHMM` (e.g. `llm-inference-megatron-lm-20250811-1229`) in ready state.
+
+Get the name of the respective service deployed by the workload with
+
+```bash
+kubectl get svc
+```
+
+The service should have the same name as the deployment from above with the format `llm-inference-megatron-lm-YYYYMMDD-HHMM`. Note the port exposed by the service, it is expected to be the port `80`.
+
+Forward the service port to your local machine, e.g., in the example below, remote port `80` to local port `5000`. For example, use the following command, and do not forget to replace `llm-inference-megatron-lm-YYYYMMDD-HHMM` with your real service name:
+
+```bash
+kubectl port-forward svc/llm-inference-megatron-lm-YYYYMMDD-HHMM 5000:80
 ```
 
 Now the inference API is available at `http://localhost:5000`.
