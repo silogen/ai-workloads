@@ -10,23 +10,32 @@ curl https://dl.min.io/client/mc/release/linux-amd64/mc \
       -o /minio-binaries/mc
 chmod +x /minio-binaries/mc
 export PATH="${PATH}:/minio-binaries/"
-mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
+if ! command -v mc >/dev/null 2>&1; then
+  echo "ERROR: MinIO client (mc) is not available after installation."
+  exit 1
+fi
+mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY} || { echo "ERROR: Failed to set MinIO alias."; exit 1; }
 echo '--------------------------------------------'
 echo 'Checking if model exists in MinIO storage'
 echo '--------------------------------------------'
 echo "Looking for files at: {{$minioModel -}}/"
-FILE_COUNT=$(mc ls {{$minioModel -}}/ 2>/dev/null | wc -l)
+FILE_COUNT=$(mc find {{$minioModel -}}/ 2>/dev/null | wc -l)
 if [ "$FILE_COUNT" -eq 0 ]; then
   echo "ERROR: No files found at '{{$minioModel -}}/' or path does not exist."
-  echo "DEBUG: mc ls command output:"
-  mc ls {{$minioModel -}}/ 2>&1
+  echo "DEBUG: mc find command output:"
+  mc find {{$minioModel -}}/ 2>&1
   exit 1
 fi
 echo "✓ Found $FILE_COUNT files at {{$minioModel -}}/"
 echo '--------------------------------------------'
 echo 'Downloading the model to the local container'
 echo '--------------------------------------------'
-mc cp --recursive {{$minioModel -}}/ {{$localModel -}}/ || { echo "ERROR: Failed to download model from '{{$minioModel -}}/'."; exit 1; }
+if ! mc mirror {{$minioModel -}}/ {{$localModel -}}/ 2> /tmp/mc_mirror_error.log; then
+  echo "ERROR: Failed to download model from '{{$minioModel -}}/'."
+  echo "DEBUG: mc mirror command stderr output:"
+  cat /tmp/mc_mirror_error.log
+  exit 1
+fi
 {{- end -}}
 
 {{- define "vllm.start" -}}
