@@ -4,3 +4,8 @@ metadata:
     chat: "true"
 
 model: "OdiaGenAI-LLM/qwen_1.5_odia_7b"
+
+env_vars:
+  HF_TOKEN:
+    key: hf-token
+    name: hf-token

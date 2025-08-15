@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "mistralai/Mixtral-8x22B-Instruct-v0.1"
+gpus: 4
 
 env_vars:
   HF_TOKEN:
@@ -12,7 +13,7 @@ env_vars:
 
 storage:
   ephemeral:
-    quantity: 256Gi
+    quantity: 300Gi
     storageClassName: mlstorage
     accessModes:
       - ReadWriteOnce

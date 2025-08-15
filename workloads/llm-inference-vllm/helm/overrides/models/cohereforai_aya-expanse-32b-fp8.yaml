@@ -4,5 +4,11 @@ metadata:
     chat: "true"
 
 model: CohereForAI/aya-expanse-32b
+
 vllm_engine_args:
   quantization: fp8
+
+env_vars:
+  HF_TOKEN:
+    key: hf-token
+    name: hf-token
