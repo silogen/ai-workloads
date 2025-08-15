@@ -78,29 +78,38 @@ nav:
   - Workloads:
     - dev-chatui-aiaio: workloads/dev-chatui-aiaio/helm/README.md
     - dev-chatui-openwebui: workloads/dev-chatui-openwebui/helm/README.md
-    - dev-openvscode-server: workloads/dev-openvscode-server/helm/README.md
     - dev-text2image-comfyui: workloads/dev-text2image-comfyui/helm/README.md
+    - dev-tracking-mlflow: workloads/dev-tracking-mlflow/helm/README.md
     - dev-workspace-jupyterlab: workloads/dev-workspace-jupyterlab/helm/README.md
+    - dev-workspace-vscode: workloads/dev-workspace-vscode/helm/README.md
     - download-data-to-bucket: workloads/download-data-to-bucket/helm/README.md
     - download-huggingface-model-to-bucket: workloads/download-huggingface-model-to-bucket/helm/README.md
+    - download-wandb-model-to-bucket: workloads/download-wandb-model-to-bucket/helm/README.md
     - k8s-namespace-setup: workloads/k8s-namespace-setup/helm/README.md
+    - llm-deepspeed-estimate-ram-vram: workloads/llm-deepspeed-estimate-ram-vram/helm/README.md
+    - llm-evaluation-judge: workloads/llm-evaluation-judge/helm/README.md
     - llm-evaluation-metrics: workloads/llm-evaluation-metrics/helm/README.md
+    - llm-finetune-axolotl: workloads/llm-finetune-axolotl/helm/README.md
+    - llm-finetune-llama-factory: workloads/llm-finetune-llama-factory/helm/README.md
     - llm-finetune-silogen-engine:
       - Overview: workloads/llm-finetune-silogen-engine/helm/README.md
       - Finetuning Config: workloads/llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md
+    - llm-finetune-verl: workloads/llm-finetune-verl/helm/README.md
     - llm-inference-llamacpp-mi300x: workloads/llm-inference-llamacpp-mi300x/helm/README.md
+    - llm-inference-megatron-lm: workloads/llm-inference-megatron-lm/helm/README.md
+    - llm-inference-ollama: workloads/llm-inference-ollama/helm/README.md
+    - llm-inference-openai-benchmark-guidellm: workloads/llm-inference-openai-benchmark-guidellm/helm/README.md
+    - llm-inference-openai-benchmark-rocmblog: workloads/llm-inference-openai-benchmark-rocmblog/helm/README.md
     - llm-inference-sglang: workloads/llm-inference-sglang/helm/README.md
+    - llm-inference-tgi: workloads/llm-inference-tgi/helm/README.md
     - llm-inference-vllm: workloads/llm-inference-vllm/helm/README.md
     - llm-inference-vllm-benchmark-mad: workloads/llm-inference-vllm-benchmark-mad/helm/README.md
     - llm-inference-vllm-benchmark-rocmblog: workloads/llm-inference-vllm-benchmark-rocmblog/helm/README.md
-    - llm-inference-openai-benchmark-rocmblog: workloads/llm-inference-openai-benchmark-rocmblog/helm/README.md
-    - llm-inference-openai-benchmark-guidellm: workloads/llm-inference-openai-benchmark-guidellm/helm/README.md
-    - rag-embedding-infinity: workloads/rag-embedding-infinity/helm/README.md
-    - prepare-data-for-megatron-lm: workloads/prepare-data-for-megatron-lm/helm/README.md
     - llm-megatron-ckpt-conversion: workloads/llm-megatron-ckpt-conversion/helm/README.md
     - llm-pretraining-megatron-lm: workloads/llm-pretraining-megatron-lm/helm/README.md
     - llm-pretraining-megatron-lm-ray: workloads/llm-pretraining-megatron-lm-ray/helm/README.md
-    - llm-inference-megatron-lm: workloads/llm-inference-megatron-lm/helm/README.md
+    - prepare-data-for-megatron-lm: workloads/prepare-data-for-megatron-lm/helm/README.md
+    - rag-embedding-infinity: workloads/rag-embedding-infinity/helm/README.md
 - Contributing: docs/contributing.md
 
 #extra_css:
