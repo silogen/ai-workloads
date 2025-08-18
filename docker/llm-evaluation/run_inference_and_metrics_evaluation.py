@@ -12,11 +12,12 @@ from llm_evaluation.call_inference_container.call_inference_container import (
 )
 from llm_evaluation.call_inference_container.call_inference_container import run as run_call_inference_container
 from llm_evaluation.call_inference_container.call_inference_container import (
-    save_inference_results,
+    save_local_results,
 )
-from llm_evaluation.metrics.run_metrics_evaluation import get_bert_score_distribution_graphs, read_inference_data
+from llm_evaluation.metrics.run_metrics_evaluation import get_bert_score_distribution_graphs, read_local_inference_data
 from llm_evaluation.metrics.run_metrics_evaluation import run as run_metrics_evaluation
-from llm_evaluation.metrics.utils import log_metrics_in_mlflow, save_results
+from llm_evaluation.metrics.utils import copy_results_files_to_minio, log_metrics_in_mlflow, save_json_object_to_minio
+from minio import Minio
 
 
 async def main(args: Namespace):
@@ -35,11 +36,12 @@ async def main(args: Namespace):
             - gold_standard_column_name (str): Name of the column containing gold standard data in the dataset.
             - model_name (str): Name of the model to be used for inference.
             - model_path (str): Path to the model.
+            - local_model_dir_path (str): Local directory path where the model is stored.
             - maximum_context_size (int): Maximum size of the context for inference.
             - batch_size (int): Batch size for inference.
             - use_data_subset (int): Number of documents to use for evaluation. If > 0, limits to this many documents.
             - dataset_split (str): The dataset split to use (e.g., "train", "test").
-            - output_dir_path (str): Directory path to save output files.
+            - minio_output_dir_path (str): Directory path to save output files.
 
     Workflow:
         1. Downloads the specified dataset.
@@ -74,19 +76,17 @@ async def main(args: Namespace):
     if args.use_data_subset > 0:
         logger.warning(f"Using a subset of the data: {args.use_data_subset} documents.")
 
-    results_dir_path = os.path.join(
-        args.output_dir_path,
-        f"inferences_{args.model_name}--{args.evaluation_dataset_name.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}",
-        "inference_results",
-    )
-    if not os.path.exists(results_dir_path):
-        logger.info(f"Creating path {results_dir_path}")
-        os.makedirs(results_dir_path)
+    evaluation_dir_name = f"metrics--{args.model_name}--{args.evaluation_dataset_name.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}"
+    minio_results_dir_path = os.path.join(args.minio_output_dir_path, f"metrics_{evaluation_dir_name}")
+    local_results_dir_path = os.path.join("/home/evaluation/results", f"inferences_{evaluation_dir_name}")
+    if not os.path.exists(local_results_dir_path):
+        logger.info(f"Creating path {local_results_dir_path}")
+        os.makedirs(local_results_dir_path)
 
-    logger.info(f"Results will be saved to {results_dir_path}")
+    logger.info(f"Results will be saved locally to {local_results_dir_path}")
 
-    saved_results = []
-
+    total_candidate_inferences = args.use_data_subset if args.use_data_subset > 0 else len(ds[args.dataset_split])
+    inferenced_docs = 0
     async for inference_result in run_call_inference_container(
         dataset=ds,
         prompt_template=prompt_template,
@@ -95,22 +95,23 @@ async def main(args: Namespace):
         gold_standard_column_name=args.gold_standard_column_name,
         llm_client=client,
         model_name=args.model_name,
-        model_path=args.model_path,
+        model_path=args.local_model_dir_path,
         parameters=parameters,
         max_context_size=args.maximum_context_size,
         batch_size=args.batch_size,
         use_data_subset=args.use_data_subset,
         dataset_split=args.dataset_split,
     ):
-        result_path = save_inference_results(
-            result=inference_result,
-            output_dir_path=results_dir_path,
+        save_local_results(result=inference_result, output_dir_path=local_results_dir_path, subdir="inferences")
+        inferenced_docs += 1
+        logger.info(
+            f"Saved inference result locally for document {inferenced_docs}/{total_candidate_inferences} with id {inference_result['context_document_id']}"
         )
-        saved_results.append(result_path)
-        logger.info(f"Saved inference result for document {inference_result['doc_id']}")
 
-    logger.info(f"Loading file with generated inferences: {results_dir_path}")
-    data = read_inference_data(results_dir_path)
+    logger.info("All inferences complete. Now running metrics evaluation...")
+    logger.info(f"Loading all inferences: {local_results_dir_path}")
+    data = read_local_inference_data(os.path.join(local_results_dir_path, "inferences"))
+    logger.info(f"Loaded {len(data)} inference results.")
     logger.info("Data loaded, running metrics evaluation...")
 
     eval_results = run_metrics_evaluation(data)
@@ -123,16 +124,38 @@ async def main(args: Namespace):
         logger.info("Logging results to MLFlow...")
         log_metrics_in_mlflow(
             distribution_graphs,
-            eval_results.scores,
+            eval_results.get_summary_scores_dict(),
             mlflow_server_uri=args.mlflow_server_uri,
             mlflow_experiment_name=args.mlflow_experiment_name,
             mlflow_run_name=args.mlflow_run_name,
+            mlflow_experiment_description="LLM Metrics Evaluation",
         )
 
     logger.info("Evaluation results:")
     logger.info(eval_results)
 
-    save_results(results=eval_results, config=args, results_dir_path=results_dir_path)
+    logger.info("Writing evaluation results to MinIO...")
+    minio_client = Minio(
+        endpoint=os.environ["BUCKET_STORAGE_HOST"],
+        access_key=os.environ["BUCKET_STORAGE_ACCESS_KEY"],
+        secret_key=os.environ["BUCKET_STORAGE_SECRET_KEY"],
+        secure=False,
+        cert_check=False,
+    )
+    for json_object, destination_file in [
+        (eval_results.get_summary_scores_dict(), os.path.join(minio_results_dir_path, "summary_results.json")),  # type: ignore
+        (eval_results.serializable_all_scores_dict(), os.path.join(minio_results_dir_path, "all_scores_list.json")),  # type: ignore
+        (prompt_template, os.path.join(minio_results_dir_path, "prompt_template.json")),  # type: ignore
+        (vars(args), os.path.join(minio_results_dir_path, "config.json")),
+    ]:
+        save_json_object_to_minio(json_object=json_object, destination_file=destination_file, client=minio_client)
+
+    copy_results_files_to_minio(
+        local_results_dir_path=local_results_dir_path,
+        subdir="inferences",
+        minio_results_dir_path=minio_results_dir_path,
+        minio_client=minio_client,
+    )
 
     logger.info("Evaluation complete.")
 

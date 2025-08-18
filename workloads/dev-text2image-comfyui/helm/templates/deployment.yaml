@@ -15,6 +15,10 @@ spec:
       app: {{ include "release.fullname" . }}
   template:
     metadata:
+      annotations:
+        {{- range $key, $value := .Values.metadata.annotations }}
+        {{ $key }}: {{ tpl $value $ | quote }}
+        {{- end }}
       labels:
         app: {{ include "release.fullname" . }}
     spec:

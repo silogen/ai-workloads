@@ -18,6 +18,7 @@ torchrun \
     --master_port $MASTER_PORT \
     /workspace/Megatron-LM/tools/run_text_generation_server.py \
     --use-checkpoint-args \
+    --no-use-tokenizer-model-from-checkpoint-args \
     --bf16 \
     --no-async-tensor-model-parallel-allreduce \
     --no-masked-softmax-fusion \

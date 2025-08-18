@@ -1,4 +1,14 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
+
+
+def check_nonnegative(value):
+    try:
+        value = int(value)
+        if value < 0:
+            raise ArgumentTypeError("{} is a negative integer. Use a non-negative integer.".format(value))
+    except ValueError:
+        raise Exception("{} is not an integer".format(value))
+    return value
 
 
 def get_inference_parser() -> ArgumentParser:
@@ -29,10 +39,11 @@ def get_inference_parser() -> ArgumentParser:
         default="test",
     )
     parser.add_argument(
-        "-o", "--output-dir-path", type=str, help="Path to the directory where output files will be saved."
+        "-o", "--minio-output-dir-path", type=str, help="Path to the directory where output files will be saved."
     )
     parser.add_argument("-m", "--model-name", type=str, help="Name of the model to be used for inference.")
     parser.add_argument("-a", "--model-path", type=str, help="Path to the model.")
+    parser.add_argument("--local-model-dir-path", type=str, help="Local path to the model.")
     parser.add_argument(
         "-x", "--maximum-context-size", type=int, help="Maximum size of the context to be used for inference."
     )
@@ -58,7 +69,7 @@ def get_inference_parser() -> ArgumentParser:
     parser.add_argument(
         "-s",
         "--use-data-subset",
-        type=int,
+        type=check_nonnegative,
         default=0,
         help="Use a subset of the data for evaluation. 0 (default) for full data, n>0 for n documents.",
     )
@@ -96,7 +107,7 @@ def get_metrics_parser() -> ArgumentParser:
     """
     parser = ArgumentParser(prog="Compute Metrics")
     parser.add_argument("-i", "--input-file-path", help="Input file path for the JSON with LLM generated text.")
-    parser.add_argument("-o", "--output-dir-path", help="Output directory for the results.")
+    parser.add_argument("-o", "--minio-output-dir-path", help="Output directory for the results.")
     return parser
 
 
@@ -107,6 +118,7 @@ def get_judge_inference_parser() -> ArgumentParser:
     parser = ArgumentParser(prog="Call Inference Container")
     parser.add_argument("--model-name", type=str, help="Name of the model to be used for inference.")
     parser.add_argument("--model-path", type=str, help="Path to the model.")
+    parser.add_argument("--local-model-dir-path", type=str, help="Local path to the model.")
     parser.add_argument("--judge-model-name", type=str, help="Name of the model to be used for judging.")
     parser.add_argument("--judge-model-path", type=str, help="Path to the judge model.")
     parser.add_argument("--llm-base-url", type=str, default="http://localhost", help="Base URL of the LLM service.")
@@ -145,7 +157,9 @@ def get_judge_inference_parser() -> ArgumentParser:
         help="Dataset split to use for evaluation (e.g., train, test, validation).",
         default="test",
     )
-    parser.add_argument("--output-dir-path", type=str, help="Path to the directory where output files will be saved.")
+    parser.add_argument(
+        "--minio-output-dir-path", type=str, help="Path to the directory where output files will be saved."
+    )
     parser.add_argument(
         "--maximum-context-size", type=int, help="Maximum size of the context to be used for inference."
     )
@@ -179,8 +193,26 @@ def get_judge_inference_parser() -> ArgumentParser:
     )
     parser.add_argument(
         "--use-data-subset",
-        type=int,
+        type=check_nonnegative,
         default=0,
         help="Use a subset of the data for evaluation. 0 (default) for full data, n>0 for n documents.",
+    )
+    parser.add_argument(
+        "--mlflow-server-uri",
+        type=str,
+        default="",  # leave this argument empty to disable MLFlow tracking
+        help="MLFlow server URI for tracking.",
+    )
+    parser.add_argument(
+        "--mlflow-experiment-name",
+        type=str,
+        default="llm-evaluation-experiment-judge",
+        help="MLFlow experiment name for tracking.",
+    )
+    parser.add_argument(
+        "--mlflow-run-name",
+        type=str,
+        default="llm-evaluation-run-judge",
+        help="MLFlow run name for tracking.",
     )
     return parser

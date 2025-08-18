@@ -1,5 +1,8 @@
+# Canonical model name:
+model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+
 # Resources:
-downloadsReservedSize: 64Gi
+downloadsReservedSize: 10Gi
 checkpointsReservedSize: 128Gi
 finetuningGpus: 1
 

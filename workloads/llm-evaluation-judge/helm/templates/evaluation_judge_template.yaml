@@ -51,12 +51,14 @@ spec:
             - |
               echo "Downloading model from HuggingFace...";
               cd /local_models;
-              {{- include "modelDownload" (dict "model_download_path" .Values.model_inference_container.model_path "local_dir_path" "/local_models/inference_model" ) | nindent 14 }}
-              echo "Downloaded model. Starting VLLM server...";
+              {{- include "modelDownload" (dict "model_download_path" .Values.model_inference_container.model_path "local_dir_path" .Values.model_inference_container.local_model_dir_path ) | nindent 14 }}
+              echo "Downloaded model. Checking GPUs:"
+              rocm-smi
+              echo "Starting VLLM server..."
               python3 -m vllm.entrypoints.openai.api_server \
                       --host="0.0.0.0" \
                       --port=8080 \
-                      --model="/local_models/inference_model" \
+                      --model="{{.Values.model_inference_container.local_model_dir_path}}" \
                       --tensor-parallel-size="{{ .Values.model_inference_container.tensor_parallel_size }}" \
                       --served-model-name="{{ .Values.model_inference_container.model }}" \
                       --max-model-len={{ .Values.model_inference_container.max_model_len }};
@@ -69,7 +71,7 @@ spec:
               port: 8080
           volumeMounts:
             - name: inference-model-volume
-              mountPath: /local_models/inference_model
+              mountPath: "{{.Values.model_inference_container.local_model_dir_path}}"
               readOnly: false
         - name: judge-inference-vllm
           image: "{{ .Values.judge_inference_container.image }}"
@@ -113,12 +115,14 @@ spec:
             - |
               echo "Downloading model...";
               cd /local_models;
-              {{- include "modelDownload" (dict "model_download_path" .Values.judge_inference_container.model_path "local_dir_path" "/local_models/judge_model/" ) | nindent 14 }}
-              echo "Downloaded model. Starting VLLM server...";
+              {{- include "modelDownload" (dict "model_download_path" .Values.judge_inference_container.model_path "local_dir_path" .Values.judge_inference_container.local_model_dir_path ) | nindent 14 }}
+              echo "Downloaded model. Checking GPUs:"
+              rocm-smi
+              echo "Starting VLLM server..."
               python3 -m vllm.entrypoints.openai.api_server \
                       --host="0.0.0.0"  \
                       --port=8081 \
-                      --model="/local_models/judge_model" \
+                      --model="{{.Values.judge_inference_container.local_model_dir_path}}" \
                       --tensor-parallel-size="{{ .Values.judge_inference_container.tensor_parallel_size }}" \
                       --served-model-name="{{ .Values.judge_inference_container.model }}" \
                       --max-model-len={{ .Values.judge_inference_container.max_model_len }} ;
@@ -131,7 +135,7 @@ spec:
               port: 8081
           volumeMounts:
             - name: judge-model-volume
-              mountPath: /local_models/judge_model
+              mountPath: "{{.Values.judge_inference_container.local_model_dir_path}}"
               readOnly: false
       containers:
         - name: evaluate-with-judge
@@ -149,14 +153,16 @@ spec:
             - |
               ls -lh /;
               echo $(whoami);
+              start_time=$(date +%s)
               until curl -sf http://localhost:8080/health && curl -sf http://localhost:8081/health; do
-                echo "Waiting for models to be ready..."
-                sleep 5
+                elapsed=$(( $(date +%s) - start_time ))
+                echo "Waiting for models to be ready... Time passed: $((elapsed / 60)) min $((elapsed % 60)) sec"
+                sleep 10
               done;
               echo "Both models ready. Running evaluation with judge...";
               python3 run_inference_and_judge_evaluation.py \
                 --model-name="{{ .Values.model_inference_container.model }}" \
-                --model-path="{{ .Values.model_inference_container.model_path }}" \
+                --local-model-dir-path="{{ .Values.model_inference_container.local_model_dir_path }}" \
                 --judge-model-name="{{ .Values.judge_inference_container.model }}" \
                 --judge-model-path="{{ .Values.judge_inference_container.model_path }}" \
                 --llm-base-url="http://localhost" \
@@ -171,7 +177,7 @@ spec:
                 --evaluation-dataset-name="{{ .Values.judge_evaluation_container.dataset_path }}"\
                 --evaluation-dataset-version="{{ .Values.judge_evaluation_container.dataset_version }}" \
                 --dataset-split="{{ .Values.judge_evaluation_container.dataset_split }}" \
-                --output-dir-path="{{ .Values.judge_evaluation_container.output_dir_path }}" \
+                --minio-output-dir-path="{{ .Values.judge_evaluation_container.minio_output_dir_path }}" \
                 --maximum-context-size={{ .Values.model_inference_container.max_model_len}} \
                 --judge-maximum-context-size={{ .Values.judge_inference_container.max_model_len}} \
                 --batch-size="{{ .Values.model_inference_container.batch_size }}" \
@@ -179,7 +185,10 @@ spec:
                 --context-column-name="{{ .Values.judge_evaluation_container.context_column_name}}"  \
                 --id-column-name="{{ .Values.judge_evaluation_container.id_column_name}}" \
                 --gold-standard-column-name="{{ .Values.judge_evaluation_container.gold_standard_column_name}}" \
-                --use-data-subset="{{ .Values.judge_evaluation_container.use_data_subset }}" ;
+                --use-data-subset="{{ .Values.judge_evaluation_container.use_data_subset }}" \
+                --mlflow-server-uri="{{ .Values.storage.mlflow.server_uri }}" \
+                --mlflow-experiment-name="{{ .Values.storage.mlflow.experiment_name }}" \
+                --mlflow-run-name="{{ .Values.storage.mlflow.run_name }}" ;
           env:
             - name: TRANSFORMERS_CACHE
               value: /HF_HOME
@@ -210,6 +219,9 @@ spec:
               readOnly: false
             - mountPath: "{{ .Values.storage.configmap_mount_path }}"
               name: configmap-mount
+            - name: inference-model-volume
+              mountPath: "{{.Values.model_inference_container.local_model_dir_path}}"
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true

@@ -1,5 +1,8 @@
+# Canonical model name:
+model: meta-llama/Llama-3.1-70B
+
 # To use this with the Llama 3.1 70B downloaded with the workload workloads/download-huggingface-model-to-bucket/helm
-# and the override file workloads/download-huggingface-model-to-bucket/helm/overrides/llama-3.1-70b-to-minio.yaml
+# and the override file workloads/download-huggingface-model-to-bucket/helm/overrides/models/meta-llama_llama-3.1-70b.yaml
 # Specify: --set basemodel=default-bucket/models/meta-llama/Llama-3.1-70B in your helm template command.
 finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.5
 

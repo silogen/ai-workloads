@@ -13,6 +13,7 @@ from llm_evaluation import logger
 from llm_evaluation.argument_parsers import get_inference_parser
 from openai import APIError, AsyncClient
 from openai.types.chat import ChatCompletion
+from tqdm import tqdm
 from transformers import AutoTokenizer
 
 
@@ -70,7 +71,7 @@ def handle_llm_inference_result(doc_id: str, result: ChatCompletion) -> str | No
     return inference_result
 
 
-def save_inference_results(result: Dict[str, Any], output_dir_path: str) -> str:
+def save_local_results(result: Dict[str, Any], output_dir_path: str, subdir: str):
     """
     Saves a single inference result to a JSON file in the specified output directory.
 
@@ -83,14 +84,17 @@ def save_inference_results(result: Dict[str, Any], output_dir_path: str) -> str:
     """
     inferences_filepath = os.path.join(
         output_dir_path,
-        f"{result['doc_id']}.json",
+        subdir,
+        f"{result['context_document_id']}.json",
     )
+
+    if not os.path.exists(os.path.join(output_dir_path, subdir)):
+        logger.info(f"Creating path {os.path.join(output_dir_path, subdir)}")
+        os.makedirs(os.path.join(output_dir_path, subdir))
 
     logger.info(f"Writing inferences to {inferences_filepath}")
     with open(inferences_filepath, "w") as fp:
         fp.write(json.dumps(result))
-
-    return inferences_filepath
 
 
 def save_judge_inferences(
@@ -261,11 +265,11 @@ def get_inference_result_as_dict(
     logger.info(f"Processed inference result: {processed_result}")
 
     result = {
-        "inference_result": processed_result,
+        "llm_inference": processed_result,
         "gold_standard_result": [correct_answer],
-        "doc_id": doc_id,
-        "document": document,
-        "prompt": prompt_template,
+        "context_document_id": doc_id,
+        "context_document": document,
+        "prompt_template": prompt_template,
     }
 
     return result
@@ -313,9 +317,11 @@ async def run(
         - Results within a batch are yielded as soon as they become available through async processing.
         - The next batch is not processed until all tasks in the current batch have completed or yielded results.
     """
+
+    logger.info(f"Loading tokenizer from model path: {model_path}")
     tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-    counter = 0  # Used for running a subset of the dataset for testing purposes
+    counter = 0  # Used as data sample index if there is no id_column_name, and for running a subset of the dataset
     length_exclusion_counter = 0
     inference_errors_counter = 0
     processed_documents_counter = 0
@@ -326,22 +332,27 @@ async def run(
 
     inference_start_time = time.time()
 
-    logger.info(f"Starting inference on batches with batch size {batch_size}...")
-
-    for batch_number, batch in enumerate(batched(dataset[dataset_split], batch_size)):
+    num_batches = (
+        use_data_subset // batch_size + 1 if use_data_subset > 0 else len(dataset[dataset_split]) // batch_size + 1
+    )
+    logger.info(f"Starting inference on {num_batches} batches with batch size {batch_size}...")
+    for batch_number, batch in tqdm(enumerate(batched(dataset[dataset_split], batch_size)), total=num_batches):
         inference_tasks = []
         batch_doc_ids = []
 
-        logger.info(f"Processing batch {batch_number}...")
+        logger.info(f"Processing inference batch {batch_number}/{num_batches}...")
 
         batch_start_time = time.time()
 
         for datum in batch:
-            doc_id = datum[id_column_name]
+            if id_column_name is None or id_column_name == "":
+                doc_id = str(counter)
+            else:
+                doc_id = datum[id_column_name]
             correct_answers_map[doc_id] = datum[gold_standard_column_name]
             documents_map[doc_id] = datum[context_column_name]
 
-            logger.info(f"Running async inference on document: {doc_id}")
+            logger.info(f"Running async inference. Batch {batch_number}/{num_batches}. Document: {doc_id}")
             batch_doc_ids.append(doc_id)
 
             # Format the prompt with the context document
@@ -350,7 +361,7 @@ async def run(
             # Exclude messages that are longer than the context length
             tokens = tokenizer(message)["input_ids"]
             if len(tokens) > max_context_size:
-                logger.warning(f"Message exceeds max content size of {max_context_size} tokens. Skipping...")
+                logger.warning(f"Message exceeds max context size of {max_context_size} tokens. Skipping...")
                 logger.warning(f"Token length: {len(tokens)}, Character length: {len(message)}")
                 length_exclusion_counter += 1
                 continue
@@ -470,10 +481,7 @@ async def main(args: Namespace) -> str:
         logger.info(f"Inference result: {inference_result}")
 
         # Save the inference result to a file
-        _ = save_inference_results(
-            result=inference_result,
-            output_dir_path=results_dir_path,
-        )
+        save_local_results(result=inference_result, output_dir_path=results_dir_path, subdir="inferences")
 
         logger.info(f"Saved inference result for document {inference_result['doc_id']}")
 

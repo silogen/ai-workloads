@@ -46,7 +46,7 @@ limits:
 {{- range $key, $value := .Values.env_vars }}
 {{- if (typeIs "string" $value) }}
 - name: {{ $key }}
-  value: {{ $value | quote }}
+  value: {{ tpl $value $ | quote }}
 {{- else }}
 - name: {{ $key }}
   valueFrom:
@@ -65,6 +65,12 @@ limits:
   name: workload-mount
 - mountPath: /dev/shm
   name: dshm
+{{- if .Values.persistent_storage.enabled }}
+{{- range $key, $value := .Values.persistent_storage.volumes }}
+- mountPath: {{ tpl $value.mount_path $ }}
+  name: {{ $key }}
+{{- end }}
+{{- end }}
 {{- end -}}
 
 # Container volumes helper
@@ -96,4 +102,11 @@ limits:
 - configMap:
     name: {{ include "release.fullname" . }}
   name: workload-mount
+{{- if .Values.persistent_storage.enabled }}
+{{- range $key, $value := .Values.persistent_storage.volumes }}
+- persistentVolumeClaim:
+    claimName: {{ tpl $value.pvc_name $ }}
+  name: {{ $key }}
+{{- end }}
+{{- end }}
 {{- end -}}

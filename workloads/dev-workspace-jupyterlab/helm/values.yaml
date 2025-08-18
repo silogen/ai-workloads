@@ -1,4 +1,9 @@
 metadata:
+  annotations:
+    pvc.silogen.ai/user-pvc-auto-create: "true"
+    pvc.silogen.ai/user-pvc-size: "2Gi"
+    pvc.silogen.ai/user-pvc-storage-class-name: "multinode"
+    pvc.silogen.ai/user-pvc-uid: "{{ .Values.metadata.user_id }}"
   labels: {}
   project_id: silogen
   user_id: user
@@ -73,5 +78,5 @@ persistent_storage:
   enabled: false
   volumes:
     pvc-user:
-      pvc_name: "pvc-user-{{ .Values.metadata.user_id }}"
+      pvc_name: "pvc-{{ .Values.metadata.user_id }}"
       mount_path: "/workload/{{ .Values.metadata.user_id }}"

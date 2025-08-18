@@ -6,7 +6,7 @@ labels:
 bucketStorageHost: "https://storage.googleapis.com"
 
 # Inputs:
-modelID: "yujiepan/llama-3.1-tiny-random"
+modelId: "yujiepan/llama-3.1-tiny-random"
 bucketPath: "silogen-dev-data/models/yujiepan/llama-3.1-tiny-random"
 storageQuantity: 5Gi
 storageClass: mlstorage

@@ -3,7 +3,7 @@ labels:
   kaiwo.silogen.ai/managed: "true"
 
 # Which model to download
-modelID: meta-llama/Llama-3.1-8B
+modelId: meta-llama/Llama-3.1-8B
 
 # Where the resources should be stored:
 bucketPath: default-bucket/models/meta-llama/Llama-3.1-8B

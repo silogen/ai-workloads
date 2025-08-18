@@ -1,3 +1,4 @@
+{{- define "job" -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -40,7 +41,7 @@ spec:
           mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
           ###################################
           echo 'Downloading the model to the local container'
-          huggingface-cli download {{ .Values.modelID }} \
+          huggingface-cli download {{ .Values.modelId }} \
             --exclude '{{ .Values.downloadExcludeGlob }}' \
             {{- if .Values.modelRevision }}
             --revision {{ .Values.modelRevision }}
@@ -79,15 +80,9 @@ spec:
           requests:
             memory: 1Gi
             cpu: 1
-            {{- if not .Values.storageClass }}
-            ephemeral_storage: {{ .Values.storageQuantity }}
-            {{- end }}
           limits:
             memory: 1Gi
             cpu: 1
-            {{- if not .Values.storageClass }}
-            ephemeral_storage: {{ .Values.storageQuantity }}
-            {{- end }}
         {{- if .Values.storageClass }}
         volumeMounts:
           - mountPath: /app
@@ -105,8 +100,8 @@ spec:
       securityContext:
         fsGroup: 1000
       volumes:
-        {{- if .Values.storageClass }}
         - name: {{ .Release.Name }}-volume
+        {{- if .Values.storageClass }}
           ephemeral:
             volumeClaimTemplate:
               spec:
@@ -115,4 +110,24 @@ spec:
                 resources:
                   requests:
                     storage: "{{ .Values.storageQuantity }}"
+        {{- else }}
+          emptyDir:
+            sizeLimit: "{{ .Values.storageQuantity }}"
         {{- end }}
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: "{{ .Release.Name }}-job"
+spec:
+  job:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

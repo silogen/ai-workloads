@@ -1,7 +1,7 @@
 {{- define "minio.setup" -}}
 {{- $model := trimPrefix "s3://" .Values.model | trimSuffix "/" -}}
 {{- $minioModel := printf "minio-host/%s" $model -}}
-{{- $localModel := printf "/workload/ComfyUI/models/checkpoints/%s" (base $model) -}}
+{{- $localModel := printf "/workload/%s/ComfyUI/models/checkpoints/%s" (.Values.metadata.user_id) (base $model) -}}
 echo '--------------------------------------------'
 echo 'Installing minio client'
 echo '--------------------------------------------'
@@ -14,7 +14,7 @@ mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BU
 echo '--------------------------------------------'
 echo 'Downloading the model from S3: {{ .Values.model }}'
 echo '--------------------------------------------'
-mkdir -p /workload/ComfyUI/models/checkpoints/
+mkdir -p /workload/{{ .Values.metadata.user_id }}/ComfyUI/models/checkpoints/
 mc cp --recursive {{$minioModel}} {{$localModel}} || { echo "Model copy from MinIO failed"; exit 1; }
 {{- end }}
 
@@ -24,7 +24,7 @@ echo 'Setting up ComfyUI environment'
 echo '--------------------------------------------'
 apt-get update && apt-get install -y git
 pip install comfy-cli huggingface_hub[hf_transfer] hiredis $PIP_DEPS
-yes | comfy --workspace=$COMFYUI_PATH install --skip-torch-or-directml --amd
+yes | comfy --workspace=$COMFYUI_PATH install --skip-torch-or-directml --amd --restore
 echo '--------------------------------------------'
 {{- end }}
 

@@ -43,6 +43,7 @@ storageClass: mlstorage # set this to use a specific storageClass for the storag
 finetuningGpus: 1
 memoryPerGpu: 64
 cpusPerGpu: 8
+shmSize: 12Gi
 
 ### Model output path ###
 checkpointsRemote: "" # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket

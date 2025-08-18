@@ -3,6 +3,7 @@ import json
 import os
 import time
 from argparse import Namespace
+from datetime import datetime
 from typing import Any, Dict, List
 
 import jsonlines
@@ -13,7 +14,8 @@ from llm_evaluation import logger
 from llm_evaluation.argument_parsers import get_metrics_parser
 from llm_evaluation.data.data_classes import EvaluationResults, EvaluationScores
 from llm_evaluation.metrics.metrics import compute_bertscore, compute_bleu_score, compute_exact_match
-from llm_evaluation.metrics.utils import save_results
+from llm_evaluation.metrics.utils import get_score_distribution_graphs, save_json_object_to_minio
+from minio import Minio
 
 
 def compute_scores(predictions: List[str], references: List[str]) -> EvaluationScores:
@@ -78,30 +80,16 @@ def get_bert_score_distribution_graphs(scores: EvaluationScores) -> Dict[str, st
     Returns:
         dict: Dictionary with keys 'precision', 'recall', 'f1', each containing PNG image bytes.
     """
-    results = {}
-    metrics = [
-        ("precision", scores.precision_list_bert),
-        ("recall", scores.recall_list_bert),
-        ("f1", scores.f1_list_bert),
-    ]
-    for name, values in metrics:
-        fig, ax = plt.subplots()
-        values = np.array(values)
-        mean_val = np.mean(values)
-        ax.hist(values, bins=20, alpha=0.7, color="skyblue", edgecolor="black")
-        ax.axvline(mean_val, color="red", linestyle="dashed", linewidth=2, label=f"Mean: {mean_val:.4f}")
-        ax.set_title(f"BERTScore {name.capitalize()} Distribution")
-        ax.set_xlabel(name.capitalize())
-        ax.set_ylabel("Frequency")
-        ax.legend()
-        plt.tight_layout()
-        plt.savefig(f"{name}_distribution.png", format="png")
-        plt.close(fig)
-        results[name] = f"{name}_distribution.png"
-    return results
+    metrics = {
+        "precision": scores.precision_list_bert,
+        "recall": scores.recall_list_bert,
+        "f1": scores.f1_list_bert,
+    }
+
+    return get_score_distribution_graphs(metrics)
 
 
-def read_inference_data(input_path: str) -> List[Dict[str, Any]]:
+def read_local_inference_data(input_path: str) -> List[Dict[str, Any]]:
     """
     Reads inference data from a file or directory containing JSON/JSONL files.
 
@@ -184,7 +172,7 @@ def run(generations: List[Dict[str, Any]]) -> EvaluationResults:
         generations (List[Dict[str, Any]]): A list of dictionaries where each dictionary represents a data point.
             Each dictionary must contain the following keys:
             - "gold_standard_result" (List[Any]): A list containing the correct answers. Only single-answer lists are supported.
-            - "inference_result" (Any): The model's prediction for the given data point.
+            - "llm_inference" (Any): The model's prediction for the given data point.
             - "prompt" (Any): The input prompt used to generate the prediction.
 
     Returns:
@@ -201,7 +189,7 @@ def run(generations: List[Dict[str, Any]]) -> EvaluationResults:
             references.append(datapoint["gold_standard_result"][0])
         else:
             raise NotImplementedError("Multiple correct answers")
-    predictions = [datapoint["inference_result"] for datapoint in generations]
+    predictions = [datapoint["llm_inference"] for datapoint in generations]
 
     logger.info("Computing evaluation scores...")
 
@@ -211,9 +199,11 @@ def run(generations: List[Dict[str, Any]]) -> EvaluationResults:
 
     logger.info(f"Score computation took {time.time() - start_score_computation:.2f} seconds")
 
-    prompts = [datapoint["prompt"] for datapoint in generations]
+    full_prompts = [
+        datapoint["prompt_template"].format(context=datapoint["context_document"]) for datapoint in generations
+    ]
 
-    return EvaluationResults(scores=scores, prompts=prompts)
+    return EvaluationResults(scores=scores, full_prompts=full_prompts, generations=predictions)
 
 
 def main(args: Namespace):
@@ -224,7 +214,7 @@ def main(args: Namespace):
         args (Namespace): A namespace object containing the following attributes:
             - input_file_path (str): Path to a JSONL file or directory containing JSON/JSONL files
               with model generations.
-            - output_dir_path (str): Directory path to save the evaluation results.
+            - minio_output_dir_path (str): Directory path to save the evaluation results.
 
     Workflow:
         1. Reads inference data from the input file or directory.
@@ -232,19 +222,32 @@ def main(args: Namespace):
         3. Saves the evaluation results to the specified output directory.
     """
 
-    generations = read_inference_data(input_path=args.input_file_path)
+    generations = read_local_inference_data(input_path=args.input_file_path)
 
     logger.info("Running metrics evaluation...")
     results = run(generations=generations)
 
     logger.info("Saving evaluation results...")
-    results_dir_path = os.path.join(args.output_dir_path, "evaluation_results")
+    evaluation_dir_name = f"{args.model_name}--{args.evaluation_dataset_name.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}"
+    minio_results_dir_path = os.path.join(args.minio_output_dir_path, f"metrics_{evaluation_dir_name}")
 
-    if not os.path.exists(results_dir_path):
-        os.makedirs(results_dir_path)
-
-    save_results(results=results, config=args, results_dir_path=results_dir_path)
-    logger.info(f"Results saved to {results_dir_path}")
+    logger.info("Writing evaluation results to MinIO...")
+    minio_client = Minio(
+        endpoint=os.environ["BUCKET_STORAGE_HOST"],
+        access_key=os.environ["BUCKET_STORAGE_ACCESS_KEY"],
+        secret_key=os.environ["BUCKET_STORAGE_SECRET_KEY"],
+        secure=False,
+        cert_check=False,
+    )
+    for json_object, destination_file in [
+        (results.get_summary_scores_dict(), os.path.join(minio_results_dir_path, "summary_results.json")),  # type: ignore
+        (results.get_complete_scores_dict(), os.path.join(minio_results_dir_path, "all_scores.json")),  # type: ignore
+        (results.generations, os.path.join(minio_results_dir_path, "generations.json")),  # type: ignore
+        (results.full_prompts, os.path.join(minio_results_dir_path, "full_prompts.json")),  # type: ignore
+        (vars(args), os.path.join(minio_results_dir_path, "config.json")),
+    ]:
+        save_json_object_to_minio(json_object=json_object, destination_file=destination_file, client=minio_client)
+    logger.info(f"Results saved to {minio_results_dir_path}")
 
 
 if __name__ == "__main__":

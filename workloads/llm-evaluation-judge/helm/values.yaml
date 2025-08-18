@@ -1,27 +1,29 @@
 general:
   job_name: evaluation-judge
 model_inference_container:
-  image: rocm/vllm-dev:20241205-tuned
+  image: rocm/vllm-dev:nightly_main_20250430
   memory: 24Gi
   gpu_count: 1
   cpu_count: 2
-  model: llama-3.1-8B
-  model_path: meta-llama/Llama-3.1-8B-Instruct
+  model: llama-3.1-8B-Instruct
+  model_path: hf://meta-llama/Llama-3.1-8B-Instruct
   tensor_parallel_size: 1
   max_model_len: 2048
   batch_size: 32
+  local_model_dir_path: /local_models/inference_model/
 judge_inference_container:
-  image: rocm/vllm-dev:20241205-tuned
+  image: rocm/vllm-dev:nightly_main_20250430
   memory: 24Gi
   gpu_count: 1
   cpu_count: 2
-  model: llama-3.1-8B
-  model_path: meta-llama/Llama-3.1-8B-Instruct
+  model: llama-3.1-8B-Instruct
+  model_path: hf://meta-llama/Llama-3.1-8B-Instruct
   tensor_parallel_size: 1
   max_model_len: 2048
   batch_size: 32
+  local_model_dir_path: /local_models/judge_model/
 judge_evaluation_container:
-  image: rocm/vllm-dev:20241205-tuned
+  image: ghcr.io/silogen/evaluation-workloads-metrics:v0.1
   memory: 24Gi
   cpu_count: 2
   prompt_template_path: summarization_prompt_template.txt
@@ -33,7 +35,7 @@ judge_evaluation_container:
   context_column_name: article
   id_column_name: id
   gold_standard_column_name: highlights
-  output_dir_path: /home/evaluation/results
+  minio_output_dir_path: /evaluation
   use_data_subset: 0
 storage:
   ephemeral:
@@ -44,3 +46,7 @@ storage:
   bucket_storage_host: default-minio-tenant-hl.minio-tenant-default.svc.cluster.local:9000
   bucket_storage_bucket: default-bucket
   configmap_mount_path: /local_resources/mount
+  mlflow:
+    server_uri:  # Intentionally omitted to not send results to MLFlow by default
+    experiment_name: mlflow-experiment-judge
+    run_name: mlflow-run-judge

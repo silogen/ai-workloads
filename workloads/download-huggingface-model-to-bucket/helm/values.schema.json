@@ -59,7 +59,7 @@
         }
       }
     },
-    "modelID": {
+    "modelId": {
       "type": "string",
       "description": "Huggingface model id, which is in the format of organization/model-name"
     },
@@ -89,7 +89,16 @@
     "storageClass": {
       "type": ["string", "null"],
       "description": "Optionally set this to use a specific storageClass for the storage"
-    }
+    },
+      "kaiwo": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "If true, use Kaiwo CRDs to have Kaiwo operator manage the workload"
+          }
+        }
+      }
   },
-  "required": ["image", "bucketStorageHost", "bucketCredentialsSecret", "modelID", "bucketPath"]
+  "required": ["image", "bucketStorageHost", "bucketCredentialsSecret", "modelId", "bucketPath"]
 }

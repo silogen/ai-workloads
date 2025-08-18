@@ -82,9 +82,22 @@
       },
       "basemodel": {
         "type": "string",
-        "description": "Path in bucket storage where the basemodel is stored."
+        "description": "Path in bucket storage where the basemodel is stored, or prefixed by hf:// for a model from the HuggingFace Hub."
       },
-
+      "model": {
+        "type": "string",
+        "description": "Path in bucket storage where the basemodel is stored.",
+        "default": ""
+      },
+      "hfDownloadExcludeGlob": {
+        "type": "string",
+        "description": "Glob pattern to exclude files when downloading from Hugging Face Hub. Used to avoid downloading unnecessary large files like duplicate weight files.",
+        "default": ""
+      },
+      "hfTokenSecret": {
+        "type": ["object", "null"],
+        "description": "Optional secret that contains the Hugging Face token for downloading models from the Hugging Face Hub."
+      },
       "finetuning_config": {
         "discriminator": {
           "mapping": {

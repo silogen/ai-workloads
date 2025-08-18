@@ -70,7 +70,7 @@ hfTokenSecret: {} # Optional secret reference that contains the Huggingface toke
 #   name: hf-token
 #   key: hf-token
 
-# Huggingface model id that has Huggingface tokenizer files: special_tokens_map.json, tokenizer.json, tokenizer_config.json
+# Huggingface model id or s3 path that has Huggingface tokenizer files: special_tokens_map.json, tokenizer.json, tokenizer_config.json
 tokenizer: NousResearch/Meta-Llama-3.1-8B
 
 # Parameters required to preprocess dataset
@@ -79,3 +79,7 @@ dataset:
   outputPrefix: "fineweb-edu-train" # prefix of the preprocessed files, the full names of the two resulting files will be <outputPrefix>_<jsonKey>_document.<bin|idx> with only extension differing
   dsName: "fineweb-edu" # name of the dataset, will be used to create the preprocessed dataset directory
   fileName: "fineweb-edu-train.jsonl" # name of the downloaded file that has to be preprocessed
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

@@ -5,18 +5,18 @@ from argparse import Namespace
 
 import jsonlines
 import pytest
-from llm_evaluation.metrics.run_metrics_evaluation import main, read_inference_data, run
+from llm_evaluation.metrics.run_metrics_evaluation import main, read_local_inference_data, run
 
 
 def test_read_inference_data_nonexistent_path():
     """Test reading inference data from a nonexistent path."""
     with pytest.raises(FileNotFoundError):
-        read_inference_data("/nonexistent/path")
+        read_local_inference_data("/nonexistent/path")
 
 
 def test_read_inference_data_empty_directory(tmpdir):
     """Test reading inference data from an empty directory."""
-    result = read_inference_data(tmpdir)
+    result = read_local_inference_data(tmpdir)
     assert len(result) == 0
 
 
@@ -27,7 +27,7 @@ def test_read_inference_data_directory_with_no_json_files(tmpdir):
     with open(non_json_file, "w") as f:
         f.write("This is a test file.")
 
-    result = read_inference_data(tmpdir)
+    result = read_local_inference_data(tmpdir)
     assert len(result) == 0
 
 
@@ -37,7 +37,7 @@ def test_read_inference_data_invalid_json_file():
         temp_file.write(b"This is not valid JSON.")
         temp_path = temp_file.name
 
-    results = read_inference_data(temp_path)
+    results = read_local_inference_data(temp_path)
 
     assert len(results) == 0
 
@@ -52,7 +52,7 @@ def test_read_inference_data_invalid_jsonl_file():
         temp_file.write(b"This is not valid JSONL.\n")
         temp_path = temp_file.name
 
-    results = read_inference_data(temp_path)
+    results = read_local_inference_data(temp_path)
 
     assert len(results) == 1
 
