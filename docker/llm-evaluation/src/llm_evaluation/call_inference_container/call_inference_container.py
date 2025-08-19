@@ -477,13 +477,13 @@ async def main(args: Namespace) -> str:
         use_data_subset=args.use_data_subset,
         dataset_split=args.dataset_split,
     ):
-        logger.info(f"Got inference result for document {inference_result['doc_id']}")
+        logger.info(f"Got inference result for document {inference_result['context_document_id']}")
         logger.info(f"Inference result: {inference_result}")
 
         # Save the inference result to a file
         save_local_results(result=inference_result, output_dir_path=results_dir_path, subdir="inferences")
 
-        logger.info(f"Saved inference result for document {inference_result['doc_id']}")
+        logger.info(f"Saved inference result for document {inference_result['context_document_id']}")
 
     return results_dir_path
 

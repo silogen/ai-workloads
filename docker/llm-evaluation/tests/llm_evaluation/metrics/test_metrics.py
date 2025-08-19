@@ -12,12 +12,11 @@ def test_compute_bertscore():
     references = ["This is a test reference.", "Another reference."]
     language = "en"
 
-    precision, recall, f1, f1_list = compute_bertscore(predictions, references, language)
+    precision_list, recall_list, f1_list = compute_bertscore(predictions, references, language)
 
-    assert precision == 0.6775
-    assert recall == 0.6593
-    assert f1 == 0.6689
-    assert f1_list == [0.7483, 0.5895]
+    assert precision_list.tolist() == [0.7478331923484802, 0.6070768237113953]
+    assert recall_list.tolist() == [0.747850775718689, 0.5707229375839233]
+    assert f1_list.tolist() == [0.7482516765594482, 0.5895071625709534]
 
 
 def test_compute_exact_match():

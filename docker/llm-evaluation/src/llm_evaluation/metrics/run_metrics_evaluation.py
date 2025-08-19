@@ -3,19 +3,16 @@ import json
 import os
 import time
 from argparse import Namespace
-from datetime import datetime
 from typing import Any, Dict, List
 
 import jsonlines
-import matplotlib.pyplot as plt
-import mlflow
 import numpy as np
 from llm_evaluation import logger
 from llm_evaluation.argument_parsers import get_metrics_parser
+from llm_evaluation.call_inference_container.call_inference_container import save_local_results
 from llm_evaluation.data.data_classes import EvaluationResults, EvaluationScores
 from llm_evaluation.metrics.metrics import compute_bertscore, compute_bleu_score, compute_exact_match
-from llm_evaluation.metrics.utils import get_score_distribution_graphs, save_json_object_to_minio
-from minio import Minio
+from llm_evaluation.metrics.utils import get_score_distribution_graphs
 
 
 def compute_scores(predictions: List[str], references: List[str]) -> EvaluationScores:
@@ -227,27 +224,14 @@ def main(args: Namespace):
     logger.info("Running metrics evaluation...")
     results = run(generations=generations)
 
-    logger.info("Saving evaluation results...")
-    evaluation_dir_name = f"{args.model_name}--{args.evaluation_dataset_name.replace('/', '_')}--{args.evaluation_dataset_version}--{datetime.now().isoformat()}"
-    minio_results_dir_path = os.path.join(args.minio_output_dir_path, f"metrics_{evaluation_dir_name}")
+    results_dir_path = os.path.join(args.output_dir_path, "evaluation_results")
 
-    logger.info("Writing evaluation results to MinIO...")
-    minio_client = Minio(
-        endpoint=os.environ["BUCKET_STORAGE_HOST"],
-        access_key=os.environ["BUCKET_STORAGE_ACCESS_KEY"],
-        secret_key=os.environ["BUCKET_STORAGE_SECRET_KEY"],
-        secure=False,
-        cert_check=False,
-    )
-    for json_object, destination_file in [
-        (results.get_summary_scores_dict(), os.path.join(minio_results_dir_path, "summary_results.json")),  # type: ignore
-        (results.get_complete_scores_dict(), os.path.join(minio_results_dir_path, "all_scores.json")),  # type: ignore
-        (results.generations, os.path.join(minio_results_dir_path, "generations.json")),  # type: ignore
-        (results.full_prompts, os.path.join(minio_results_dir_path, "full_prompts.json")),  # type: ignore
-        (vars(args), os.path.join(minio_results_dir_path, "config.json")),
-    ]:
-        save_json_object_to_minio(json_object=json_object, destination_file=destination_file, client=minio_client)
-    logger.info(f"Results saved to {minio_results_dir_path}")
+    os.makedirs(results_dir_path, exist_ok=True)
+
+    # TODO: Save results to a JSONL file. Currently depracated from the main, as the dataclasses
+    # and mechanism for saving needs to be unified between metrics and judge evaluation.
+
+    # logger.info(f"Results saved to {results_dir_path}")
 
 
 if __name__ == "__main__":
