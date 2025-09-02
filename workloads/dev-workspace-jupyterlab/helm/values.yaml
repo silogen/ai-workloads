@@ -43,9 +43,18 @@ deployment:
 # livenessProbe - checks if the container is still alive. If it fails, Kubernetes restarts the container to recover from failure.
 # readinessProbe - checks if the container is ready to serve traffic. If it fails, the container is removed from the service's endpoints but remains running.
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-startupProbe: {}
-livenessProbe: {}
-readinessProbe: {}
+startupProbe:
+  httpGet:
+    path: "{{ include \"httpRoute.baseUrl\" . }}/api/status"
+    port: http
+livenessProbe:
+  httpGet:
+    path: "{{ include \"httpRoute.baseUrl\" . }}/api/status"
+    port: http
+readinessProbe:
+  httpGet:
+    path: "{{ include \"httpRoute.baseUrl\" . }}/api/status"
+    port: http
 
 entrypoint: |
   export PATH=$PATH:$PIPX_BIN_DIR
