@@ -3,7 +3,7 @@ metadata:
     pipeline_tag: "text-generation"
     chat: "true"
 
-model: "meta-llama/Llama-3.3-70B-Instruct"
+model: "unsloth/Llama-3.3-70B-Instruct"
 
 vllm_engine_args:
   gpu-memory-utilization: "0.95"
