@@ -60,6 +60,7 @@ readinessProbe:
     port: http
 
 entrypoint: |
+  bash /workload/mount/install_s3_clients.sh
   curl -fsSL https://code-server.dev/install.sh | sh
 
   # Set up persistent VSCode configuration directory using environment variable
@@ -80,6 +81,8 @@ entrypoint: |
   export XDG_CONFIG_HOME="$VSCODE_CONFIG_DIR"
 
   # Install extensions (these will be stored persistently)
+  curl -L -o /tmp/aws-s3-vscode-extension-1.8.4.vsix https://github.com/necatiarslan/aws-s3/raw/refs/heads/main/vsix/aws-s3-vscode-extension-1.8.4.vsix &&
+  code-server --install-extension /tmp/aws-s3-vscode-extension-1.8.4.vsix
   code-server --install-extension ms-python.python
   code-server --install-extension GitHub.vscode-pull-request-github
   code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
