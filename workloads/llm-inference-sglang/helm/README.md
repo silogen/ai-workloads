@@ -65,7 +65,7 @@ kubectl get deployment
 Forward the port to access the service (assuming the service is named `llm-inference-sglang-tiny-llama` ):
 
 ```bash
-kubectl port-forward deployments/llm-inference-sglang-tiny-llama 8080:80
+kubectl port-forward services/llm-inference-sglang-tiny-llama 8080:80
 ```
 
 ### Test the Deployment
