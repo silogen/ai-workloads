@@ -46,7 +46,7 @@ limits:
 {{- range $key, $value := .Values.env_vars }}
 {{- if (typeIs "string" $value) }}
 - name: {{ $key }}
-  value: {{ $value | quote }}
+  value: {{ tpl $value $ | quote }}
 {{- else }}
 - name: {{ $key }}
   valueFrom:

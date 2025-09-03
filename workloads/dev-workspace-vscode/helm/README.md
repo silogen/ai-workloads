@@ -2,6 +2,26 @@
 
 This workload deploys a basic Visual Studio Code environment on top of any image with Python (pip) pre-installed. It is ideal for interactive development sessions and experimentation with other workloads.
 
+## Persistent Settings
+
+By default, this workload is configured to persist VSCode settings, extensions, and workspace configurations across pod restarts using a Persistent Volume Claim (PVC). This means:
+
+- **Settings**: Your VSCode settings, themes, and preferences are preserved
+- **Extensions**: Installed extensions persist and don't need to be reinstalled
+- **Workspace**: Your workspace configurations and project settings are maintained
+- **User Data**: All user customizations and data are stored persistently
+
+The persistent configuration is stored in `/workload/{user_id}/.vscode-server/` on the PVC.
+
+### Disabling Persistence
+
+If you prefer ephemeral storage (settings reset on pod restart), you can disable persistence by setting:
+
+```yaml
+persistent_storage:
+  enabled: false
+```
+
 ## Configuration Parameters
 
 You can configure the following parameters in the `values.yaml` file or override them via the command line:
@@ -14,6 +34,7 @@ You can configure the following parameters in the `values.yaml` file or override
 | `memory_per_gpu`       | Memory allocated per GPU (in Gi)                                            | `128`                                                                   |
 | `cpu_per_gpu`          | CPU cores allocated per GPU                                                 | `4`                                                                     |
 | `storage.ephemeral`    | Ephemeral storage configuration                                             | `128Gi`, `mlstorage`, `ReadWriteOnce`                                   |
+| `persistent_storage.enabled` | Enable persistent storage for VSCode settings and extensions         | `false`                                                                  |
 | `deployment.ports.http`| HTTP port exposed by the service                                            | `8080`                                                                  |
 | `entrypoint`           | Custom entrypoint script                                                    | See `values.yaml` for details                                           |
 
