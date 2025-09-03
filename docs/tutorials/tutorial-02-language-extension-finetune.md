@@ -115,6 +115,7 @@ echo -e "\n\nQwen 1.5 7B Chat:"
 name="qwen-base-chat"
 curl http://localhost:8080/v1/chat/completions \
     -H "Content-Type: application/json" \
+    -X POST \
     -d '{
         "model": "'$name'",
         "messages": [
@@ -129,6 +130,7 @@ echo -e "\n\nQwen 1.5 7B Odia-CPT Base:"
 name="qwen-odia-base"
 curl http://localhost:8090/v1/chat/completions \
     -H "Content-Type: application/json" \
+    -X POST \
     -d '{
         "model": "'$name'",
         "messages": [
@@ -143,6 +145,7 @@ echo -e "\n\nQwen 1.5 Odia-CPT Instruction-tuned model v1:"
 name="qwen-odia-instruct-v1"
 curl http://localhost:8100/v1/chat/completions \
     -H "Content-Type: application/json" \
+    -X POST \
     -d '{
         "model": "'$name'",
         "messages": [

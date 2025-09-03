@@ -116,6 +116,7 @@ name="tiny-llama-argilla-v1"
 question="What are the top five benefits of eating a large breakfast?"
 curl http://localhost:8080/v1/chat/completions \
     -H "Content-Type: application/json" \
+    -X POST \
     -d '{
         "model": "'$name'",
         "messages": [
