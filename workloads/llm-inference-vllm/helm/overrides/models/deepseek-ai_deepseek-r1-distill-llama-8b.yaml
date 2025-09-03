@@ -4,3 +4,4 @@ metadata:
     chat: "true"
 
 model: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+served_model_name: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"

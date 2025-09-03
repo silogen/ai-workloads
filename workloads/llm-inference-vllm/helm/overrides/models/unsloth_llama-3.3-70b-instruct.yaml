@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "unsloth/Llama-3.3-70B-Instruct"
+served_model_name: "unsloth/Llama-3.3-70B-Instruct"
 
 vllm_engine_args:
   gpu-memory-utilization: "0.95"

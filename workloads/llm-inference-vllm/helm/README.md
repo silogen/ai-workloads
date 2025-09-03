@@ -47,6 +47,18 @@ helm template qwen2-0-5b . --set model=s3://models/Qwen/Qwen2-0.5B-Instruct | ku
 
 The model will be automatically downloaded before starting the inference server.
 
+### Alternative 4: Deploy with Custom Served Model Name
+
+You can decouple the served model name from the storage path by using the `served_model_name` parameter:
+
+```bash
+helm template qwen2-0-5b . \
+    --set model=s3://default-bucket/engineering/models/OdiaGenAI-LLM/qwen_1.5_odia_7b \
+    --set served_model_name=OdiaGenAI-LLM/qwen_1.5_odia_7b | kubectl apply -f -
+```
+
+This allows you to use clean, user-friendly model names in your API requests while keeping the actual storage path separate.
+
 ## User Input Values
 
 Refer to the `values.yaml` file for the user input values you can provide, along with instructions.
@@ -82,6 +94,20 @@ curl http://localhost:8080/v1/chat/completions \
         "messages": [
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Who won the world series in 2020?"}
+        ]
+    }'
+```
+
+If you deployed with a custom `served_model_name`, use that name instead:
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "OdiaGenAI-LLM/qwen_1.5_odia_7b",
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Hello, how are you?"}
         ]
     }'
 ```

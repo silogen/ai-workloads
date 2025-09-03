@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "mistralai/Mistral-Large-Instruct-2411"
+served_model_name: "mistralai/Mistral-Large-Instruct-2411"
 gpus: 2
 
 env_vars:

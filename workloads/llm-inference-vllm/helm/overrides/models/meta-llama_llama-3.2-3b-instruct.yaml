@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "meta-llama/Llama-3.2-3B-Instruct"
+served_model_name: "meta-llama/Llama-3.2-3B-Instruct"
 
 env_vars:
   HF_TOKEN:

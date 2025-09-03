@@ -9,6 +9,7 @@ imagePullPolicy: Always
 replicas: 1
 
 model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+served_model_name: # Optional: explicit served model name for API requests
 gpus: 1
 memory_per_gpu: 64 # Gi
 cpu_per_gpu: 4
@@ -19,8 +20,7 @@ cpu_per_gpu: 4
 vllm_engine_args:
   # tensor-parallel-size: "{{ .Values.gpus }}"  # taken care of by the template
   # model: "{{ .Values.model }}"  # taken care of by the template
-  # served-model-name: "{{ .Values.model }}"
-  # enforce-eager: "true"
+  # served-model-name: "{{ .Values.served_model_name }}"  # taken care of by the template
   gpu-memory-utilization: "0.95"
   distributed_executor_backend: "mp"
   no-enable-chunked-prefill:

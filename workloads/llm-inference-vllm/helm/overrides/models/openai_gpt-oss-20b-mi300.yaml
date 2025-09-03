@@ -5,8 +5,8 @@ metadata:
 
 # reference: https://rocm.blogs.amd.com/ecosystems-and-partners/openai-day-0/README.html
 image: "rocm/vllm-dev:open-mi300-08052025"
-
 model: "openai/gpt-oss-20b"
+served_model_name: "openai/gpt-oss-20b"
 gpus: 1
 memory_per_gpu: 64 # Gi
 cpu_per_gpu: 4

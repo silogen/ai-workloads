@@ -56,6 +56,9 @@ python3 -m vllm.entrypoints.openai.api_server \
 {{- end }}
 {{- end }}
 --model={{ $modelPath }} \
+{{- if .Values.served_model_name }}
+--served-model-name={{ .Values.served_model_name | quote }} \
+{{- end }}
 --tensor-parallel-size={{ .Values.gpus }} \
 --host="0.0.0.0" \
 --port=8080

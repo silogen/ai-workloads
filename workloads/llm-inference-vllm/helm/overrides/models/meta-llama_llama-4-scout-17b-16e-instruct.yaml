@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+served_model_name: "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 gpus: 2
 memory_per_gpu: 64 # Gi
 cpu_per_gpu: 4

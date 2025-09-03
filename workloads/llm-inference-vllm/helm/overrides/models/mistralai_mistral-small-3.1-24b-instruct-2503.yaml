@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "mistralai/Mistral-Small-3.1-24B-Instruct-2503"
+served_model_name: "mistralai/Mistral-Small-3.1-24B-Instruct-2503"
 
 vllm_engine_args:
   max-model-len: "32768"
