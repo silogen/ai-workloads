@@ -1,0 +1,15 @@
+name: "LLM Inference (vLLM)"
+slug: "llm-inference-vllm"
+shortDescription: "High-performance inference using vLLM"
+longDescription: 'vLLM is a fast and memory-efficient inference engine for Large Language Models (LLMs). This service provides a REST API endpoint for inference using the vLLM engine with advanced features like continuous batching, PagedAttention, and optimized KV cache management.\n\nYou can use this service to run inference with your preferred model and get high-throughput inference with minimal latency.'
+category: INFERENCE
+tags: ["inference", "vllm"]
+featuredImage: "https://raw.githubusercontent.com/vllm-project/media-kit/main/vLLM-Logo.svg"
+requiredResources:
+  gpuCount: 1
+  gpuMemory: 64
+  cpuCoreCount: 4
+  systemMemory: 64
+type: "INFERENCE"
+id: "llm-inference-vllm"
+externalUrl: "https://vllm.ai/"

@@ -1,0 +1,51 @@
+metadata:
+  labels: {}
+
+image: rocm/megatron-lm:v25.4
+imagePullPolicy: Always
+
+remoteTokenizerPath: default-bucket/models/meta-llama/Llama-3.1-8B/
+remoteModelPath: default-bucket/megatron-models/meta-llama/Llama-3.1-8B/
+
+envVars:
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  HF_HOME: /workload/.cache/huggingface
+  NPROC_PER_NODE: "1"
+  NNODES: "1"
+  NODE_RANK: "0"
+  TENSOR_MODEL_PARALLEL_SIZE: "1"
+  PIPELINE_MODEL_PARALLEL_SIZE: "1"
+  CONTEXT_PARALLEL_SIZE: "1"
+  MICRO_BATCH_SIZE: "1"
+  USE_CHECKPOINT_ARGS: "true"
+  BF16: "true"
+  NO_ASYNC_TENSOR_MODEL_PARALLEL_ALLREDUCE: "true"
+  NO_MASKED_SOFTMAX_FUSION: "true"
+  NO_ROPE_FUSION: "true"
+  NO_GRADIENT_ACCUMULATION_FUSION: "true"
+
+storage:
+  ephemeral:
+    quantity: 100Gi
+    storageClassName: mlstorage
+    accessModes:
+    - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+deployment:
+  port: 5000
+
+gpus: 1
+memoryPerGpu: 64
+cpuPerGpu: 4
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

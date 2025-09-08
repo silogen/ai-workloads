@@ -1,0 +1,94 @@
+metadata:
+  labels: {}
+  project_id: silogen
+  user_id: user # set to empty or null for project-wide workloads
+  workload_id: # defaults to the release name
+
+image: ghcr.io/mlflow/mlflow:v2.22.0
+imagePullPolicy: Always
+
+gpus: 0
+# also default when no gpu assigned
+memory_per_gpu: 128 # Gi
+cpu_per_gpu: 8
+
+env_vars:
+  # https://mlflow.org/docs/latest/api_reference/python_api/mlflow.environment_variables.html
+  MLFLOW_ARTIFACTS_DESTINATION: "s3://default-bucket/mlflow/artifacts"
+  MLFLOW_S3_ENDPOINT_URL: http://minio.minio-tenant-default.svc.cluster.local:80
+  # MLFLOW_S3_IGNORE_TLS: "true"
+  AWS_ACCESS_KEY_ID:
+    name: minio-credentials
+    key: minio-access-key
+  AWS_SECRET_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+
+storage:
+  ephemeral:
+    quantity: 128Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 16Gi
+
+backendStore:
+  type: sqlite # Options: sqlite, postgres, mysql
+  # For sqlite
+  dbpath: "/workload/mlflow.db"
+  # For postgres/mysql
+  host: ""
+  port: ""
+  database: ""
+  driver: ""
+  # Secret configuration for database credentials (required for postgres/mysql)
+  # To use secrets, create a Kubernetes secret with username and password keys:
+  # kubectl create secret generic mlflow-db-credentials--from-literal=username=myuser --from-literal=password=mypassword
+  secret:
+    name: "mlflow-db-credentials" # Name of the secret containing database credentials (e.g., "mlflow-db-credentials")
+    userKey: "username" # Key in the secret for username (default: username)
+    passwordKey: "password" # Key in the secret for password (default: password)
+
+deployment:
+  ports:
+    http: 8080
+
+# startupProbe - checks if the container has successfully started. It disables liveness and readiness probes until it succeeds, useful for slow-starting applications.
+# livenessProbe - checks if the container is still alive. If it fails, Kubernetes restarts the container to recover from failure.
+# readinessProbe - checks if the container is ready to serve traffic. If it fails, the container is removed from the service's endpoints but remains running.
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  failureThreshold: 20
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+# Commands to run before starting the MLFlow server.
+# entrypoint: |
+#   tail -f /dev/null
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
+
+http_route:
+  enabled: false
+
+ingress:
+  enabled: false
+
+persistent_storage:
+  enabled: false
+  volumes:
+    pvc-user:
+      pvc_name: "pvc-user-{{ .Values.metadata.user_id }}"
+      mount_path: "/workload/{{ .Values.metadata.user_id }}"

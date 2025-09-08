@@ -1,0 +1,80 @@
+metadata:
+  annotations:
+    pvc.silogen.ai/user-pvc-auto-create: "true"
+    pvc.silogen.ai/user-pvc-size: "2Gi"
+    pvc.silogen.ai/user-pvc-storage-class-name: "multinode"
+    pvc.silogen.ai/user-pvc-uid: "{{ .Values.metadata.user_id }}"
+  labels: {}
+  project_id: silogen
+  user_id: user
+  workload_id: # defaults to the release name
+
+image: "rocm/pytorch:rocm6.4.1_ubuntu24.04_py3.12_pytorch_release_2.6.0"
+model: Comfy-Org/flux1-dev
+# tag: sd_xl_turbo_1.0
+
+imagePullPolicy: Always
+gpus: 1
+cpu_per_gpu: 16
+memory_per_gpu: 128
+
+env_vars:
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  PIP_DEPS: "https://repo.radeon.com/rocm/manylinux/rocm-rel-6.4.1/torchaudio-2.6.0%2Brocm6.4.1.gitd8831425-cp312-cp312-linux_x86_64.whl"
+  COMFYUI_PATH: "/workload/{{ .Values.metadata.user_id }}/ComfyUI"
+  # MODEL_BIN_URL: "https://huggingface.co/Comfy-Org/Lumina_Image_2.0_Repackaged/resolve/main/all_in_one/lumina_2.safetensors"
+
+storage:
+  ephemeral:
+    quantity: 200Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+deployment:
+  ports:
+    http: 8188
+
+# startupProbe - checks if the container has successfully started. It disables liveness and readiness probes until it succeeds, useful for slow-starting applications.
+# livenessProbe - checks if the container is still alive. If it fails, Kubernetes restarts the container to recover from failure.
+# readinessProbe - checks if the container is ready to serve traffic. If it fails, the container is removed from the service's endpoints but remains running.
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+startupProbe:
+  httpGet:
+    path: /queue
+    port: http
+  failureThreshold: 60 # 60 x 10s => allow for 10 minutes startup time
+  periodSeconds: 10
+livenessProbe:
+  httpGet:
+    path: /queue
+    port: http
+readinessProbe:
+  httpGet:
+    path: /queue
+    port: http
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
+
+http_route:
+  enabled: false
+
+ingress:
+  enabled: false
+
+persistent_storage:
+  enabled: false
+  volumes:
+    pvc-user:
+      pvc_name: "pvc-{{ .Values.metadata.user_id }}"
+      mount_path: "/workload/{{ .Values.metadata.user_id }}"

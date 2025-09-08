@@ -1,0 +1,19 @@
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
+model: "Qwen/Qwen3-235B-A22B"
+served_model_name: "Qwen/Qwen3-235B-A22B"
+gpus: 4
+memory_per_gpu: 64 # Gi
+cpu_per_gpu: 4
+
+storage:
+  ephemeral:
+    quantity: 512Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 64Gi

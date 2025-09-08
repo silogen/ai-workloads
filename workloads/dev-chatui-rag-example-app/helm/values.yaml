@@ -1,0 +1,29 @@
+metadata:
+  labels: {}
+
+image: "python:3.12"
+imagePullPolicy: Always
+
+app:
+  port: 7860 # Gradio default
+
+infinity:
+  host: "rag-embedding-infinity-e5-large-instruct"
+  port: 80
+  model: "intfloat/multilingual-e5-large-instruct"
+
+vllm:
+  host: "llm-inference-vllm-tiny-llama"
+  port: 80
+  model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+
+resources:
+  requests:
+    cpu: "1"
+    memory: "4Gi"
+  limits:
+    cpu: "1"
+    memory: "4Gi"
+
+kaiwo:
+  enabled: false

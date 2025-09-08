@@ -1,0 +1,190 @@
+{{- define "job" -}}
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: {{ include "release.fullname" . }}
+  {{- if .Values.metadata.labels }}
+  labels:
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  backoffLimit: 0
+  shutdownAfterJobFinishes: true
+  submissionMode: K8sJobMode
+  ttlSecondsAfterFinished: 0
+  entrypoint:
+    {{- include "entrypoint" . | nindent 4 }}
+  rayClusterSpec:
+    enableInTreeAutoscaling: false
+    headGroupSpec:
+      rayStartParams:
+      {{- .Values.workers.start_params | default dict | toYaml | nindent 8 }}
+      template:
+        spec:
+          restartPolicy: Never
+          volumes:
+            {{- include "container.volumes" . | nindent 12 }}
+          containers:
+            - image: "{{ .Values.mainWorkloadImage }}"
+              imagePullPolicy: Always
+              name: ray-head
+              env:
+                {{- include "worker.container.env" . | nindent 14 }}
+              - name: RAY_ENABLE_RECORD_ACTOR_TASK_LOGGING
+                value: "1"
+              - name: PYTORCH_HIP_ALLOC_CONF
+                value: "expandable_segments:True"
+              - name: HIP_VISIBLE_DEVICES
+                value: "{{ int .Values.workers.resources.gpu | until | join "," }}"
+              resources:
+              {{- with .Values.workers.resources }}
+                limits:
+                  memory: "{{ .memory }}"
+                  cpu: "{{ .cpu }}"
+                  amd.com/gpu: "{{ .gpu }}"
+                requests:
+                  memory: "{{ .memory }}"
+                  cpu: "{{ .cpu }}"
+                  amd.com/gpu: "{{ .gpu }}"
+              {{- end }}
+              volumeMounts:
+              - name: dshm
+                mountPath: /dev/shm
+              - name: ephemeral-storage
+                mountPath: /local_resources
+                readOnly: false
+              - mountPath: /local_resources/mount
+                name: workload-mount
+
+          initContainers:
+          - name: setup
+            image: "{{ .Values.logistics.image }}"
+            imagePullPolicy: Always
+            command: ["sh", "-euc"]
+            args:
+              - |
+                # Handle cleanup of kubernetes resources: ConfigMap, PVC
+                bash /local_resources/mount/gc.sh{{- if and .Values.kaiwo.storageEnabled .Values.kaiwo.enabled}} --skip-pvc{{- end }} {{ include "release.fullname" . }}
+                # Setup MinIO, Download resources:
+                mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY};
+              {{- if and .Values.remoteDataDirPath .Values.remoteDataNamePrefix }}
+                echo "Copying data to container...";
+                mc cp -r minio-host/{{ .Values.remoteDataDirPath | trimSuffix "/" }}/{{ .Values.remoteDataNamePrefix }} /local_resources/data;
+              {{- end }}
+                echo "Copying tokenizer to container...";
+                mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/special_tokens_map.json /local_resources/tokenizer/special_tokens_map.json
+                mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/tokenizer.json /local_resources/tokenizer/tokenizer.json
+                mc cp minio-host/{{ .Values.remoteTokenizerPath | trimSuffix "/" }}/tokenizer_config.json /local_resources/tokenizer/tokenizer_config.json
+              {{- if .Values.remoteBaseModelPath }}
+                echo "Copying model checkpoint to container...";
+                mc cp -r minio-host/{{ .Values.remoteBaseModelPath | trimSuffix "/" }}/ /local_resources/basemodel;
+              {{- end }}
+            resources:
+              limits:
+                memory: "1Gi"
+                cpu: "1"
+              requests:
+                memory: "1Gi"
+                cpu: "1"
+            env:
+              {{- include "logistics.container.env" . | nindent 14 }}
+            volumeMounts:
+              - name: ephemeral-storage
+                mountPath: /local_resources
+              - name: workload-mount
+                mountPath: /local_resources/mount
+
+          - name: upload
+            image: "{{ .Values.logistics.image }}"
+            imagePullPolicy: Always
+            restartPolicy: Always
+            command: ["sh", "-euc"]
+            args:
+              - |
+                bash /local_resources/mount/checkpoints_upload.sh {{ .Values.remoteCheckpointsPath | trimSuffix "/" }}
+            resources:
+              limits:
+                memory: "1Gi"
+                cpu: "1"
+              requests:
+                memory: "1Gi"
+                cpu: "1"
+            env:
+              {{- include "logistics.container.env" . | nindent 14 }}
+            volumeMounts:
+              - name: ephemeral-storage
+                mountPath: /local_resources
+              - name: workload-mount
+                mountPath: /local_resources/mount
+
+    workerGroupSpecs:
+    - groupName: "ray-worker"
+      maxReplicas: {{ sub .Values.workers.replicas 1 }}
+      minReplicas: {{ sub .Values.workers.replicas 1 }}
+      replicas: {{ sub .Values.workers.replicas 1 }}
+      rayStartParams:
+      {{- .Values.workers.startParams | default dict | toYaml | nindent 8 }}
+      numOfHosts: 1
+      template:
+        spec:
+          volumes:
+            {{- include "container.volumes" . | nindent 12 }}
+          containers:
+          - name: ray-worker
+            env:
+              {{- include "worker.container.env" . | nindent 12 }}
+            - name: RAY_ENABLE_RECORD_ACTOR_TASK_LOGGING
+              value: "1"
+            - name: PYTORCH_HIP_ALLOC_CONF
+              value: "expandable_segments:True"
+            - name: HIP_VISIBLE_DEVICES
+              value: "{{ int .Values.workers.resources.gpu | until | join "," }}"
+            image: "{{ .Values.mainWorkloadImage }}"
+            imagePullPolicy: Always
+            resources:
+            {{- with .Values.workers.resources }}
+              limits:
+                memory: "{{ .memory }}"
+                cpu: "{{ .cpu }}"
+                amd.com/gpu: "{{ .gpu }}"
+              requests:
+                memory: "{{ .memory }}"
+                cpu: "{{ .cpu }}"
+                amd.com/gpu: "{{ .gpu }}"
+            {{- end }}
+            volumeMounts:
+            - name: dshm # Increase SHM size for the container by mounting /dev/shm, for Pytorch parallel processing
+              mountPath: /dev/shm
+            - name: ephemeral-storage
+              mountPath: /local_resources
+              readOnly: false
+            - mountPath: /local_resources/mount
+              name: workload-mount
+          restartPolicy: Never
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: {{ include "release.fullname" . }}
+spec:
+  ray: true
+  storage:
+    storageEnabled: {{ .Values.kaiwo.storageEnabled }}
+    storageClassName: {{ .Values.storage.ephemeral.storageClassName }}
+    accessMode: {{ index .Values.storage.ephemeral.accessModes 0 | default "ReadWriteOnce" }}
+    data:
+      mountPath: /local_resources
+      storageSize: {{ .Values.storage.ephemeral.quantity }}
+  rayJob:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

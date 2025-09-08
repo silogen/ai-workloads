@@ -1,0 +1,9 @@
+gradio
+isort>=5.13.0
+langchain
+langchain-chroma
+langchain-community
+numpy
+pymupdf
+requests
+types-requests

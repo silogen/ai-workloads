@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Release.Name }}-configs"
+data:
+  verl_config.yaml: |
+    # @package _global_
+{{ toYaml .Values.verlConfig | indent 4 }}
+  entrypoint.sh: |
+    #!/bin/bash
+    set -eu
+    # Print GPU Info:
+    rocm-smi
+    mkdir -p /workdir/checkpoints
+    mkdir -p /workdir/datasets
+
+    echo "Installing MinIO:"
+    curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+          --create-dirs \
+          -o /minio-binaries/mc
+    chmod +x /minio-binaries/mc
+    export PATH="${PATH}:/minio-binaries/"
+    # Setup MinIO
+    mc alias set minio-host $BUCKET_STORAGE_HOST $BUCKET_STORAGE_ACCESS_KEY $BUCKET_STORAGE_SECRET_KEY
+    {{- if .Values.modelRemote }}
+    # copy model from remote to local
+    echo "Downloading model from remote: {{ .Values.modelRemote }}"
+    mc cp --recursive \
+      minio-host/{{ .Values.modelRemote | trimSuffix "/" }}/ \
+      /workdir/basemodel
+    MODEL_PATH=/workdir/basemodel
+    {{- else if .Values.modelName }}
+    MODEL_PATH={{ .Values.modelName }}
+    {{- else }}
+    {{- fail "either modelName or modelRemote must be set" }}
+    {{- end }}
+    python3 -c "import transformers;transformers.pipeline('text-generation', model='$MODEL_PATH')"
+
+    {{- if .Values.datasetRemote }}
+    echo "Downloading dataset from remote: {{ .Values.datasetRemote }}"
+    mc cp --recursive \
+      minio-host/{{ .Values.datasetRemote | trimSuffix "/" }}/ \
+      /workdir/datasets/{{ .Values.datasetRemote | trimSuffix "/" }}
+    DATASET_PATH=/workdir/datasets/{{ .Values.datasetRemote | trimSuffix "/" }}
+    {{- else if .Values.dataset }}
+    {{- if eq .Values.dataset "full_hh_rlhf" }}
+    python3 /app/examples/data_preprocess/{{ .Values.dataset }}.py --split rm --local_dir /workdir/datasets/{{ .Values.dataset }}
+    DATASET_PATH=/workdir/datasets/{{ .Values.dataset }}/rm
+    {{- else }}
+    python3 /app/examples/data_preprocess/{{ .Values.dataset }}.py --local_dir /workdir/datasets/{{ .Values.dataset }}
+    DATASET_PATH=/workdir/datasets/{{ .Values.dataset }}
+    {{- end }}
+    {{- else }}
+    {{- fail "either dataset or datasetRemote must be set" }}
+    {{- end }}
+
+    {{- $checkpointsRemotePath := printf "minio-host/'%s'/" (.Values.checkpointsRemote | trimSuffix "/" | replace  "'" "'\\''") }}
+    {{- if .Values.checkpointsRemote }}
+    {{- if .Values.resumeFromCheckpoint }}
+    # Sync checkpoints from remote to local
+    if mc mirror {{ $checkpointsRemotePath }} /workdir/checkpoints 2>/dev/null; then
+      echo 'Downloaded checkpoints from {{ .Values.checkpointsRemote}} to /workdir/checkpoints'
+      ls -lah /workdir/checkpoints
+      RESUME_MODE='resume_path'
+    else
+      echo 'No checkpoints found yet'
+      RESUME_MODE='disable'
+    fi
+    {{- else }}
+    RESUME_MODE='disable'
+    {{- end }}
+    echo "Starting checkpoint sync process"
+    mc mirror \
+      --watch \
+      --overwrite \
+      /workdir/checkpoints \
+      {{ $checkpointsRemotePath }} &
+    uploadPID=$!
+    # Check if the sync process started successfully
+    sleep 1
+    if ! ps -p $uploadPID > /dev/null; then
+      echo "ERROR: Sync process failed to start"
+      exit 1
+    fi
+    {{- end }}
+
+    export HIP_VISIBLE_DEVICES=$(rocm-smi --showall --csv | grep -P '^card\d+,' | cut -d',' -f1 | sed 's/card//g' | paste -sd ',' -)
+    export NUM_GPUS=$(echo $HIP_VISIBLE_DEVICES | tr ',' '\n' | wc -l)
+    export CUDA_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
+    export ROCR_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
+
+    # copy config file into the verl directory, this is necessary to apply it as an override with hydra
+    mkdir -p /app/verl/trainer/config/override
+    cp /configs/verl_config.yaml /app/verl/trainer/config/override/helm.yaml
+
+    echo "Starting training process"
+    python3 -m verl.trainer.main_ppo +override=helm \
+        data.train_files=$DATASET_PATH/train.parquet \
+        data.val_files=$DATASET_PATH/test.parquet \
+        actor_rollout_ref.model.path=$MODEL_PATH \
+        critic.model.path=$MODEL_PATH \
+        trainer.n_gpus_per_node=$NUM_GPUS \
+        trainer.project_name='{{ .Release.Name }}' \
+        trainer.experiment_name='{{ .Release.Name }}' \
+        trainer.default_local_dir=/workdir/checkpoints \
+        trainer.resume_mode=$RESUME_MODE \
+        trainer.resume_from_path=/workdir/checkpoints
+
+    {{- if .Values.checkpointsRemote }}
+    echo "Training done, stop the upload process"
+    kill $uploadPID
+    wait $uploadPID || true
+    # Once more to ensure everything gets uploaded
+    echo 'Training done, syncing once more...'
+    mc mirror --overwrite \
+      /workdir/checkpoints \
+      {{ $checkpointsRemotePath }}
+    {{- end }}
+    echo 'All done, exiting'
