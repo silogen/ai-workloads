@@ -1,0 +1,35 @@
+name: Copy workload documentation to public docs repo
+# We rsync the ai-workloads documentation to a temp clone of the public docs repo
+# and commit and push the changes to the main branch of the public docs repo. Purpose is to keep the Docs repo (consolidated SiloGen docs) updated with ai-workloads repository changes.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "workloads/**"
+      - ".github/workflows/docs-file-copy.yml"
+
+jobs:
+  copy-docs:
+    if: github.repository == 'silogen/ai-workloads'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout core repo
+        uses: actions/checkout@v4
+
+      - name: Push to public docs repo
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git clone https://x-access-token:${{ secrets.DOCS_REPO_TOKEN }}@github.com/silogen/ai-workloads.git source_docs
+          git clone https://x-access-token:${{ secrets.DOCS_REPO_TOKEN }}@github.com/silogen/docs.git target_silogen_docs
+          cd target_silogen_docs
+          rsync -av --delete --exclude='.git' ../source_docs/docs docs/ai-workloads-docs
+          rsync -av --delete --exclude='.git' ../source_docs/workloads docs/ai-workloads-manifests
+          git add .
+          git diff --staged --quiet || git commit -m "Update external docs from ai-workloads repo"
+          git push origin main
+        env:
+          DOCS_REPO_TOKEN: ${{ secrets.DOCS_REPO_TOKEN }}
