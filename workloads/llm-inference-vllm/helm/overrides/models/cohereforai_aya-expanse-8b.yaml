@@ -3,7 +3,8 @@ metadata:
     pipeline_tag: "text-generation"
     chat: "true"
 
-model: CohereForAI/aya-expanse-8b
+model: "CohereForAI/aya-expanse-8b"
+served_model_name: "CohereForAI/aya-expanse-8b"
 
 env_vars:
   HF_TOKEN:

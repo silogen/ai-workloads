@@ -4,9 +4,11 @@ metadata:
     chat: "true"
 
 model: "meta-llama/Llama-3.3-70B-Instruct"
+served_model_name: "meta-llama/Llama-3.3-70B-Instruct"
 
 vllm_engine_args:
   gpu-memory-utilization: "0.95"
+  max-model-len: "65536"
 
 env_vars:
   HF_TOKEN:

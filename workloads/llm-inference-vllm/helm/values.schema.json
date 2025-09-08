@@ -45,6 +45,10 @@
       "type": "string",
       "description": "Model to use for inference"
     },
+    "served_model_name": {
+      "type": ["string", "null"],
+      "description": "Optional explicit model name for API requests (defaults to model if not set)"
+    },
     "gpus": {
       "type": "integer",
       "description": "Number of GPUs to allocate",

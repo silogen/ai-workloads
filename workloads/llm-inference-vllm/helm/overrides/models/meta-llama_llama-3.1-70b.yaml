@@ -4,6 +4,7 @@ metadata:
     chat: "false"
 
 model: "meta-llama/Llama-3.1-70B"
+served_model_name: "meta-llama/Llama-3.1-70B"
 
 vllm_engine_args:
   gpu-memory-utilization: "0.95"

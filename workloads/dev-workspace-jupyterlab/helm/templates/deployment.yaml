@@ -38,7 +38,7 @@ spec:
           imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
           {{- if .Values.livenessProbe }}
           livenessProbe:
-            {{- .Values.livenessProbe | toYaml | nindent 12 -}}
+            {{- tpl (.Values.livenessProbe | toYaml) . | nindent 12 }}
           {{- end }}
           ports:
             {{- range $key, $value := .Values.deployment.ports }}
@@ -47,13 +47,13 @@ spec:
             {{- end }}
           {{- if .Values.readinessProbe }}
           readinessProbe:
-            {{- .Values.readinessProbe | toYaml | nindent 12 -}}
+            {{- tpl (.Values.readinessProbe | toYaml) . | nindent 12 }}
           {{- end }}
           resources:
             {{- include "container.resources" . | nindent 12 }}
           {{- if .Values.startupProbe }}
           startupProbe:
-            {{- .Values.startupProbe | toYaml | nindent 12 -}}
+            {{- tpl (.Values.startupProbe | toYaml) . | nindent 12 }}
           {{- end }}
           volumeMounts:
             {{- include "container.volumeMounts" . | nindent 12 }}

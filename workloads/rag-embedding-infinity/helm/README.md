@@ -14,7 +14,7 @@ helm template [optional-release-name] <helm-dir> -f <overrides/xyz.yaml> --set <
 Use default settings:
 
 ```bash
-helm template e5-large . | kubectl apply -f -
+helm template e5-large-instruct . | kubectl apply -f -
 ```
 
 Use custom model (that works with infinity):
@@ -44,7 +44,7 @@ kubectl get deployment
 Forward the port to access the service:
 
 ```bash
-kubectl port-forward services/rag-embedding-infinity 7997:7997
+kubectl port-forward services/rag-embedding-infinity-e5-large-instruct 7997:80
 ```
 
 ### Test the Deployment

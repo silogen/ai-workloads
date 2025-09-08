@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
+served_model_name: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
 
 vllm_engine_args:
   gpu-memory-utilization: "0.95"

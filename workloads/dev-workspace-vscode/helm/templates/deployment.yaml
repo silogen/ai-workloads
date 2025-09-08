@@ -19,6 +19,11 @@ spec:
         {{- range $key, $value := .Values.metadata.annotations }}
         {{ $key }}: {{ tpl $value $ | quote }}
         {{- end }}
+        {{- if .Values.persistent_storage.enabled }}
+        {{- range $key, $value := .Values.pvc_annotations }}
+        {{ $key }}: {{ tpl $value $ | quote }}
+        {{- end }}
+        {{- end }}
       labels:
         app: {{ include "release.fullname" . }}
     spec:

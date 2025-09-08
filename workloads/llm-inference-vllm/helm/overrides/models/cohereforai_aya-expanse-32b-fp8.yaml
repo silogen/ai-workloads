@@ -3,7 +3,8 @@ metadata:
     pipeline_tag: "text-generation"
     chat: "true"
 
-model: CohereForAI/aya-expanse-32b
+model: "CohereForAI/aya-expanse-32b"
+served_model_name: "CohereForAI/aya-expanse-32b"
 
 vllm_engine_args:
   quantization: fp8

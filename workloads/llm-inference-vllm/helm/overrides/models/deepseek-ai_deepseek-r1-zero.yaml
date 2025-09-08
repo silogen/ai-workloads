@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "deepseek-ai/DeepSeek-R1-Zero"
+served_model_name: "deepseek-ai/DeepSeek-R1-Zero"
 gpus: 8
 memory_per_gpu: 64 # Gi
 cpu_per_gpu: 4

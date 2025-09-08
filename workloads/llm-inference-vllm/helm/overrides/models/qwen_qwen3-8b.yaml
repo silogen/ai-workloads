@@ -4,3 +4,4 @@ metadata:
     chat: "true"
 
 model: "Qwen/Qwen3-8B"
+served_model_name: "Qwen/Qwen3-8B"

@@ -99,7 +99,7 @@ helm template workloads/llm-inference-vllm/helm \
   | kubectl apply -f -
 ```
 
-We can change the `name` to different experiment names to deploy other models. Note that discussing with the LoRA adapter models with these workloads requires us to merge the final adapter. This can be achieved during fine-tuning by adding `--set mergeAdapter=true` and additionally in the deploy command, we have to refer to the merged model, changing the path to `--set "model=s3://default-bucket/experiments/$name/checkpoint-final-merged"`.
+We can change the `name` to different experiment names to deploy other models. Note that discussing with the LoRA adapter models with these workloads requires us to merge the final adapter. This can be achieved during fine-tuning by adding `--set mergeAdapter=true`. The final full model is saved in the same path of `"$experiment/checkpoint-final"`, whether it is an adapter or a full-parameter training run.
 
 To discuss with the model, we first need to setup a connection to it. Since this is not a public-internet deployment, we'll do this simply by starting a background port-forwarding process:
 
@@ -116,6 +116,7 @@ name="tiny-llama-argilla-v1"
 question="What are the top five benefits of eating a large breakfast?"
 curl http://localhost:8080/v1/chat/completions \
     -H "Content-Type: application/json" \
+    -X POST \
     -d '{
         "model": "'$name'",
         "messages": [

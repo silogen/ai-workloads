@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+served_model_name: "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
 gpus: 8
 memory_per_gpu: 64 # Gi
 cpu_per_gpu: 4

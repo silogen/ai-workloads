@@ -205,9 +205,9 @@ def test_run(mocker):
     results = asyncio.run(collect_results())
 
     assert len(results) == 1
-    assert results[0]["inference_result"] == "This is a summary."
+    assert results[0]["llm_inference"] == "This is a summary."
     assert results[0]["gold_standard_result"] == ["This is a test answer."]
-    assert "prompt" in results[0]
+    assert "prompt_template" in results[0]
 
 
 def test_read_prompt_template(tmpdir):
@@ -263,10 +263,10 @@ def test_main(mocker, tmpdir):
     # Define mock_results before using it
     mock_results = [
         {
-            "inference_result": "This is a test inference.",
+            "llm_inference": "This is a test inference.",
             "gold_standard_result": ["This is a test answer."],
-            "prompt": "Test prompt",
-            "doc_id": "test_doc_id",
+            "prompt_template": "Test prompt",
+            "context_document_id": "test_doc_id",
         }
     ]
 
@@ -293,7 +293,7 @@ def test_main(mocker, tmpdir):
     assert inferences_filepath.startswith(os.path.join(tmpdir, "inferences_test-model--abisee_cnn_dailymail--3.0.0--"))
 
     # Use glob to find the json file created in the output directory
-    json_files = glob.glob(os.path.join(inferences_filepath, "*.json"))
+    json_files = glob.glob(os.path.join(inferences_filepath, "inferences", "*.json"))
     assert len(json_files) == 1
 
     with open(json_files[0], "r") as infile:

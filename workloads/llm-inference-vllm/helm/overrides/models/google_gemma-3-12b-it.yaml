@@ -4,6 +4,7 @@ metadata:
     chat: "true"
 
 model: "google/gemma-3-12b-it"
+served_model_name: "google/gemma-3-12b-it"
 
 env_vars:
   HF_TOKEN:

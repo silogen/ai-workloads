@@ -1,0 +1,30 @@
+image: ghcr.io/mlflow/mlflow:v2.22.0
+gpus: 0
+memory_per_gpu: 20
+cpu_per_gpu: 1
+metadata:
+  project_id: ""
+  workload_id: ""
+  user_id: ""
+
+  annotations:
+    pvc.silogen.ai/user-pvc-auto-create: "true"
+    pvc.silogen.ai/user-pvc-size: "60Gi"
+    pvc.silogen.ai/user-pvc-storage-class-name: "multinode"
+    pvc.silogen.ai/user-pvc-uid: "mlflow-{{ .Values.metadata.project_id }}"
+
+http_route:
+  enabled: true
+
+ingress:
+  enabled: true
+
+kaiwo:
+  enabled: true
+
+persistent_storage:
+  enabled: true
+  volumes:
+    pvc-user:
+      pvc_name: "pvc-mlflow-{{ .Values.metadata.project_id }}"
+      mount_path: "/workload/{{ .Values.metadata.project_id }}"

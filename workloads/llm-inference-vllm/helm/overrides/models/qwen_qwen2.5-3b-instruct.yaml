@@ -4,3 +4,4 @@ metadata:
     chat: "true"
 
 model: "Qwen/Qwen2.5-3B-Instruct"
+served_model_name: "Qwen/Qwen2.5-3B-Instruct"
