@@ -14,6 +14,7 @@ pvc_annotations:
 
 image: rocm/pytorch:rocm6.4_ubuntu24.04_py3.12_pytorch_release_2.6.0
 imagePullPolicy: Always
+imagePullSecrets: []
 gpus: 1
 memory_per_gpu: 128 # Gi
 cpu_per_gpu: 4

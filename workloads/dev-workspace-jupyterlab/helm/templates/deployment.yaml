@@ -22,41 +22,47 @@ spec:
       labels:
         app: {{ include "release.fullname" . }}
     spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       containers:
-        - name: {{ .Chart.Name }}
-          {{- if .Values.entrypoint }}
-          args:
-          - |
-            {{- .Values.entrypoint | nindent 12 }}
-          command: ["sh", "-c"]
+      - name: {{ .Chart.Name }}
+        {{- if .Values.entrypoint }}
+        args:
+        - |
+          {{- .Values.entrypoint | nindent 12 }}
+        command: ["sh", "-c"]
+        {{- end }}
+        {{- if .Values.env_vars }}
+        env:
+          {{- include "container.env" . | nindent 12 }}
+        {{- end }}
+        image: {{ .Values.image | quote}}
+        imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
+        {{- if .Values.livenessProbe }}
+        livenessProbe:
+          {{- tpl (.Values.livenessProbe | toYaml) . | nindent 12 }}
+        {{- end }}
+        ports:
+          {{- range $key, $value := .Values.deployment.ports }}
+          - name: {{ $key }}
+            containerPort: {{ $value }}
           {{- end }}
-          {{- if .Values.env_vars }}
-          env:
-            {{- include "container.env" . | nindent 12 }}
-          {{- end }}
-          image: {{ .Values.image | quote}}
-          imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
-          {{- if .Values.livenessProbe }}
-          livenessProbe:
-            {{- tpl (.Values.livenessProbe | toYaml) . | nindent 12 }}
-          {{- end }}
-          ports:
-            {{- range $key, $value := .Values.deployment.ports }}
-            - name: {{ $key }}
-              containerPort: {{ $value }}
-            {{- end }}
-          {{- if .Values.readinessProbe }}
-          readinessProbe:
-            {{- tpl (.Values.readinessProbe | toYaml) . | nindent 12 }}
-          {{- end }}
-          resources:
-            {{- include "container.resources" . | nindent 12 }}
-          {{- if .Values.startupProbe }}
-          startupProbe:
-            {{- tpl (.Values.startupProbe | toYaml) . | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            {{- include "container.volumeMounts" . | nindent 12 }}
+        {{- if .Values.readinessProbe }}
+        readinessProbe:
+          {{- tpl (.Values.readinessProbe | toYaml) . | nindent 12 }}
+        {{- end }}
+        resources:
+          {{- include "container.resources" . | nindent 12 }}
+        {{- if .Values.startupProbe }}
+        startupProbe:
+          {{- tpl (.Values.startupProbe | toYaml) . | nindent 12 }}
+        {{- end }}
+        volumeMounts:
+          {{- include "container.volumeMounts" . | nindent 12 }}
       volumes:
         {{- include "container.volumes" . | nindent 8 }}
 {{- end -}}

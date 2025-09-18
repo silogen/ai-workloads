@@ -14,6 +14,7 @@ model: Comfy-Org/flux1-dev
 # tag: sd_xl_turbo_1.0
 
 imagePullPolicy: Always
+imagePullSecrets: []
 gpus: 1
 cpu_per_gpu: 16
 memory_per_gpu: 128

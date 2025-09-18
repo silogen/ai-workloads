@@ -30,6 +30,7 @@ You can configure the following parameters in the `values.yaml` file or override
 |------------------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | `image`                | Container image repository and tag                                          | `rocm/pytorch:rocm6.4_ubuntu24.04_py3.12_pytorch_release_2.6.0`         |
 | `imagePullPolicy`      | Image pull policy                                                           | `Always`                                                                |
+| `imagePullSecrets`     | List of image pull secrets for private registries                           | `[]`                                                                    |
 | `gpus`                 | Number of GPUs to allocate (set to 0 for CPU-only mode)                     | `1`                                                                     |
 | `memory_per_gpu`       | Memory allocated per GPU (in Gi)                                            | `128`                                                                   |
 | `cpu_per_gpu`          | CPU cores allocated per GPU                                                 | `4`                                                                     |

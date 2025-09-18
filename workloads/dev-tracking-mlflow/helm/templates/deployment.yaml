@@ -22,6 +22,12 @@ spec:
       labels:
         app: {{ include "release.fullname" . }}
     spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           command: ["sh", "-c"]
