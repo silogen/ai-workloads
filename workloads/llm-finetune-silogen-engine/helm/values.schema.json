@@ -139,6 +139,7 @@
           },
           "data_type": {
             "default": "ChatConversation",
+            "description": "Generally, the data_type is automatically set based on the experiment config method.",
             "title": "Data Type",
             "type": "string"
           },
@@ -301,6 +302,7 @@
         "type": "object"
       },
       "ChatTemplateName": {
+        "description": "Chat template to use.",
         "enum": [
           "mistral-with-system",
           "chat-ml",
@@ -365,7 +367,7 @@
       },
       "ConcatenationDataInput": {
         "additionalProperties": false,
-        "description": "A simple list of datasets\n\nThese are simply concatenated, the same as sampling all with equal weight.\n\nThe datasets themselves need to be in the finetuning supported JSONL formats.\nFor SFT this means lines:\n{\"messages\": {\"content\": \"string\", \"role\": \"string\"}}\nFor DPO this means lines of:\n{\"prompt_messages\": {\"content\": \"string\", \"role\": \"string\"}, \"chosen_messages\": {\"content\": \"string\", \"role\": \"string\"}, \"rejected_messages\": {\"content\": \"string\", \"role\": \"string\"}}",
+        "description": "A simple list of datasets\n\nThese are simply concatenated, the same as sampling all with equal weight.\n\nThe datasets themselves need to be in the finetuning supported JSONL formats.\nFor SFT this means lines:\n\n    {\"messages\": {\"content\": \"string\", \"role\": \"string\"}}\n\nFor DPO this means lines of:\n\n    {\"prompt_messages\": {\"content\": \"string\", \"role\": \"string\"}, \"chosen_messages\": {\"content\": \"string\", \"role\": \"string\"}, \"rejected_messages\": {\"content\": \"string\", \"role\": \"string\"}}",
         "properties": {
           "type": {
             "const": "CONCATENATION",
@@ -374,6 +376,7 @@
           },
           "data_type": {
             "default": "ChatConversation",
+            "description": "Generally, the data_type is automatically set based on the experiment config method.",
             "title": "Data Type",
             "type": "string"
           },
@@ -531,39 +534,18 @@
         "description": "Settings that define how run details are logged",
         "properties": {
           "mlflow_server_uri": {
+            "description": "MLflow server URI. Can be local path.",
             "title": "Mlflow Server Uri",
             "type": "string"
           },
           "experiment_name": {
+            "description": "Experiment name that is used for MLFlow tracking.",
             "title": "Experiment Name",
             "type": "string"
           },
-          "run_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Run Id"
-          },
-          "run_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Run Name"
-          },
           "hf_mlflow_log_artifacts": {
             "default": "False",
+            "description": "Whether to store model artifacts in MLFlow.",
             "title": "Hf Mlflow Log Artifacts",
             "type": "string"
           }
@@ -577,7 +559,7 @@
       },
       "GenericPeftConfig": {
         "additionalProperties": false,
-        "description": "Config for any new initialized PEFT Adapter\n\nSee https://huggingface.co/docs/peft/tutorial/peft_model_config for the possible kwargs\nand https://github.com/huggingface/peft/blob/v0.7.1/src/peft/utils/peft_types.py for the types.\n\nExample\n=======\n    >>> loaded_data = {'peft_type':'LORA', 'task_type': 'CAUSAL_LM',\n    ...         'peft_kwargs': {'r': 32, 'target_modules': ['v_proj']}}\n    >>> generic_conf = GenericPeftConfig(**loaded_data)\n    >>> # Then later in the code something like:\n    >>> model = transformers.AutoModel.from_pretrained('hf-internal-testing/tiny-random-MistralModel')\n    >>> peft.get_peft_model(model, generic_conf.get_peft_config())\n    PeftModelForCausalLM(\n      (base_model): LoraModel(\n        ...\n      )\n    )",
+        "description": "Config for any new initialized PEFT Adapter\n\nSee https://huggingface.co/docs/peft/tutorial/peft_model_config for the possible kwargs\nand https://github.com/huggingface/peft/blob/v0.7.1/src/peft/utils/peft_types.py for the types.\n\nExample:\n\n    >>> loaded_data = {'peft_type':'LORA', 'task_type': 'CAUSAL_LM',\n    ...         'peft_kwargs': {'r': 32, 'target_modules': ['v_proj']}}\n    >>> generic_conf = GenericPeftConfig(**loaded_data)\n    >>> generic_conf.get_peft_config()\n    LoraConfig(task_type=<TaskType.CAUSAL_LM: 'CAUSAL_LM'>, peft_type=<PeftType.LORA: 'LORA'>, ...)",
         "properties": {
           "peft_type": {
             "$ref": "#/$defs/PeftType"
@@ -630,7 +612,7 @@
       },
       "ModelArguments": {
         "additionalProperties": false,
-        "description": "These are passed to AutoModelForCausalLM.from_pretrained\n\nSee parameter docstrings and help at:\nhttps://huggingface.co/docs/transformers/main/en/main_classes/model#transformers.PreTrainedModel.from_pretrained\nSee below in \"Parameters for big model inference\" too, it affects training too. Also note that this link takes you\nto the transformers main branch version - be sure to compare with the installed version of transformers (that keeps\nchanging over time, and it is difficult to keep this doctstring up to date, so we wanted to link to the latest here).\n\nSome important parameters to consider are:\n\ndevice_map :\n    A map that specifies where each submodule should go. It doesn\u2019t need to be refined to each parameter/buffer\n    name, once a given module name is inside, every submodule of it will be sent to the same device. If we only pass\n    the device (e.g., \"cpu\", \"cuda:1\", \"mps\", or a GPU ordinal rank like 1) on which the model will be allocated,\n    the device map will map the entire model to this device. Passing device_map = 0 means put the whole model on GPU\n    0.\nattn_implementation :\n    The attention implementation to use in the model (if relevant). Can be any of \"eager\" (manual implementation of\n    the attention), \"sdpa\" (using F.scaled_dot_product_attention), or \"flash_attention_2\" (using\n    Dao-AILab/flash-attention). By default, if available, SDPA will be used for torch>=2.1.1. The default is\n    otherwise the manual \"eager\" implementation.\n\nNOTE:\n    This does not include quantization_config. Quantization config is specified separately.",
+        "description": "These are passed to AutoModelForCausalLM.from_pretrained\n\nSee parameter docstrings and help at:\nhttps://huggingface.co/docs/transformers/main/en/main_classes/model#transformers.PreTrainedModel.from_pretrained\nSee below in \"Parameters for big model inference\" too, it affects training too. Also note that this link takes you\nto the transformers main branch version - be sure to compare with the installed version of transformers (that keeps\nchanging over time, and it is difficult to keep this docstring up to date, so we wanted to link to the latest here).\n\nSome important parameters to consider are:\n\n- device_map :\n    A map that specifies where each submodule should go. It doesn\u2019t need to be refined to each parameter/buffer\n    name, once a given module name is inside, every submodule of it will be sent to the same device. If we only pass\n    the device (e.g., \"cpu\", \"cuda:1\", \"mps\", or a GPU ordinal rank like 1) on which the model will be allocated,\n    the device map will map the entire model to this device. Passing device_map = 0 means put the whole model on GPU\n    0.\n- attn_implementation :\n    The attention implementation to use in the model (if relevant). Can be any of \"eager\" (manual implementation of\n    the attention), \"sdpa\" (using F.scaled_dot_product_attention), or \"flash_attention_2\" (using\n    Dao-AILab/flash-attention). By default, if available, SDPA will be used for torch>=2.1.1. The default is\n    otherwise the manual \"eager\" implementation.\n\nNOTE:\n    This does not include quantization_config. Quantization config is specified separately.",
         "properties": {
           "torch_dtype": {
             "default": "auto",
@@ -660,6 +642,7 @@
               }
             ],
             "default": null,
+            "description": "Custom device map so that you can manually override the choices that HuggingFace would make. This can also be a string to specify \"auto\", \"balanced_low_0\", or \"sequential\".",
             "title": "Device Map"
           },
           "max_memory": {
@@ -692,6 +675,7 @@
               }
             ],
             "default": null,
+            "description": "Note: this can be set to \"sdpa\", \"flash_attention_2\", \"eager\".",
             "title": "Attn Implementation"
           },
           "offload_folder": {
@@ -716,6 +700,7 @@
               }
             ],
             "default": null,
+            "description": "Default is True if offloading (otherwise no effect)",
             "title": "Offload State Dict"
           },
           "offload_buffers": {
@@ -732,6 +717,7 @@
           },
           "use_cache": {
             "default": true,
+            "description": "Saves generated hidden states to speed up generation, see: https://discuss.huggingface.co/t/what-is-the-purpose-of-use-cache-in-decoder/958 This is mutually exclusive with gradient_checkpointing.",
             "title": "Use Cache",
             "type": "boolean"
           },
@@ -837,6 +823,7 @@
           },
           "trust_remote_code": {
             "default": false,
+            "description": "Warning: if set to True, allows execution of downloaded remote code.",
             "title": "Trust Remote Code",
             "type": "boolean"
           }
@@ -885,6 +872,7 @@
           },
           "data_type": {
             "default": "ChatConversation",
+            "description": "Generally, the data_type is automatically set based on the experiment config method.",
             "title": "Data Type",
             "type": "string"
           }
@@ -898,7 +886,6 @@
       "OptimizerNames": {
         "description": "Stores the acceptable string identifiers for optimizers.",
         "enum": [
-          "adamw_hf",
           "adamw_torch",
           "adamw_torch_fused",
           "adamw_torch_xla",
@@ -956,7 +943,7 @@
           },
           "lr_batch_size_scaling": {
             "default": "none",
-            "description": "Scales the learning rate in the training_args by a factor derived from the total training batch size.\n            'none': No scaling.\n            'sqrt': Multiplies learning rate by square root of batch size (a classic scaling rule).\n            'linear': Multiplies learning rate by the batch size (a more modern scaling rule).\n",
+            "description": "Scales the learning rate in the training_args by a factor derived from the total training batch size.             'none': No scaling.             'sqrt': Multiplies learning rate by square root of batch size (a classic scaling rule).             'linear': Multiplies learning rate by the batch size (a more modern scaling rule).\n",
             "enum": [
               "none",
               "sqrt",
@@ -970,7 +957,7 @@
         "type": "object"
       },
       "PeftType": {
-        "description": "Enum class for the different types of adapters in PEFT.\n\nSupported PEFT types:\n- PROMPT_TUNING\n- MULTITASK_PROMPT_TUNING\n- P_TUNING\n- PREFIX_TUNING\n- LORA\n- ADALORA\n- BOFT\n- ADAPTION_PROMPT\n- IA3\n- LOHA\n- LOKR\n- OFT\n- XLORA\n- POLY\n- LN_TUNING\n- VERA\n- FOURIERFT\n- HRA",
+        "description": "Enum class for the different types of adapters in PEFT.\n\nSupported PEFT types:\n- PROMPT_TUNING\n- MULTITASK_PROMPT_TUNING\n- P_TUNING\n- PREFIX_TUNING\n- LORA\n- ADALORA\n- BOFT\n- ADAPTION_PROMPT\n- IA3\n- LOHA\n- LOKR\n- OFT\n- XLORA\n- POLY\n- LN_TUNING\n- VERA\n- FOURIERFT\n- HRA\n- BONE\n- RANDLORA\n- C3A",
         "enum": [
           "PROMPT_TUNING",
           "MULTITASK_PROMPT_TUNING",
@@ -990,7 +977,12 @@
           "FOURIERFT",
           "XLORA",
           "HRA",
-          "VBLORA"
+          "VBLORA",
+          "CPT",
+          "BONE",
+          "RANDLORA",
+          "TRAINABLE_TOKENS",
+          "C3A"
         ],
         "title": "PeftType",
         "type": "string"
@@ -1005,6 +997,7 @@
             "type": "string"
           },
           "name_or_path": {
+            "description": "HF ID or path to the pretrained peft.",
             "title": "Name Or Path",
             "type": "string"
           }
@@ -1081,7 +1074,7 @@
               }
             ],
             "default": false,
-            "description": "Normally should be set to 'auto' to continue if a checkpoint exists.\nCan set to True to always try to continue, False to never try, or a path to load from a specific path.",
+            "description": "Normally should be set to 'auto' to continue if a checkpoint exists.        Can set to True to always try to continue, False to never try, or a path to load from a specific path.",
             "title": "Resume From Checkpoint"
           },
           "final_checkpoint_name": {
@@ -1092,7 +1085,7 @@
           },
           "determinism": {
             "default": "no",
-            "description": "Set the level of determinism in implementations. Deterministic implementations are not always available,\nand when they are, they are usually slower than their non-deterministic counterparts. Recommended for\ndebugging only.\n'no': No determinism.\n'half': Prefer deterministic implementations.\n'full': Only fully deterministic implementations, error out on operations that only have non-deterministic\n        implementations.",
+            "description": "Set the level of determinism in implementations. Deterministic implementations are not always available,            and when they are, they are usually slower than their non-deterministic counterparts. Recommended for            debugging only.            'no': No determinism.            'half': Prefer deterministic implementations.            'full': Only fully deterministic implementations, error out on operations that only have non-deterministic                    implementations.",
             "enum": [
               "no",
               "half",
@@ -1107,6 +1100,7 @@
       },
       "SFTArguments": {
         "additionalProperties": false,
+        "description": "Supervised fine-tuning arguments",
         "properties": {
           "max_seq_length": {
             "default": 2048,
@@ -1122,7 +1116,7 @@
           },
           "train_on_completions_only": {
             "default": false,
-            "description": "Only comput loss on the assistant's turns.",
+            "description": "Only compute loss on the assistant's turns.",
             "title": "Train On Completions Only",
             "type": "boolean"
           }
@@ -1425,11 +1419,11 @@
           "lr_scheduler_kwargs": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
@@ -1448,28 +1442,14 @@
             "type": "integer"
           },
           "log_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
             "default": "passive",
-            "title": "Log Level"
+            "title": "Log Level",
+            "type": "string"
           },
           "log_level_replica": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
             "default": "warning",
-            "title": "Log Level Replica"
+            "title": "Log Level Replica",
+            "type": "string"
           },
           "log_on_each_node": {
             "default": true,
@@ -1889,11 +1869,11 @@
           "accelerator_config": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
@@ -1905,11 +1885,11 @@
           "deepspeed": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
@@ -2113,6 +2093,18 @@
             "title": "Hub Always Push",
             "type": "boolean"
           },
+          "hub_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Hub Revision"
+          },
           "gradient_checkpointing": {
             "default": false,
             "title": "Gradient Checkpointing",
@@ -2155,18 +2147,6 @@
             "default": "auto",
             "title": "Fp16 Backend",
             "type": "string"
-          },
-          "evaluation_strategy": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/IntervalStrategy"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "default": null,
-            "title": "Evaluation Strategy"
           },
           "push_to_hub_model_id": {
             "anyOf": [
@@ -2244,16 +2224,9 @@
             "title": "Ray Scope"
           },
           "ddp_timeout": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
             "default": 1800,
-            "title": "Ddp Timeout"
+            "title": "Ddp Timeout",
+            "type": "integer"
           },
           "torch_compile": {
             "default": false,
@@ -2283,30 +2256,6 @@
             ],
             "default": null,
             "title": "Torch Compile Mode"
-          },
-          "dispatch_batches": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Dispatch Batches"
-          },
-          "split_batches": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Split Batches"
           },
           "include_tokens_per_second": {
             "anyOf": [
@@ -2383,6 +2332,21 @@
             ],
             "default": false,
             "title": "Use Liger Kernel"
+          },
+          "liger_kernel_config": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Liger Kernel Config"
           },
           "eval_use_gather_object": {
             "anyOf": [
@@ -2846,11 +2810,11 @@
           "lr_scheduler_kwargs": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
@@ -2869,28 +2833,14 @@
             "type": "integer"
           },
           "log_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
             "default": "passive",
-            "title": "Log Level"
+            "title": "Log Level",
+            "type": "string"
           },
           "log_level_replica": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
             "default": "warning",
-            "title": "Log Level Replica"
+            "title": "Log Level Replica",
+            "type": "string"
           },
           "log_on_each_node": {
             "default": true,
@@ -3304,11 +3254,11 @@
           "accelerator_config": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
@@ -3320,11 +3270,11 @@
           "deepspeed": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
@@ -3528,6 +3478,18 @@
             "title": "Hub Always Push",
             "type": "boolean"
           },
+          "hub_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Hub Revision"
+          },
           "gradient_checkpointing": {
             "default": false,
             "title": "Gradient Checkpointing",
@@ -3570,18 +3532,6 @@
             "default": "auto",
             "title": "Fp16 Backend",
             "type": "string"
-          },
-          "evaluation_strategy": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/IntervalStrategy"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "default": null,
-            "title": "Evaluation Strategy"
           },
           "push_to_hub_model_id": {
             "anyOf": [
@@ -3659,16 +3609,9 @@
             "title": "Ray Scope"
           },
           "ddp_timeout": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
             "default": 1800,
-            "title": "Ddp Timeout"
+            "title": "Ddp Timeout",
+            "type": "integer"
           },
           "torch_compile": {
             "default": false,
@@ -3698,30 +3641,6 @@
             ],
             "default": null,
             "title": "Torch Compile Mode"
-          },
-          "dispatch_batches": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Dispatch Batches"
-          },
-          "split_batches": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Split Batches"
           },
           "include_tokens_per_second": {
             "anyOf": [
@@ -3799,6 +3718,21 @@
             "default": false,
             "title": "Use Liger Kernel"
           },
+          "liger_kernel_config": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Liger Kernel Config"
+          },
           "eval_use_gather_object": {
             "anyOf": [
               {
@@ -3863,7 +3797,7 @@
       },
       "WeightedMixDataInput": {
         "additionalProperties": false,
-        "description": "A list of datasets where each is sampled by a certain weight\n\nThese datasets are interleaved based on the sampling weights. The resulting dataset is fully precomputed, upto\nthe point where every single sample in every dataset gets picked. This means that with small sampling weights,\nit can take a lot of draws to see every sample from a dataset and so the resulting dataset can be very large.\n\nThe datasets themselves need to be in the finetuning supported JSONL formats.\nFor SFT this means lines:\n{\"messages\": {\"content\": \"string\", \"role\": \"string\"}}\nFor DPO this means lines of:\n{\"prompt_messages\": {\"content\": \"string\", \"role\": \"string\"}, \"chosen_messages\": {\"content\": \"string\", \"role\": \"string\"}, \"rejected_messages\": {\"content\": \"string\", \"role\": \"string\"}}",
+        "description": "A list of datasets where each is sampled by a certain weight\n\nThese datasets are interleaved based on the sampling weights. The resulting dataset is fully precomputed, upto\nthe point where every single sample in every dataset gets picked. This means that with small sampling weights,\nit can take a lot of draws to see every sample from a dataset and so the resulting dataset can be very large.\n\nThe datasets themselves need to be in the finetuning supported JSONL formats.\nFor SFT this means lines:\n\n    {\"messages\": {\"content\": \"string\", \"role\": \"string\"}}\n\nFor DPO this means lines of:\n\n    {\"prompt_messages\": {\"content\": \"string\", \"role\": \"string\"}, \"chosen_messages\": {\"content\": \"string\", \"role\": \"string\"}, \"rejected_messages\": {\"content\": \"string\", \"role\": \"string\"}}",
         "properties": {
           "type": {
             "const": "PRECOMPUTE_WEIGHTED_MIX",
@@ -3872,6 +3806,7 @@
           },
           "data_type": {
             "default": "ChatConversation",
+            "description": "Generally, the data_type is automatically set based on the experiment config method.",
             "title": "Data Type",
             "type": "string"
           },

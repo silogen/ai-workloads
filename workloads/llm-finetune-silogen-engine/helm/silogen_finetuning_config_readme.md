@@ -17,7 +17,7 @@ See the various sub-configs for their options. Additional properties are not all
 | sft_args | `object` | ✅ | [SFTArguments](#sftarguments) |  | SFT specific arguments |
 | method | `const` |  | `sft` | `"sft"` |  |
 | overrides | `object` |  | [Overrides](#overrides) | `{"lr_multiplier": 1.0, "lr_batch_size_scaling": "none"}` | Override options to simplify the config interface |
-| tracking | `object` or `null` |  | [FinetuningTrackingConfig](#finetuningtrackingconfig) |  | MLFlow tracking configuration |
+| tracking | `object` or `null` |  | [FinetuningTrackingConfig](#finetuningtrackingconfig) | `null` | MLFlow tracking configuration |
 | quant_conf | `object` |  | [BnBQuantizationConfig](#bnbquantizationconfig) and/or [NoQuantizationConfig](#noquantizationconfig) | `{"quantization_type": "no-quantization"}` | Quantization configuration |
 
 
@@ -50,11 +50,11 @@ This mostly limited by the memory capacity of the device.
 
 #### Type: `object`
 
-| Property | Type | Required | Possible values | Description |
-| -------- | ---- | -------- | --------------- | ----------- |
-| total_train_batch_size | `integer` | ✅ | integer | The total batch size for the training run |
-| max_per_device_train_batch_size | `integer` | ✅ | integer | The maximum training batch size per device |
-| per_device_eval_batch_size | `integer` or `null` |  | integer | The maximum eval batch size per device, if not given, will use same as training batch size |
+| Property | Type | Required | Possible values | Default | Description |
+| -------- | ---- | -------- | --------------- | ------- | ----------- |
+| total_train_batch_size | `integer` | ✅ | integer |  | The total batch size for the training run |
+| max_per_device_train_batch_size | `integer` | ✅ | integer |  | The maximum training batch size per device |
+| per_device_eval_batch_size | `integer` or `null` |  | integer | `null` | The maximum eval batch size per device, if not given, will use same as training batch size |
 
 ## BnBQuantizationConfig
 
@@ -68,16 +68,16 @@ see: https://huggingface.co/docs/transformers/en/main_classes/quantization#trans
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | quantization_type | `const` |  | `bits-and-bytes` | `"bits-and-bytes"` |  |
-| load_in_8bit | `boolean` |  | boolean | `False` |  |
-| load_in_4bit | `boolean` |  | boolean | `False` |  |
+| load_in_8bit | `boolean` |  | boolean | `false` |  |
+| load_in_4bit | `boolean` |  | boolean | `false` |  |
 | llm_int8_threshold | `number` |  | number | `6.0` |  |
-| llm_int8_skip_modules | `array` or `null` |  | string |  |  |
-| llm_int8_enable_fp32_cpu_offload | `boolean` |  | boolean | `False` |  |
-| llm_int8_has_fp16_weight | `boolean` |  | boolean | `False` |  |
-| bnb_4bit_compute_dtype | `string` or `null` |  | string |  |  |
+| llm_int8_skip_modules | `array` or `null` |  | string | `null` |  |
+| llm_int8_enable_fp32_cpu_offload | `boolean` |  | boolean | `false` |  |
+| llm_int8_has_fp16_weight | `boolean` |  | boolean | `false` |  |
+| bnb_4bit_compute_dtype | `string` or `null` |  | string | `null` |  |
 | bnb_4bit_quant_type | `const` |  | `fp4` and/or `nf4` | `"fp4"` |  |
-| bnb_4bit_use_double_quant | `boolean` |  | boolean | `False` |  |
-| bnb_4bit_quant_storage | `string` or `null` |  | string |  |  |
+| bnb_4bit_use_double_quant | `boolean` |  | boolean | `false` |  |
+| bnb_4bit_quant_storage | `string` or `null` |  | string | `null` |  |
 
 ## ChatTemplateName
 
@@ -149,8 +149,6 @@ Settings that define how run details are logged
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | mlflow_server_uri | `string` | ✅ | string |  | MLflow server URI. Can be local path. |
 | experiment_name | `string` | ✅ | string |  | Experiment name that is used for MLFlow tracking. |
-| run_id | `string` or `null` |  | string |  | Run id, to resume logging to previously started run. |
-| run_name | `string` or `null` |  | string |  | Run name, to give meaningful name to the run to be displayed in MLFlow UI. Used only when run_id is unspecified. |
 | hf_mlflow_log_artifacts | `string` |  | string | `"False"` | Whether to store model artifacts in MLFlow. |
 
 ## GenericPeftConfig
@@ -165,14 +163,8 @@ Example:
     >>> loaded_data = {'peft_type':'LORA', 'task_type': 'CAUSAL_LM',
     ...         'peft_kwargs': {'r': 32, 'target_modules': ['v_proj']}}
     >>> generic_conf = GenericPeftConfig(**loaded_data)
-    >>> # Then later in the code something like:
-    >>> model = transformers.AutoModel.from_pretrained('hf-internal-testing/tiny-random-MistralModel')
-    >>> peft.get_peft_model(model, generic_conf.get_peft_config())
-    PeftModelForCausalLM(
-      (base_model): LoraModel(
-        ...
-      )
-    )
+    >>> generic_conf.get_peft_config()
+    LoraConfig(task_type=<TaskType.CAUSAL_LM: 'CAUSAL_LM'>, peft_type=<PeftType.LORA: 'LORA'>, ...)
 
 #### Type: `object`
 
@@ -240,26 +232,26 @@ NOTE:
 | Property | Type | Required | Possible values | Default | Description |
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | torch_dtype | `const` |  | `auto` | `"auto"` |  |
-| device_map | `object` or `string` or `null` |  | object and/or string |  | Custom device map so that you can manually override the choices that HuggingFace would make. This can also be a string to specify "auto", "balanced_low_0", or "sequential". |
-| max_memory | `object` or `null` |  | object |  |  |
-| low_cpu_mem_usage | `boolean` |  | boolean | `False` |  |
-| attn_implementation | `string` or `null` |  | string |  | Note: this can be set to "sdpa", "flash_attention_2", "eager". |
-| offload_folder | `string` or `null` |  | string |  |  |
-| offload_state_dict | `boolean` or `null` |  | boolean |  | Default is True if offloading (otherwise no effect) |
-| offload_buffers | `boolean` or `null` |  | boolean |  |  |
+| device_map | `object` or `string` or `null` |  | object and/or string | `null` | Custom device map so that you can manually override the choices that HuggingFace would make. This can also be a string to specify "auto", "balanced_low_0", or "sequential". |
+| max_memory | `object` or `null` |  | object | `null` |  |
+| low_cpu_mem_usage | `boolean` |  | boolean | `false` |  |
+| attn_implementation | `string` or `null` |  | string | `null` | Note: this can be set to "sdpa", "flash_attention_2", "eager". |
+| offload_folder | `string` or `null` |  | string | `null` |  |
+| offload_state_dict | `boolean` or `null` |  | boolean | `null` | Default is True if offloading (otherwise no effect) |
+| offload_buffers | `boolean` or `null` |  | boolean | `null` |  |
 | use_cache | `boolean` |  | boolean | `true` | Saves generated hidden states to speed up generation, see: https://discuss.huggingface.co/t/what-is-the-purpose-of-use-cache-in-decoder/958 This is mutually exclusive with gradient_checkpointing. |
-| cache_dir | `string` or `null` |  | string |  |  |
-| force_download | `boolean` |  | boolean | `False` |  |
-| local_files_only | `boolean` |  | boolean | `False` |  |
-| proxies | `object` or `null` |  | object |  |  |
-| resume_download | `boolean` |  | boolean | `False` |  |
+| cache_dir | `string` or `null` |  | string | `null` |  |
+| force_download | `boolean` |  | boolean | `false` |  |
+| local_files_only | `boolean` |  | boolean | `false` |  |
+| proxies | `object` or `null` |  | object | `null` |  |
+| resume_download | `boolean` |  | boolean | `false` |  |
 | revision | `string` |  | string | `"main"` |  |
 | code_revision | `string` |  | string | `"main"` |  |
-| subfolder | `string` or `null` |  | string |  |  |
-| token | `string` or `null` |  | string |  |  |
-| use_safetensors | `boolean` or `null` |  | boolean |  |  |
-| variant | `string` or `null` |  | string |  |  |
-| trust_remote_code | `boolean` |  | boolean | `False` | Warning: if set to True, allows execution of downloaded remote code. |
+| subfolder | `string` or `null` |  | string | `null` |  |
+| token | `string` or `null` |  | string | `null` |  |
+| use_safetensors | `boolean` or `null` |  | boolean | `null` |  |
+| variant | `string` or `null` |  | string | `null` |  |
+| trust_remote_code | `boolean` |  | boolean | `false` | Warning: if set to True, allows execution of downloaded remote code. |
 
 ## NoPeftConfig
 
@@ -328,10 +320,13 @@ Supported PEFT types:
 - VERA
 - FOURIERFT
 - HRA
+- BONE
+- RANDLORA
+- C3A
 
 #### Type: `string`
 
-**Possible Values:** `PROMPT_TUNING` or `MULTITASK_PROMPT_TUNING` or `P_TUNING` or `PREFIX_TUNING` or `LORA` or `ADALORA` or `BOFT` or `ADAPTION_PROMPT` or `IA3` or `LOHA` or `LOKR` or `OFT` or `POLY` or `LN_TUNING` or `VERA` or `FOURIERFT` or `XLORA` or `HRA` or `VBLORA`
+**Possible Values:** `PROMPT_TUNING` or `MULTITASK_PROMPT_TUNING` or `P_TUNING` or `PREFIX_TUNING` or `LORA` or `ADALORA` or `BOFT` or `ADAPTION_PROMPT` or `IA3` or `LOHA` or `LOKR` or `OFT` or `POLY` or `LN_TUNING` or `VERA` or `FOURIERFT` or `XLORA` or `HRA` or `VBLORA` or `CPT` or `BONE` or `RANDLORA` or `TRAINABLE_TOKENS` or `C3A`
 
 ## PretrainedPeftConfig
 
@@ -354,9 +349,9 @@ Experiment running configuration
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | model | `string` |  | string | `"/local_resources/basemodel"` | Local path to model to be fine-tuned. Normally this should be /local_resources/basemodel |
 | model_args | `object` |  | [ModelArguments](#modelarguments) | `{"torch_dtype": "auto", "device_map": "auto", "max_memory": null, "low_cpu_mem_usage": false, "attn_implementation": null, "offload_folder": null, "offload_state_dict": null, "offload_buffers": null, "use_cache": true, "cache_dir": null, "force_download": false, "local_files_only": false, "proxies": null, "resume_download": false, "revision": "main", "code_revision": "main", "subfolder": null, "token": null, "use_safetensors": null, "variant": null, "trust_remote_code": false}` |  |
-| tokenizer | `string` or `null` |  | string |  | Model HuggingFace ID, or path, or None to use the one associated with the model |
+| tokenizer | `string` or `null` |  | string | `null` | Model HuggingFace ID, or path, or None to use the one associated with the model |
 | use_fast_tokenizer | `boolean` |  | boolean | `true` | Use the Fast version of the tokenizer. The 'slow' version may be compatible with more features. |
-| resume_from_checkpoint | `boolean` or `string` |  | boolean and/or string |  | Normally should be set to 'auto' to continue if a checkpoint exists.        Can set to True to always try to continue, False to never try, or a path to load from a specific path. |
+| resume_from_checkpoint | `boolean` or `string` |  | boolean and/or string | `false` | Normally should be set to 'auto' to continue if a checkpoint exists.        Can set to True to always try to continue, False to never try, or a path to load from a specific path. |
 | final_checkpoint_name | `string` |  | string | `"checkpoint-final"` | Name of final checkpoint. Should be left as default |
 | determinism | `string` |  | `no` `half` `full` | `"no"` | Set the level of determinism in implementations. Deterministic implementations are not always available,            and when they are, they are usually slower than their non-deterministic counterparts. Recommended for            debugging only.            'no': No determinism.            'half': Prefer deterministic implementations.            'full': Only fully deterministic implementations, error out on operations that only have non-deterministic                    implementations. |
 
@@ -370,7 +365,7 @@ Supervised fine-tuning arguments
 | -------- | ---- | -------- | --------------- | ------- | ----------- |
 | max_seq_length | `integer` |  | integer | `2048` | Maximum length input sequence length. Longer sequences will be filtered out. |
 | save_name_if_new_basemodel | `string` |  | string | `"checkpoint-new-basemodel"` | If a new basemodel is saved, it will be saved with this name |
-| train_on_completions_only | `boolean` |  | boolean | `False` | Only compute loss on the assistant's turns. |
+| train_on_completions_only | `boolean` |  | boolean | `false` | Only compute loss on the assistant's turns. |
 
 ## SilogenTrainingArguments
 
