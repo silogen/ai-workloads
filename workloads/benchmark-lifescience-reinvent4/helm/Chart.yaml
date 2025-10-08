@@ -1,0 +1,4 @@
+apiVersion: v2
+name: benchmark-lifescience-reinvent4
+description: A Helm chart for Reinvent4 inference
+version: 0.0.1
