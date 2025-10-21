@@ -93,7 +93,8 @@ nav:
     - llm-finetune-llama-factory: workloads/llm-finetune-llama-factory/helm/README.md
     - llm-finetune-silogen-engine:
       - Overview: workloads/llm-finetune-silogen-engine/helm/README.md
-      - Finetuning Config: workloads/llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md
+      - SFT Config: workloads/llm-finetune-silogen-engine/helm/config_doc_sft.md
+      - DPO Config: workloads/llm-finetune-silogen-engine/helm/config_doc_dpo.md
     - llm-finetune-verl: workloads/llm-finetune-verl/helm/README.md
     - llm-inference-llamacpp-mi300x: workloads/llm-inference-llamacpp-mi300x/helm/README.md
     - llm-inference-megatron-lm: workloads/llm-inference-megatron-lm/helm/README.md

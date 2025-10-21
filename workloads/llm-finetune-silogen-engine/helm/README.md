@@ -78,3 +78,16 @@ Note that the logging frequency is set by the HuggingFace Transformers [logging 
 ## Best-known-configuration model overrides
 
 The directory `overrides/models` hosts finetuning recipes for various models. The files are named according to model canonical names, which is the huggingface pattern of `organization/model-name` just changed into `organization_model-name`. These configurations have been shown to work well in experiments, but that does not guarantee that these exact parameters are always optimal. The best parameters still depend on the data, too.
+
+## Running DPO
+
+The default values have an SFT-specific field `finetuning_config.sft_args`, which must be set to null to run DPO. An example command for running DPO training:
+
+```bash
+helm template debug-dpo . \
+ --values overrides/tiny-llama-dpo-full-param.yaml \
+ --values overrides/data/ultrafeedback-binarized.yaml \
+ --set checkpointsRemote="default-bucket/experiments/debug-dpo-tiny-llama-ultrafeedback-alpha" \
+ | kubectl apply -f - -nkaiwo
+```
+Note that first you must download Ultrafeedback Binarized with the `workloads/download-data-to-bucket/helm` chart using the override file `workloads/download-data-to-bucket/helm/overrides/ultrafeedback-binarized-to-minio.yaml`.

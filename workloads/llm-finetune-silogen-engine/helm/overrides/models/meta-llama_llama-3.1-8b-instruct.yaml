@@ -2,7 +2,7 @@
 model: "meta-llama/Llama-3.1-8B-Instruct"
 
 # Resources:
-downloadsReservedSize: 24Gi
+downloadsReservedSize: 64Gi
 checkpointsReservedSize: 512Gi
 finetuningGpus: 1
 

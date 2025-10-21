@@ -1,6 +1,6 @@
-# Finetuning config structure and parameters
+# Finetuning config structure and parameters for SFT
 
-This document describes the structure of the finetuning configuration, and the parameters and values that can be defined there.
+This document describes the structure of the SFT finetuning configuration, and the parameters and values that can be defined there.
 
 See the finetuning config section [this config file](overrides/llama-31-tiny-random-deepspeed-values.yaml) for an example of a valid configuration.
 See the various sub-configs for their options. Additional properties are not allowed.
@@ -115,11 +115,14 @@ These are simply concatenated, the same as sampling all with equal weight.
 The datasets themselves need to be in the finetuning supported JSONL formats.
 For SFT this means lines:
 
-    {"messages": {"content": "string", "role": "string"}}
+    {"messages": [{"content": "string", "role": "string"}]}
 
 For DPO this means lines of:
-
-    {"prompt_messages": {"content": "string", "role": "string"}, "chosen_messages": {"content": "string", "role": "string"}, "rejected_messages": {"content": "string", "role": "string"}}
+    {
+       "prompt_messages": [{"content": "string", "role": "string"}],
+       "chosen_messages": [{"content": "string", "role": "string"}],
+        "rejected_messages": [{"content": "string", "role": "string"}]
+    }
 
 #### Type: `object`
 
@@ -372,9 +375,9 @@ Supervised fine-tuning arguments
 HuggingFace TrainingArguments as Config with additional SiloGen conventions
 
 The list of training arguments is best available online (the version might not be up-to-date here):
-https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.TrainingArguments
+https://huggingface.co/docs/transformers/v4.53.0/en/main_classes/trainer#transformers.TrainingArguments
 
-The TrainingArguments object does a lot of things besides specifying the training configuaration options (e.g. it
+The TrainingArguments object does a lot of things besides specifying the training configuration options (e.g. it
 has computed properties like true training batch size etc.)
 
 ## TaskType
@@ -416,11 +419,14 @@ it can take a lot of draws to see every sample from a dataset and so the resulti
 The datasets themselves need to be in the finetuning supported JSONL formats.
 For SFT this means lines:
 
-    {"messages": {"content": "string", "role": "string"}}
+    {"messages": [{"content": "string", "role": "string"}]}
 
 For DPO this means lines of:
-
-    {"prompt_messages": {"content": "string", "role": "string"}, "chosen_messages": {"content": "string", "role": "string"}, "rejected_messages": {"content": "string", "role": "string"}}
+    {
+       "prompt_messages": [{"content": "string", "role": "string"}],
+       "chosen_messages": [{"content": "string", "role": "string"}],
+        "rejected_messages": [{"content": "string", "role": "string"}]
+    }
 
 #### Type: `object`
 
