@@ -6,6 +6,7 @@ metadata:
 
 image: ghcr.io/mlflow/mlflow:v2.22.0
 imagePullPolicy: Always
+imagePullSecrets: []
 
 gpus: 0
 # also default when no gpu assigned

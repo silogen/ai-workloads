@@ -1,0 +1,48 @@
+metadata:
+  labels: {}
+
+# The build steps for this file can be found under ai-workloads/docker/lifescience/reinvent4/Dockerfile
+image: ghcr.io/silogen/reinvent4:rocm7.0_ubuntu24.04_py3.12_pytorch_release_2.5.1
+imagePullPolicy: Always
+
+gpus: 1
+memory_per_gpu: 64
+cpu_per_gpu: 12
+
+storage:
+  ephemeral:
+    quantity: 128Gi
+    # Change the storageClassName to standard if mlstorage is not available.
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+entrypoint: |
+  # Move the REINVENT4 directory to the ephemeral storage
+  mv /REINVENT4 /workload/REINVENT4
+
+  cd /workload/REINVENT4
+
+  START_TIME=$(date +%s)
+
+  # Run the REINVENT4 demo notebook
+  if python3 ./notebooks/Reinvent_demo_clean.py; then
+    echo "REINVENT4 demo workflow completed successfully"
+  else
+    echo "REINVENT4 demo workflow failed with exit code: $?"
+  fi
+
+  # # Uncomment the lines below if you want to run the TLRL notebook instead
+  # if python3 ./notebooks/Reinvent_TLRL_clean.py; then
+  #   echo "REINVENT4 TLRL workflow completed successfully"
+  # else
+  #   echo "REINVENT4 TLRL workflow failed with exit code: $?"
+  # fi
+
+  END_TIME=$(date +%s)
+  DURATION=$((END_TIME - START_TIME))
+
+  echo "Benchmark completed at: $(date)"
+  echo "Total benchmark duration: ${DURATION} seconds ($(date -u -d @${DURATION} +%H:%M:%S))"

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: weatherbench-runner
+description: Runs a script to download reference data and model data, run the Weatherbench metrics on them, and then upload the result to Minio.
+type: application
+version: 0.0.1
+appVersion: "0.0.1"

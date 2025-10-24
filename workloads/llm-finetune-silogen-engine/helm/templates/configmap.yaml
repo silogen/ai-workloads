@@ -115,4 +115,8 @@ data:
     sft_args:
       {{- toYaml .sft_args | nindent 6 }}
     {{- end }}
+    {{- if .tracking }}
+    tracking:
+      {{- toYaml .tracking | nindent 6 }}
+    {{- end }}
     {{- end }}

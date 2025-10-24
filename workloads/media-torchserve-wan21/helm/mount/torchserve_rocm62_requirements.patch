@@ -1,0 +1,10 @@
+diff --git a/requirements/torch_rocm62.txt b/requirements/torch_rocm62.txt
+index 291a07b4..d3f5a12f 100644
+--- a/requirements/torch_rocm62.txt
++++ b/requirements/torch_rocm62.txt
+@@ -1,4 +1 @@
+---index-url https://download.pytorch.org/whl/rocm6.2
+-torch==2.5.1+rocm6.2; sys_platform == 'linux'
+-torchvision==0.20.1+rocm6.2; sys_platform == 'linux'
+-torchaudio==2.5.1+rocm6.2; sys_platform == 'linux'
++

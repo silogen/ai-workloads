@@ -1,0 +1,6 @@
+apiVersion: v2
+name: weatherbench-model-preprocessor
+description: Runs a script to download ECMWF ai-models outputs for a single model, preprocesses and combines them for Weatherbench and uploads to Minio.
+type: application
+version: 0.0.1
+appVersion: "0.0.1"

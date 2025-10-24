@@ -1,0 +1,10 @@
+accelerate>=1.1.1
+dashscope==1.22.2
+easydict==1.13
+ftfy==6.3.1
+gradio>=5.0.0
+imageio==2.36.1
+imageio-ffmpeg==0.6.0
+opencv-python>=4.9.0.80
+pygit2==1.17.0
+tqdm

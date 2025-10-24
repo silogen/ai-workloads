@@ -15,11 +15,30 @@ You can configure the following parameters in the `values.yaml` file or override
 | Parameter                    | Description                                                           | Default                                    |
 |------------------------------|-----------------------------------------------------------------------|--------------------------------------------|
 | `image`                      | Container image repository and tag                                    | `rocm/dev-ubuntu-22.04:6.2.4`             |
+| `imagePullSecrets`           | List of Kubernetes secrets for pulling images from private registries  | `[]`                                       |
 | `gpus`                       | Number of GPUs to allocate                                            | `1`                                        |
 | `model`                     | HuggingFace model path (e.g., `Comfy-Org/flux1-dev`)                | Not set                                    |
 | `tag`                       | Specific model binaries (**\*tag\*.safetensors**)  to download (optional)                        | Clone the repo when not set                                   |
 | `storage.ephemeral.quantity` | Ephemeral storage size                                               | `200Gi`                                    |
 | `kaiwo.enabled`             | Enable Kaiwo operator management                                      | `false`                                    |
+## Using Private Container Registries
+
+If you need to pull images from a private registry, set the `imagePullSecrets` field in your `values.yaml` or via the command line. This should be a list of Kubernetes secret names that provide credentials for your registry.
+
+Example in `values.yaml`:
+
+```yaml
+imagePullSecrets:
+  - my-registry-secret
+```
+
+Or via the command line:
+
+```bash
+helm template . --set imagePullSecrets={my-registry-secret} | kubectl apply -f -
+```
+
+The deployment will include these secrets in the pod spec, allowing Kubernetes to authenticate to your private registry.
 
 ## Environment Variables
 

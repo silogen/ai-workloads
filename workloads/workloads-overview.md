@@ -146,3 +146,23 @@ Return from any regular `k9s` view with `Esc` .
 To create a new workload, you can duplicate an existing workload and adapt as needed.
 
 [Example: Using your own model and data in the workloads](https://github.com/silogen/ai-workloads/blob/main/docs/tutorials/tutorial-01-deliver-resources-and-finetune.md#next-steps-how-to-use-your-own-model-and-data)
+
+```{toctree}
+---
+caption: Reference AI Workloads
+maxdepth: 1
+hidden: True
+---
+dev-chatui-openwebui <dev-chatui-openwebui/helm/README.md>
+dev-openvscode-server <dev-workspace-vscode/helm/README.md>
+dev-text2image-comfyui <dev-text2image-comfyui/helm/README.md>
+download-data-to-bucket <download-data-to-bucket/helm/README.md>
+download-huggingface-model-to-bucket <download-huggingface-model-to-bucket/helm/README.md>
+k8s-namespace-setup <k8s-namespace-setup/helm/README.md>
+LLM fine-tuning overview <llm-finetune-silogen-engine/helm/README.md>
+Fine-tuning config for the workload <llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md>
+llm-inference-llamacpp-mi300x <llm-inference-llamacpp-mi300x/helm/README.md>
+llm-inference-sglang <llm-inference-sglang/helm/README.md>
+llm-inference-vllm <llm-inference-vllm/helm/README.md>
+llm-inference-vllm-benchmark-mad <llm-inference-vllm-benchmark-mad/helm/README.md>
+```

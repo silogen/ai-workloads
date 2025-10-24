@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "release.fullname" . }}
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
+  template:
+    spec:
+      {{- include "image.pull_secrets" . | trim | nindent 6 }}
+      restartPolicy: Never
+      containers:
+      - name: runner
+        image: {{ .Values.image }}
+        imagePullPolicy: Always
+        command:
+        - sh
+        - -e
+        - -u
+        - -c
+        args:
+        - |
+          cd /workdir/run
+          echo "Downloading data, running weatherbench and uploading data"
+          ######### SETUP ENVIRONMENT VARIABLES FOR WEATHERBENCH #########
+          export WB_METRICS="{{- range .Values.settings.wb_metrics}} {{.}}{{ end }}"
+          export WB_VARIABLES="{{- range .Values.settings.wb_variables}} {{.}}{{ end }}"
+          ######### RUN WEATHERBENCH #####################################
+          sed -i 's/cert_check=not no_cert/secure=not no_cert/' /workdir/python/minio_uploader.py
+          bash ../weatherbench/run_weatherbench.sh {{ .Values.settings.minio_bucket }} {{ .Values.settings.minio_prefix }} \
+            {{ .Values.settings.start_date }} {{ .Values.settings.end_date }} \
+            {{ .Values.settings.forecast_period }} {{ .Values.settings.forecast_steps }} \
+            {{ .Values.settings.cds_file }} {{- range .Values.settings.models}} {{.}}{{ end }}
+          echo "Done"
+        resources:
+          {{- include "container.resources" . | trim | nindent 12 }}
+        env:
+          {{- include "container.env" . | trim | nindent 12 }}
+          {{- include "container.env_secrets" . | trim | nindent 12 }}

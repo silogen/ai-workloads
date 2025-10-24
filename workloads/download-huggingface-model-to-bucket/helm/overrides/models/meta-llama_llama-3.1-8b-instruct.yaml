@@ -1,2 +1,3 @@
 modelId: meta-llama/Llama-3.1-8B-Instruct
+bucketPath: default-bucket/models/meta-llama/Llama-3.1-8B-Instruct
 storageQuantity: 38Gi

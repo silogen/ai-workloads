@@ -27,6 +27,26 @@ You can configure the following parameters in the `values.yaml` file or override
 | `backendStore.secret.name`            | Secret name for database credentials                          | `mlflow-db-credentials`                    |
 | `backendStore.secret.userKey`         | Key in secret for username                                    | `username`                                 |
 | `backendStore.secret.passwordKey`     | Key in secret for password                                    | `password`                                 |
+| `imagePullSecrets`                    | List of Kubernetes secrets for pulling images from private registries  | `[]`                                       |
+
+## Using Private Container Registries
+
+If you need to pull images from a private registry, set the `imagePullSecrets` field in your `values.yaml` or via the command line. This should be a list of Kubernetes secret names that provide credentials for your registry.
+
+Example in `values.yaml`:
+
+```yaml
+imagePullSecrets:
+  - my-registry-secret
+```
+
+Or via the command line:
+
+```bash
+helm template . --set imagePullSecrets={my-registry-secret} | kubectl apply -f -
+```
+
+The deployment will include these secrets in the pod spec, allowing Kubernetes to authenticate to your private registry.
 
 ### Artifact Storage Configuration
 

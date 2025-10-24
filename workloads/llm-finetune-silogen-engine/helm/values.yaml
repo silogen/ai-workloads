@@ -92,3 +92,4 @@ finetuning_config:
     resume_from_checkpoint: auto
   sft_args:
     max_seq_length: 2048
+  tracking: null

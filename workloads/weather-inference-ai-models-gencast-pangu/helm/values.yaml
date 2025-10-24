@@ -1,0 +1,67 @@
+# Job metadata and labels
+metadata:
+  labels: {}
+  name: "ecmwf-tooling-job"
+
+# Container image configuration
+image:
+  name: "rocm/jax-community"
+  tag: "latest"
+  pullPolicy: "Always"
+
+# Container resources
+resources:
+  gpus: 1
+  memoryPerGpu: 64
+  cpuPerGpu: 4
+
+# Container command and entrypoint
+settings:
+  model_name: gencast-1.0-Mini
+  lead_time: 48
+  visualize: true
+  model_out_dir: /workspace/model_out
+  assets_dir: /workspace/assets
+  jax_profiler: false
+  num_ensemble_members: 1
+  date: "20230110"
+  time: "0000"
+  minio_bucket: weather
+  minio_prefix: inference_results
+  mountdir: /workload/mount
+
+# Volume configurations
+storage:
+  ephemeral:
+    quantity: 200Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    enabled: true
+    sizeLimit: "32Gi"
+
+
+# Environment variables
+env_vars:
+  MINIO_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  MINIO_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  MINIO_ENDPOINT: http://minio.minio-tenant-default.svc.cluster.local:80
+  CDSAPI_URL:
+    name: cds-api-secret
+    key: url
+  CDSAPI_KEY:
+    name: cds-api-secret
+    key: key
+
+# Job restart and timeout settings
+job:
+  restartPolicy: "Never"
+  backoffLimit: 0
+
+kaiwo:
+  enabled: false

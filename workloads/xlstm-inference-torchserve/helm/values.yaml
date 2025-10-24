@@ -1,0 +1,61 @@
+metadata:
+  labels: {}
+
+image: "rocm/pytorch:rocm6.4_ubuntu24.04_py3.12_pytorch_release_2.6.0"
+imagePullPolicy: Always
+
+model: "NX-AI/xLSTM-7b"
+
+gpus: 1
+memoryPerGpu: 256 # Gi
+cpuPerGpu: 4
+
+entrypoint: |
+  bash /mount/entrypoint.sh
+storage:
+  dshm:
+    sizeLimit: 32Gi
+  ephemeral:
+    quantity: 200Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+    mountPath: /workload
+
+env_vars:
+  TS_REPO_URL: "https://github.com/pytorch/serve.git"
+  TS_REPO_DIR: "/workload/serve"
+  MODEL_STORE: "/workload/model-store"
+  TEMP: "/workload/tmp"
+  TS_CONFIG: "/mount/config.properties"
+  BUCKET_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+  BUCKET_PATH: "default-bucket/models"
+
+startupProbe:
+  httpGet:
+    path: /ping
+    port: http
+  periodSeconds: 10
+  failureThreshold: 360 # 360 x 10s => allow for 60 minutes startup time
+livenessProbe:
+  httpGet:
+    path: /ping
+    port: http
+readinessProbe:
+  httpGet:
+    path: /ping
+    port: http
+
+deployment:
+  ports:
+    http: 8080
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
