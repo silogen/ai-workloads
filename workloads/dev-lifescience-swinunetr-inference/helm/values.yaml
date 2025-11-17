@@ -1,0 +1,55 @@
+metadata:
+  labels: {}
+
+image: rocm/pytorch:rocm7.0_ubuntu24.04_py3.12_pytorch_release_2.6.0
+imagePullPolicy: Always
+
+gpus: 1
+ephemeral_storage: 128Gi
+
+entrypoint: |
+  bash /workload/mount/entrypoint.sh
+
+env_vars:
+  HF_MODEL: "darragh/swinunetr-btcv-base"
+  ROI_X: 96
+  ROI_Y: 96
+  ROI_Z: 96
+  SPACE_X: 1.5
+  SPACE_Y: 1.5
+  SPACE_Z: 2.0
+  A_MIN: -175.0
+  A_MAX: 250.0
+  B_MIN: 0.0
+  B_MAX: 1.0
+  INFER_OVERLAP: 0.5
+  COMPILE: "false"
+  COMPILE_MODE: "max-autotune"
+  AUTOCAST: "false"
+
+storage:
+  dshm:
+    sizeLimit: 32Gi
+
+deployment:
+  ports:
+    http: 8000
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  failureThreshold: 60
+  periodSeconds: 10
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
