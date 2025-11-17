@@ -11,7 +11,8 @@
 #################################################################################
 
 # Source the environment variables from the separate script
-source ./set-env-vars.sh  # path in container
+DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$DIR/set-env-vars.sh"  # path in container
 
 TIME_STAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 EXP_NAME="${EXP_NAME:-perf}"
