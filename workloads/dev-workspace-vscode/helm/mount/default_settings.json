@@ -1,3 +1,4 @@
 {
-    "workbench.colorTheme": "Default Dark Modern"
+    "workbench.colorTheme": "Default Dark Modern",
+    "chat.disableAIFeatures": true
 }

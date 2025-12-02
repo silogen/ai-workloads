@@ -12,7 +12,7 @@ pvc_annotations:
   pvc.silogen.ai/user-pvc-storage-class-name: "multinode"
   pvc.silogen.ai/user-pvc-uid: "{{ .Values.metadata.user_id }}"
 
-image: rocm/pytorch:rocm6.4_ubuntu24.04_py3.12_pytorch_release_2.6.0
+image: rocm/pytorch:rocm7.0.2_ubuntu24.04_py3.12_pytorch_release_2.8.0
 imagePullPolicy: Always
 imagePullSecrets: []
 gpus: 1
@@ -50,7 +50,8 @@ startupProbe:
   httpGet:
     path: /healthz
     port: http
-  failureThreshold: 20
+  failureThreshold: 60
+  periodSeconds: 10
 livenessProbe:
   httpGet:
     path: /healthz
@@ -65,12 +66,12 @@ entrypoint: |
   curl -fsSL https://code-server.dev/install.sh | sh
 
   # Set up persistent VSCode configuration directory using environment variable
-  VSCODE_USER_DIR="$VSCODE_CONFIG_DIR/User"
+  VSCODE_USER_DIR="$VSCODE_CONFIG_DIR/code-server/User"
 
   # Create directory structure if it doesn't exist
   mkdir -p "$VSCODE_USER_DIR"
-  mkdir -p "$VSCODE_CONFIG_DIR/extensions"
-  mkdir -p "$VSCODE_CONFIG_DIR/logs"
+  mkdir -p "$VSCODE_CONFIG_DIR/code-server/extensions"
+  mkdir -p "$VSCODE_CONFIG_DIR/code-server/logs"
 
   # Copy default settings only if user settings don't exist (preserve user customizations)
   if [ ! -f "$VSCODE_USER_DIR/settings.json" ]; then
@@ -82,8 +83,8 @@ entrypoint: |
   export XDG_CONFIG_HOME="$VSCODE_CONFIG_DIR"
 
   # Install extensions (these will be stored persistently)
-  curl -L -o /tmp/aws-s3-vscode-extension-1.8.4.vsix https://github.com/necatiarslan/aws-s3/raw/refs/heads/main/vsix/aws-s3-vscode-extension-1.8.4.vsix &&
-  code-server --install-extension /tmp/aws-s3-vscode-extension-1.8.4.vsix
+  curl -L -o /tmp/aws-s3-vscode-extension-1.8.5.vsix https://github.com/necatiarslan/aws-s3/raw/refs/heads/main/vsix/aws-s3-vscode-extension-1.8.5.vsix &&
+  code-server --install-extension /tmp/aws-s3-vscode-extension-1.8.5.vsix
   code-server --install-extension ms-python.python
   code-server --install-extension GitHub.vscode-pull-request-github
   code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
