@@ -13,8 +13,8 @@ This Helm Chart deploys a [ComfyUI](https://github.com/comfyanonymous/ComfyUI) w
 You can configure the following parameters in the `values.yaml` file or override them via the command line:
 
 | Parameter                    | Description                                                           | Default                                    |
-|------------------------------|-----------------------------------------------------------------------|--------------------------------------------|
-| `image`                      | Container image repository and tag                                    | `rocm/dev-ubuntu-22.04:6.2.4`             |
+|------------------------------|-----------------------------------------------------------------------|--------------------------------------------||
+| `image`                      | Container image repository and tag                                    | `rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0`             |
 | `imagePullSecrets`           | List of Kubernetes secrets for pulling images from private registries  | `[]`                                       |
 | `gpus`                       | Number of GPUs to allocate                                            | `1`                                        |
 | `model`                     | HuggingFace model path (e.g., `Comfy-Org/flux1-dev`)                | Not set                                    |
@@ -49,7 +49,7 @@ The following environment variables are configured for MinIO/S3 integration:
 | `BUCKET_STORAGE_HOST`        | MinIO/S3 endpoint URL                                                | `http://minio.minio-tenant-default.svc.cluster.local:80` |
 | `BUCKET_STORAGE_ACCESS_KEY`  | MinIO/S3 access key (from secret)                                   | From `minio-credentials` secret            |
 | `BUCKET_STORAGE_SECRET_KEY`  | MinIO/S3 secret key (from secret)                                   | From `minio-credentials` secret            |
-| `PIP_DEPS`                  | Additional Python packages to install via pip (space or newline separated URLs/packages) | ROCm-compatible torchaudio wheel          |
+| `PIP_DEPS`                  | Additional Python packages to install via pip (space or newline separated URLs/packages) | `""`                                      |
 | `COMFYUI_PATH`              | ComfyUI installation path                                            | `/workload/ComfyUI`                       |
 | `MODEL_BIN_URL`             | Direct URL to download an additional model checkpoint (optional)                       | Not set                                    |
 
