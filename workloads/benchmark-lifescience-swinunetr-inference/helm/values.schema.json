@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Metadata for the deployment",
+      "properties": {
+        "labels": {
+          "type": "object",
+          "description": "Labels to apply to the deployment",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["labels"]
+    },
+    "image": {
+      "type": "string",
+      "description": "Docker image to use for the deployment"
+    },
+    "imagePullPolicy": {
+      "type": "string",
+      "description": "Image pull policy",
+      "enum": ["Always", "IfNotPresent", "Never"]
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "Image pull secrets for private registries"
+    },
+    "entrypoint": {
+      "type": "string",
+      "description": "Entrypoint for the container"
+    },
+    "gpus": {
+      "type": "integer",
+      "description": "Number of GPUs to allocate",
+      "minimum": 1
+    },
+    "ephemeral_storage": {
+      "type": "string",
+      "description": "Ephemeral storage space written with as <value>Gi",
+      "minimum": 1
+    },
+    "env_vars": {
+      "type": "object",
+      "description": "Environment variables for the container",
+      "properties": {
+        "HF_MODEL": {
+          "type": "string",
+          "description": "Hugging Face model name"
+        },
+        "ROI_X": {
+          "type": "integer",
+          "description": "Region of interest X dimension"
+        },
+        "ROI_Y": {
+          "type": "integer",
+          "description": "Region of interest Y dimension"
+        },
+        "ROI_Z": {
+          "type": "integer",
+          "description": "Region of interest Z dimension"
+        },
+        "SPACE_X": {
+          "type": "number",
+          "description": "Spacing in X dimension"
+        },
+        "SPACE_Y": {
+          "type": "number",
+          "description": "Spacing in Y dimension"
+        },
+        "SPACE_Z": {
+          "type": "number",
+          "description": "Spacing in Z dimension"
+        },
+        "A_MIN": {
+          "type": "number",
+          "description": "Minimum value for normalization"
+        },
+        "A_MAX": {
+          "type": "number",
+          "description": "Maximum value for normalization"
+        },
+        "B_MIN": {
+          "type": "number",
+          "description": "Minimum value for normalization range"
+        },
+        "B_MAX": {
+          "type": "number",
+          "description": "Maximum value for normalization range"
+        },
+        "INFER_OVERLAP": {
+          "type": "number",
+          "description": "Inference overlap value"
+        },
+        "COMPILE": {
+          "type": "string",
+          "description": "Whether to compile the model",
+          "enum": ["true", "false"]
+        },
+        "COMPILE_MODE": {
+          "type": "string",
+          "description": "Compilation mode for the model"
+        },
+        "AUTOCAST": {
+          "type": "string",
+          "description": "Whether to use autocast",
+          "enum": ["true", "false"]
+        }
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "vllm_engine_args": {
+      "type": "object",
+      "description": "Arguments for the vllm engine",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "storage": {
+      "type": "object",
+      "description": "Storage configuration",
+      "properties": {
+        "dshm": {
+          "type": "object",
+          "description": "Shared memory configuration",
+          "properties": {
+            "sizeLimit": {
+              "type": "string",
+              "description": "Size limit for shared memory"
+            }
+          },
+          "required": ["sizeLimit"]
+        }
+      },
+      "required": ["dshm"]
+    },
+    "volumes": {
+      "type": "array",
+      "description": "Custom volumes to mount from secrets or configmaps.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "mountPath": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "object",
+            "properties": {
+              "secretName": {
+                "type": "string"
+              }
+            },
+            "required": ["secretName"]
+          }
+        },
+        "required": ["name", "mountPath"]
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "description": "Deployment configuration",
+      "properties": {
+        "ports": {
+          "type": "object",
+          "description": "Ports for the deployment",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "description": "HTTP port for the deployment"
+            }
+          },
+          "required": ["http"]
+        }
+      },
+      "required": ["ports"]
+    },
+    "nodeSelector": {
+      "type": "object",
+      "properties": {
+        "dev": {
+          "type": "string",
+          "description": "If true, use the dev node selector"
+        }
+      }
+    },
+    "kaiwo": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If true, use Kaiwo CRDs to have Kaiwo operator manage the workload"
+        }
+      }
+    },
+      "startupProbe": {
+      "type": ["object"],
+      "additionalProperties": true,
+      "description": "Startup probe configuration for the container"
+    },
+    "livenessProbe": {
+      "type": ["object"],
+      "additionalProperties": true,
+      "description": "Liveness probe configuration for the container"
+    },
+    "readinessProbe": {
+      "type": ["object"],
+      "additionalProperties": true,
+      "description": "Readiness probe configuration for the container"
+    }
+  },
+  "required": ["metadata", "image", "imagePullPolicy", "gpus", "ephemeral_storage", "env_vars", "storage", "deployment", "kaiwo"],
+  "additionalProperties": false
+}

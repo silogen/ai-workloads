@@ -130,10 +130,15 @@ spec:
                     --loader {{ .loader }} \
                     --saver {{ .saver }} \
                     --target-tensor-parallel-size {{ .tensorParallel }} \
+                    --target-pipeline-parallel-size {{ .pipelineParallel }} \
+                    --target-expert-parallel-size {{ .expertParallel }} \
                     --checkpoint-type hf \
                     --load-dir /local-resources/sourcemodel \
                     --save-dir /local-resources/checkpoints \
-                    --tokenizer-model /local-resources/sourcemodel
+                    --tokenizer-model /local-resources/sourcemodel \
+                    {{- range $.Values.additionalArgs }}
+                    {{ . }} \
+                    {{- end }}
 
               echo "Checkpoint conversion completed"
 

@@ -62,6 +62,20 @@ helm template workloads/llm-pretraining-megatron-lm-ray/helm \
   | kubectl apply -f -
 ```
 
+It is important to note that service account used by the rayjob must have `get rayjob` and `patch configmap | pvc` permissions in order to run garbage collection script from [https://github.com/silogen/ai-workloads/blob/main/workloads/llm-pretraining-megatron-lm-ray/helm/mount/gc.sh](https://github.com/silogen/ai-workloads/blob/main/workloads/llm-pretraining-megatron-lm-ray/helm/mount/gc.sh) successfully. If this requirement is not satisfied it will manifest by failing to start the ray cluster. The head pod of the cluster will have `Init:Error` status because init container that runs `gc.sh` script fails with the error similar to
+
+```bash
+Error from server (Forbidden): rayjobs.ray.io is forbidden: User "system:serviceaccount:examplenamespace:default" cannot get resource "rayjobs" in API group "ray.io" in the namespace "examplenamespace"
+```
+
+To quickly overcome this issue while waiting for permissions setup one can comment out this line in [https://github.com/silogen/ai-workloads/blob/main/workloads/llm-pretraining-megatron-lm-ray/helm/templates/ray_job.yaml](https://github.com/silogen/ai-workloads/blob/main/workloads/llm-pretraining-megatron-lm-ray/helm/templates/ray_job.yaml#L69)
+
+```
+bash /local_resources/mount/gc.sh{{- if and .Values.kaiwo.storageEnabled .Values.kaiwo.enabled}} --skip-pvc{{- end }} {{ include "release.fullname" . }}
+```
+
+If automatic garbage collection was disabled this way then resources of the workload such as `PVC` and `ConfigMap` should be deleted manually using `kubectl delete` commands in the end of the run.
+
 ### 2.4 Run inference workload with the final checkpoint (2.3) and query it using sample prompts on Llama-3.1-70B
 
 

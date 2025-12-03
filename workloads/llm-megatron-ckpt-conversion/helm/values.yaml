@@ -42,3 +42,9 @@ conversionArgs:
   loader: "llama_mistral" # Model loader: llama_mistral, megatron, etc.
   saver: "mcore"
   tensorParallel: 1 # 1 for 8B, 8 for 70B
+  pipelineParallel: 1
+  expertParallel: 1
+
+# Additional args to pass to conversion script, e.g. --bf16 or --fp16 for specific precision
+additionalArgs:
+- "--bf16"

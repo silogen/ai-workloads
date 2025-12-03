@@ -18,22 +18,47 @@ spec:
       labels:
         app: {{ include "release.fullname" . }}
     spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- .Values.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       containers:
-        - env:
-          {{- include "container.env" . | nindent 12 }}
-          image: {{ .Values.image | quote}}
-          imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
-          name: {{ .Chart.Name }}
+        - name: {{ .Chart.Name }}
+          {{- if .Values.entrypoint }}
           command: ["sh", "-c"]
           args:
           - |
-            bash /workload/mount/download_files.sh {{ .Values.remoteModelPath }} {{ .Values.remoteTokenizerPath | trimSuffix "/" }}
-            git checkout fd6f0d11
-            git apply /workload/mount/Megatron-LM-inference.patch
-            echo "Patch applied successfully"
-            bash /workload/mount/run_megatron.sh
+            {{- .Values.entrypoint | nindent 12 }}
+          {{- end }}
+          {{- if .Values.env_vars }}
+          env:
+            {{- include "container.env" . | nindent 12 }}
+          {{- end }}
+          image: {{ .Values.image | quote}}
+          imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
           ports:
-            - containerPort: {{ .Values.deployment.port }}
+            {{- range $key, $value := .Values.deployment.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $value }}
+            {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- .Values.livenessProbe | toYaml | nindent 12 -}}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- .Values.readinessProbe | toYaml | nindent 12 -}}
+          {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+            {{- .Values.startupProbe | toYaml | nindent 12 -}}
+          {{- end }}
           resources:
             {{- include "container.resources" . | nindent 12 }}
           volumeMounts:

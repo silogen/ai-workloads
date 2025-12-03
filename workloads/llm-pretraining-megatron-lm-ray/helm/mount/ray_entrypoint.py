@@ -54,6 +54,10 @@ class MegatronWorker:
         """
         Sets up the environment (device, env vars) required for Megatron initialization which will happen inside the pretrain function.
         """
+        import subprocess
+
+        subprocess.run("cd /workspace/Megatron-LM; git apply /local_resources/mount/Megatron-LM.patch;", shell=True)
+
         # Synchronize GPU Visibility Environment Variables
         hip_visible_devices = os.environ.get("HIP_VISIBLE_DEVICES")
         print(

@@ -17,26 +17,26 @@ repos:
     hooks:
       - id: black
         language_version: python3.12
-        args: ["--config=pyproject.toml"]
+        args: [ "--config=pyproject.toml" ]
 
   - repo: https://github.com/pycqa/flake8
     rev: 7.2.0
     hooks:
       - id: flake8
-        args: ["--config=.flake8"]
+        args: [ "--config=.flake8" ]
 
   - repo: https://github.com/pycqa/isort
     rev: 6.0.1
     hooks:
       - id: isort
         name: isort (python)
-        args: ["--settings-path=pyproject.toml"]
+        args: [ "--settings-path=pyproject.toml" ]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.16.0
     hooks:
       - id: mypy
-        args: ["--config-file=pyproject.toml"]
+        args: [ "--config-file=pyproject.toml", "--install-types", "--non-interactive" ]
         exclude: kaiwo|mount
         language_version: python3.12
         additional_dependencies:

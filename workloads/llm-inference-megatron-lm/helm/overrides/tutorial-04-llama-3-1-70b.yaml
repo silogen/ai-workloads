@@ -7,7 +7,7 @@ imagePullPolicy: Always
 remoteTokenizerPath: default-bucket/models/meta-llama/Llama-3.1-70B/
 
 # Path to the checkpoint for Llama 3.1 70B
-remoteModelPath: default-bucket/megatron-models/meta-llama/Llama-3.1-70B/
+remoteModelPath: default-bucket/experiments/megatron-lm/llama-3.1-70b-cpt-test/
 
 envVars:
   BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80

@@ -8,7 +8,6 @@ To generate manifests and print them in standard output using the default `value
 helm template workloads/llm-pretraining-megatron-lm-ray/helm
 ```
 
-
 This will generate a kubernetes manifest with a RayJob, a ConfigMap and a PersistentVolumeClaim resources in the user's active namespace.
 
 To override the default values, a specific file can be passed using `--values` flag
@@ -48,6 +47,20 @@ Some assumptions for running the pretraining jobs are as follows: The initial mo
         key: minio-secret-key
 ```
 
+Additionally service account used by the rayjob must have `get rayjob` and `patch configmap | pvc` permissions in order to run garbage collection script from [helm/mount/gc.sh](./mount/gc.sh) successfully. If this requirement is not satisfied it will manifest by failing to start the ray cluster. The head pod of the cluster will have `Init:Error` status because init container that runs `gc.sh` script fails with the error similar to
+
+```bash
+Error from server (Forbidden): rayjobs.ray.io is forbidden: User "system:serviceaccount:examplenamespace:default" cannot get resource "rayjobs" in API group "ray.io" in the namespace "examplenamespace"
+```
+
+To quickly overcome this issue while waiting for permissions setup one can comment out this line in [./templates/ray_job.yaml](./templates/ray_job.yaml#L69)
+
+```
+bash /local_resources/mount/gc.sh{{- if and .Values.kaiwo.storageEnabled .Values.kaiwo.enabled}} --skip-pvc{{- end }} {{ include "release.fullname" . }}
+```
+
 ## Cleanup
 
 Note that this chart, when run with `kubectl apply`, will create RayJob, PersistentVolumeClaim and ConfigMap objects. After the RayJob has finished, there is a 3600-second grace period to remove the RayJob object from the namespace. ConfigMap and PersistentVolumeClaim are attached to the lifecycle of the RayJob at the start of the workload and cleaned up automatically. However, if there is an issue during start up of the workload, there can be a situation, when ConfigMap and PersistentVolumeClaim are created but are not owned by the RayJob. In this case ConfigMap and PersistentVolumeClaim resources should be cleaned up manually using `kubectl delete` command.
+
+If automatic garbage collection was disabled then resources of the workload should be deleted manually using `kubectl delete` commands.
