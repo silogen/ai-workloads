@@ -14,13 +14,13 @@ You can configure the following parameters in the `values.yaml` file or override
 
 | Parameter                    | Description                                                           | Default                                    |
 |------------------------------|-----------------------------------------------------------------------|--------------------------------------------|
-| `image`                      | Container image repository and tag                                    | `rocm/dev-ubuntu-22.04:6.2.4`             |
-| `imagePullSecrets`           | List of Kubernetes secrets for pulling images from private registries  | `[]`                                       |
+| `image`                      | Container image repository and tag                                    | `rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0` |
+| `imagePullSecrets`           | List of Kubernetes secrets for pulling images from private registries | `[]`                                       |
 | `gpus`                       | Number of GPUs to allocate                                            | `1`                                        |
-| `model`                     | HuggingFace model path (e.g., `Comfy-Org/flux1-dev`)                | Not set                                    |
-| `tag`                       | Specific model binaries (**\*tag\*.safetensors**)  to download (optional)                        | Clone the repo when not set                                   |
-| `storage.ephemeral.quantity` | Ephemeral storage size                                               | `200Gi`                                    |
-| `kaiwo.enabled`             | Enable Kaiwo operator management                                      | `false`                                    |
+| `model`                      | HuggingFace model path (e.g., `Comfy-Org/flux1-dev`)                  | Not set                                    |
+| `tag`                        | Specific model binaries (**\*tag\*.safetensors**)  to download (optional) | Clone the repo when not set            |
+| `storage.ephemeral.quantity` | Ephemeral storage size                                                | `200Gi`                                    |
+| `kaiwo.enabled`              | Enable Kaiwo operator management                                      | `false`                                    |
 ## Using Private Container Registries
 
 If you need to pull images from a private registry, set the `imagePullSecrets` field in your `values.yaml` or via the command line. This should be a list of Kubernetes secret names that provide credentials for your registry.
@@ -46,12 +46,12 @@ The following environment variables are configured for MinIO/S3 integration:
 
 | Variable                     | Description                                                           | Default                                    |
 |------------------------------|-----------------------------------------------------------------------|--------------------------------------------|
-| `BUCKET_STORAGE_HOST`        | MinIO/S3 endpoint URL                                                | `http://minio.minio-tenant-default.svc.cluster.local:80` |
-| `BUCKET_STORAGE_ACCESS_KEY`  | MinIO/S3 access key (from secret)                                   | From `minio-credentials` secret            |
-| `BUCKET_STORAGE_SECRET_KEY`  | MinIO/S3 secret key (from secret)                                   | From `minio-credentials` secret            |
-| `PIP_DEPS`                  | Additional Python packages to install via pip (space or newline separated URLs/packages) | ROCm-compatible torchaudio wheel          |
-| `COMFYUI_PATH`              | ComfyUI installation path                                            | `/workload/ComfyUI`                       |
-| `MODEL_BIN_URL`             | Direct URL to download an additional model checkpoint (optional)                       | Not set                                    |
+| `BUCKET_STORAGE_HOST`        | MinIO/S3 endpoint URL                                                 | `http://minio.minio-tenant-default.svc.cluster.local:80` |
+| `BUCKET_STORAGE_ACCESS_KEY`  | MinIO/S3 access key (from secret)                                     | From `minio-credentials` secret            |
+| `BUCKET_STORAGE_SECRET_KEY`  | MinIO/S3 secret key (from secret)                                     | From `minio-credentials` secret            |
+| `PIP_DEPS`                   | Additional Python packages to install via pip (space or newline separated URLs/packages) | `""`                    |
+| `COMFYUI_PATH`               | ComfyUI installation path                                             | `/workload/ComfyUI`                        |
+| `MODEL_BIN_URL`              | Direct URL to download an additional model checkpoint (optional)      | Not set                                    |
 
 ## Model Configuration
 

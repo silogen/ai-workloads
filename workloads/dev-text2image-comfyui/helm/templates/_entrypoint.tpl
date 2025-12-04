@@ -33,7 +33,7 @@ echo '--------------------------------------------'
 echo '--------------------------------------------'
 echo 'Downloading model from HuggingFace: {{ .Values.model }}'
 echo '--------------------------------------------'
-huggingface-cli download {{ .Values.model }} --local-dir $COMFYUI_PATH/models/checkpoints {{- if .Values.tag }} --include *{{ .Values.tag }}*safetensors{{- end }}
+hf download {{ .Values.model }} --local-dir $COMFYUI_PATH/models/checkpoints {{- if .Values.tag }} --include *{{ .Values.tag }}*safetensors{{- end }}
 
 {{- end }}
 {{- end }}

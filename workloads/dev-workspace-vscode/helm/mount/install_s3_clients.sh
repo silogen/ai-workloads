@@ -4,6 +4,12 @@ echo '============================================'
 echo 'Installing S3 Storage Clients (AWS CLI, MinIO, rclone)'
 echo '============================================'
 
+# Install required dependencies
+echo '--------------------------------------------'
+echo 'Installing required dependencies (curl, unzip, rclone)'
+echo '--------------------------------------------'
+apt-get update && apt-get install -y curl unzip rclone
+
 # Function to install AWS CLI and boto3
 install_aws_cli() {
     echo '--------------------------------------------'
@@ -59,9 +65,6 @@ install_rclone() {
     echo '--------------------------------------------'
     echo 'Installing rclone'
     echo '--------------------------------------------'
-
-    # Install rclone via apt
-    apt-get update && apt-get install rclone -y
 
     # Configure rclone with MinIO S3 settings
     mkdir -p ~/.config/rclone

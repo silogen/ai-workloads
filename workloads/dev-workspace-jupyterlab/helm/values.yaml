@@ -9,7 +9,7 @@ metadata:
   user_id: user
   workload_id: # defaults to the release name
 
-image: rocm/pytorch:rocm7.0.2_ubuntu24.04_py3.12_pytorch_release_2.8.0
+image: rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0
 imagePullPolicy: Always
 imagePullSecrets: []
 gpus: 1
