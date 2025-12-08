@@ -76,6 +76,7 @@ entrypoint: |
   # Copy default settings only if user settings don't exist (preserve user customizations)
   if [ ! -f "$VSCODE_USER_DIR/settings.json" ]; then
     cp /workload/mount/default_settings.json "$VSCODE_USER_DIR/settings.json"
+    sed -i "s|__PYTHON_PATH__|$(which python)|" "$VSCODE_USER_DIR/settings.json"
   fi
 
   # Set environment variables for code-server to use persistent directories
