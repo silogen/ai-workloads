@@ -2,6 +2,8 @@
 mainWorkloadImage: rocm/megatron-lm:v25.4
 remoteSourceModelPath: default-bucket/models/meta-llama/Llama-3.1-8B
 remoteDestinationModelPath: default-bucket/megatron-models/meta-llama/Llama-3.1-8B/
+# remoteTokenizerPath is relevant when converting Megatron -> HuggingFace format
+remoteTokenizerPath: default-bucket/models/meta-llama/Llama-3.1-8B/
 
 # Resources of main workload container
 resources:
@@ -41,10 +43,15 @@ conversionArgs:
   modelType: "GPT" # Model type: GPT, BERT, T5, OPT, BLOOM, etc.
   loader: "llama_mistral" # Model loader: llama_mistral, megatron, etc.
   saver: "mcore"
-  tensorParallel: 1 # 1 for 8B, 8 for 70B
-  pipelineParallel: 1
-  expertParallel: 1
+  # target parallelism settings take effect only when saver is "mcore"
+  targetTensorParallel: 1 # 1 for 8B, 8 for 70B
+  targetPipelineParallel: 1
+  targetExpertParallel: 1
+  # source parallelism settings take effect only when loader is "mcore"
+  sourceTensorParallel: 1 # 1 for 8B, 8 for 70B
+  sourcePipelineParallel: 1
+  sourceExpertParallel: 1
 
-# Additional args to pass to conversion script, e.g. --bf16 or --fp16 for specific precision
+# Additional args to pass to conversion script, e.g. --bf16 or --fp16 for specific precision, --true-vocab-size etc.
 additionalArgs:
 - "--bf16"

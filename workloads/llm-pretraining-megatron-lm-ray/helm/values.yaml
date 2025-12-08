@@ -16,6 +16,11 @@ remoteDataDirPath: default-bucket/datasets/fineweb-edu
 remoteDataNamePrefix: fineweb-edu-train_text_document
 remoteTokenizerPath: default-bucket/models/meta-llama/Llama-3.1-8B
 
+# Reporting
+# Set runTensorboard to true to run tensorboard in the sidecar container.
+runTensorboard: false
+tensorboardDir: /local_resources/experiment/
+
 # Definition of the worker group. Note we count head node as worker too.
 workers:
   startParams: {}
@@ -111,7 +116,7 @@ megatronArguments:
 - "--no-save-optim"
 - "--no-save-rng"
 - "--eval-iters 10"
-- "--tensorboard-dir experiment/"
+- "--tensorboard-dir {{ .Values.tensorboardDir }}"
 - "--ckpt-format torch"
 - "--no-gradient-accumulation-fusion"
 - "--distributed-timeout-minutes 120"

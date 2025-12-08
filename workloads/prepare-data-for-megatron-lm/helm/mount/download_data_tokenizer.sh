@@ -22,9 +22,11 @@ if [[ "$tokenizer_id" = "s3://"* ]]; then
   echo "Setting up minio"
   mc alias set minio-host $BUCKET_STORAGE_HOST $BUCKET_STORAGE_ACCESS_KEY $BUCKET_STORAGE_SECRET_KEY;
   tokenizer_path="${tokenizer_id#'s3://'}"
-  mc cp minio-host/$tokenizer_path/special_tokens_map.json /downloads/tokenizer/special_tokens_map.json
-  mc cp minio-host/$tokenizer_path/tokenizer.json /downloads/tokenizer/tokenizer.json
-  mc cp minio-host/$tokenizer_path/tokenizer_config.json /downloads/tokenizer/tokenizer_config.json
+
+  tokenizerFiles=("special_tokens_map.json" "tokenizer.json" "tokenizer_config.json" "vocab.json" "merges.txt" "tokenizer.model")
+  for file in "${tokenizerFiles[@]}"; do
+    mc cp minio-host/$tokenizer_path/$file /downloads/tokenizer/$file || echo "Did not copy minio-host/$tokenizer_path/$file."
+  done
 else
   echo "Downloading tokenizer from HuggingFace Hub using HuggingFace model id: $tokenizer_id ..."
   huggingface-cli download "$tokenizer_id" \

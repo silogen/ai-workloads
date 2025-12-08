@@ -41,6 +41,17 @@ spec:
               echo "Listing contents of /local-resources/sourcemodel:";
               ls -la /local-resources/sourcemodel || echo "Source model directory not found!";
 
+              {{ if and (eq .Values.conversionArgs.loader "mcore") (eq .Values.conversionArgs.saver "llama_mistral") }}
+              echo "Copying tokenizer and generation config to container...";
+              tokenizerFiles="special_tokens_map.json tokenizer.json tokenizer_config.json vocab.json merges.txt tokenizer.model generation_config.json"
+              for file in ${tokenizerFiles}; do
+                remote_file_path=minio-host/'{{ .Values.remoteTokenizerPath | trimSuffix "/" | replace  "'" "'\\''" }}'/"$file"
+                mc cp "$remote_file_path" /local-resources/tokenizer/$file || echo "Did not copy $remote_file_path."
+                mc cp "$remote_file_path" /local-resources/sourcemodel/$file || echo "Did not copy $remote_file_path."
+              done
+              mc cp minio-host/'{{ .Values.remoteTokenizerPath | trimSuffix "/" | replace  "'" "'\\''" }}'/config.json /local-resources/sourcemodel/config.json || echo "Did not copy remote config.json."
+              {{- end }}
+
               echo "Done copying resources to container";
           resources:
             limits:
@@ -119,7 +130,7 @@ spec:
               echo "Listing contents of /local-resources/sourcemodel:";
               ls -la /local-resources/sourcemodel || echo "Source model directory not found!";
 
-              git apply /local-resources/mount/Megatron-LM.patch
+              git apply --reject --whitespace=fix /local-resources/mount/Megatron-LM.patch
 
               mkdir -p /local-resources/checkpoints
               echo "Starting conversion...";
@@ -129,16 +140,30 @@ spec:
                     --model-size {{ .modelName }} \
                     --loader {{ .loader }} \
                     --saver {{ .saver }} \
-                    --target-tensor-parallel-size {{ .tensorParallel }} \
-                    --target-pipeline-parallel-size {{ .pipelineParallel }} \
-                    --target-expert-parallel-size {{ .expertParallel }} \
+                    {{- if eq .saver "mcore" }}
+                    --target-tensor-parallel-size {{ .targetTensorParallel }} \
+                    --target-pipeline-parallel-size {{ .targetPipelineParallel }} \
+                    --target-expert-parallel-size {{ .targetExpertParallel }} \
+                    {{- end }}
+                    {{- if eq .loader "mcore" }}
+                    --source-tensor-parallel-size {{ .sourceTensorParallel }} \
+                    --source-pipeline-parallel-size {{ .sourcePipelineParallel }} \
+                    --source-expert-parallel-size {{ .sourceExpertParallel }} \
+                    {{- end }}
+                    {{- if eq .loader "llama_mistral" }}
                     --checkpoint-type hf \
+                    {{- end }}
                     --load-dir /local-resources/sourcemodel \
                     --save-dir /local-resources/checkpoints \
                     --tokenizer-model /local-resources/sourcemodel \
                     {{- range $.Values.additionalArgs }}
                     {{ . }} \
                     {{- end }}
+
+              {{ if and (eq .loader "mcore") (eq .saver "llama_mistral") }}
+              echo "Copying tokenizer and generation config to the converted checkpoint ...";
+              cp /local-resources/tokenizer/* /local-resources/checkpoints/ || echo "Failed to copy tokenizer files to converted checkpoint!";
+              {{- end }}
 
               echo "Checkpoint conversion completed"
 

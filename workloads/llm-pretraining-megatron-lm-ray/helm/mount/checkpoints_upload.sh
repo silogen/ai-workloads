@@ -1,10 +1,14 @@
 #!/bin/bash
 
 if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 <remote_checkpoints_path>"
+  echo "Usage: $0 <remote_checkpoints_path> [local_tensorboard_dir]"
   exit 1
 fi
 remote_checkpoints_path="$1"
+
+if [ "$#" -gt 1 ]; then
+  local_tensorboard_dir="$2"
+fi
 
 # Setup MinIO, Upload resources:
 mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY};
@@ -40,5 +44,11 @@ mc mirror --overwrite \
     --exclude latest_checkpointed_iteration.txt \
     /local_resources/checkpoints/ "minio-host/$remote_checkpoints_path/";
 mc cp /local_resources/checkpoints/latest_checkpointed_iteration.txt "minio-host/$remote_checkpoints_path/latest_checkpointed_iteration.txt"
+
+if [[ -n "$local_tensorboard_dir" && -d "$local_tensorboard_dir" ]]; then
+  echo "Uploading tensorboard logs to remote storage minio-host/$remote_checkpoints_path/tensorboard/ ...";
+  mc cp "$local_tensorboard_dir" "minio-host/$remote_checkpoints_path/tensorboard/" --recursive;
+fi
+
 echo "Done uploading. Signal to the main container that it can exit.";
 touch /local_resources/done_uploading;

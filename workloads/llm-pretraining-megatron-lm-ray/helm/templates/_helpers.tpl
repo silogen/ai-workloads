@@ -113,6 +113,8 @@
         {{- if $isLoad -}}
           {{- $extraArgs = append $extraArgs $arg -}}
         {{- end -}}
+      {{- else if hasPrefix "--tensorboard-dir" $arg -}}
+          {{- $extraArgs = append $extraArgs (tpl $arg $) -}}
       {{- else }}
         {{- $extraArgs = append $extraArgs $arg -}}
       {{- end -}}

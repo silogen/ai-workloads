@@ -47,6 +47,8 @@ limits:
       key: {{ $value.key }}
 {{- end }}
 {{- end }}
+- name: ADDITIONAL_ARGS
+  value: {{ include "cmd.additional-arguments" . }}
 {{- end -}}
 
 # Container volume mounts helper
@@ -88,4 +90,9 @@ limits:
 - configMap:
     name: {{ include "release.fullname" . }}
   name: workload-mount
+{{- end -}}
+
+# Additional arguments helper
+{{- define "cmd.additional-arguments" -}}
+{{ .Values.additionalArgs | join " " }}
 {{- end -}}
