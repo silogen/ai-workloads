@@ -7,8 +7,8 @@ metadata:
   workload_id: ""
   user_id: ""
 
-  annotations:
-    pvc.silogen.ai/user-pvc-size: "100Gi"
+pvc_annotations:
+  pvc.silogen.ai/user-pvc-size: "100Gi"
 
 http_route:
   enabled: true

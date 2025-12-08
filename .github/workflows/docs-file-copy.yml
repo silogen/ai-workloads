@@ -29,8 +29,8 @@ jobs:
           git clone https://x-access-token:${{ secrets.DOCS_REPO_TOKEN }}@github.com/silogen/AMDEnterpriseAISuiteDocs.git target_amd_docs
           cd target_amd_docs
 
-          rsync -av --delete --exclude='.git' ../source_docs/docs docs/ai-workloads-docs
-          rsync -av --delete --exclude='.git' ../source_docs/workloads docs/ai-workloads-manifests
+          rsync -av --delete --exclude='.git' ../source_docs/docs/ docs/ai-workloads-docs
+          rsync -av --delete --exclude='.git' ../source_docs/workloads/ docs/ai-workloads-manifests
 
           git add .
           git diff --staged --quiet || git commit -m "Update external docs from ai-workloads repo"
