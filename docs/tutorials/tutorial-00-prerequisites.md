@@ -14,16 +14,12 @@ At least curl and often jq too are commonly installed in many distributions out 
 
 ## Namespace setup
 
-In order to run the workloads you need to have a Kubernetes cluster with sufficient resources configured. This includes storage, secrets, namespace, and a HuggingFace token. These should be installed and configured as part of the installation process, but if this is not the case you can use the following command to set up these. The command does the following:
+In order to run the workloads you need to have a Kubernetes cluster with sufficient resources configured. This includes storage, secrets, namespace, and a Hugging Face token. These should be installed and configured as part of the installation process, but if this is not the case you can use the following command to set up these. The command does the following:
 
 - Adds a namespace, where we will conduct all our work. We will setup the `silo-tutorial` namespace, but this also works in the default namespace in your cluster.
-
 - Adds an External Secret to get the credentials to access the MinIO storage from our namespace.
-
   - This depends on a ClusterSecretStore called `k8s-secret-store` being already setup by a cluster admin, and the MinIO API credentials being secret there. The cluster should have these by default.
-
 - Adds a LocalQueue so that our jobs schedule intelligently.
-
   - This references the ClusterQueue `kaiwo` which should already be setup by a cluster admin.
 
 We will use the helm chart in `workloads/k8s-namespace-setup/helm` and the overrides in `workloads/k8s-namespace-setup/helm/overrides/`.
@@ -39,7 +35,7 @@ helm template workloads/k8s-namespace-setup/helm \
   | kubectl apply -f -
 ```
 
-HuggingFace token: In addition to running the command above you also need to add your HuggingFace Token as a secret called `hf-token` with the key `hf-token` in your namespace.
+Hugging Face token: In addition to running the command above you also need to add your Hugging Face Token as a secret called `hf-token` with the key `hf-token` in your namespace.
 
 ## Monitoring progress, logs, and GPU utilization with k9s
 
@@ -56,9 +52,7 @@ k9s --command Jobs
 Choose a job using `arrow keys` and `Enter` to see the Pod that it spawned, then `Enter` again to see the Container in the Pod. From here, we can do three things:
 
 - Look at the logs by pressing `l`. The logs show any output messages produced during the workload runtime.
-
 - Attach to the output of the container by pressing `a`. This is particularly useful to see the interactive progress bar of a fine-tuning run.
-
 - Spawn a shell inside the container by pressing `s`. Inside the shell we can run `watch -n0.5 rocm-smi` to get a view of the GPU utilization that updates every 0.5s.
 
 Return from any regular `k9s` view with `Esc`.

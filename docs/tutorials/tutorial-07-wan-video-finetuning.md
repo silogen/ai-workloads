@@ -8,7 +8,7 @@ We'll start with the 5B parameter model using LoRA fine-tuning, which provides a
 
 ## 1. Setup
 
-Follow the setup in the [tutorial pre-requisites section](./tutorial-prereqs.md).
+Follow the setup in the [tutorial pre-requisites section](./tutorial-00-prerequisites.md).
 
 ## 2. Download model and dataset
 
@@ -36,7 +36,8 @@ helm template workloads/download-data-to-bucket/helm \
   | kubectl apply -f -
 ```
 
-Monitor the downloads using [k9s or kubectl logs](./tutorial-prereqs.md#monitoring-progress-logs-and-gpu-utilization-with-k9s). The model download includes:
+Monitor the downloads using [k9s or kubectl logs](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s). The model download includes:
+
 - Main diffusion model (3 safetensors files, ~18.7 GiB)
 - VAE model (Wan2.2_VAE.pth, ~2.6 GiB)
 - Text encoder (T5-XXL, ~11 GiB)
@@ -53,6 +54,7 @@ helm template workloads/media-finetune-wan/helm \
 ```
 
 Connect to the interactive pod:
+
 ```bash
 kubectl exec -it wan-finetune-interactive -- /bin/bash
 ```
@@ -75,6 +77,7 @@ helm template workloads/media-finetune-wan/helm \
 ```
 
 This configuration uses:
+
 - **4 GPUs** with **32 CPU cores** for reasonable compilation performance
 - **LoRA rank 32** for good parameter efficiency
 - **DeepSpeed ZeRO Stage 2** for distributed training
@@ -97,6 +100,7 @@ k9s
 ```
 
 Training phases you'll observe:
+
 1. **Installation**: DiffSynth framework setup
 2. **Resource Download**: Model and dataset download from MinIO
 3. **Compilation**: PyTorch model compilation for AMD GPUs
@@ -116,6 +120,7 @@ For higher quality results, use the 14B parameter model by using the relevant co
 ### Full Parameter Fine-tuning
 
 For maximum customization, use the relevant override file for `architecture: "full"` instead of LoRA. This requires:
+
 - More GPU resources (4+ GPUs recommended)
 - Increased memory allocation
 - Longer training time but potentially better results
@@ -124,7 +129,7 @@ For maximum customization, use the relevant override file for `architecture: "fu
 
 Trained checkpoints are automatically uploaded to MinIO with organized paths:
 
-```
+```bash
 default-bucket/models/Wan-AI/Wan2.2-TI2V-5B/Wan2.2-TI2V-5B_lora/20250925-141325/
 ├── epoch-0.safetensors
 ├── epoch-1.safetensors
@@ -216,19 +221,23 @@ finetune_config:
 ### Common issues and solutions
 
 **Compilation taking too long**:
+
 - Increase CPU allocation to 32+ cores
 - Use at least 3-4 GPUs for better parallelization
 
 **Out of memory errors**:
+
 - Reduce batch size: `train_batch_size: 8`
 - Enable gradient checkpointing
 - Use smaller LoRA rank: `lora_rank: 16`
 
 **Slow model download**:
+
 - Check MinIO cluster connectivity
 - Verify bucket credentials and permissions
 
 **Training divergence**:
+
 - Lower learning rate: `learning_rate: 1e-5`
 - Increase warmup steps
 - Use different noise schedules

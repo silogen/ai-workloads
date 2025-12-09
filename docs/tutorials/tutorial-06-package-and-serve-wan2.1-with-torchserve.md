@@ -6,8 +6,6 @@ This tutorial shows how to prepare the Wan2.1 model for TorchServe, upload it to
 
 Follow the setup in the [tutorial pre-requisites section](./tutorial-00-prerequisites.md).
 
----
-
 ## 2. Package model into MinIO
 
 Before TorchServe can serve a model, it needs a model `.zip` archive. We use the workload `torchserve-model-packager` to compress the Wan2.1 model and upload it to MinIO storage. Its user input file is:
@@ -28,8 +26,6 @@ helm template workloads/torchserve-model-packager/helm \
 This job downloads Wan2.1 weights, prepares TorchServe assets, and writes the `.zip` file into MinIO.
 
 You can follow logs and progress as described in [the monitoring section](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s).
-
----
 
 ## 3. Deploy TorchServe with Wan2.1
 
@@ -52,11 +48,9 @@ helm template workloads/media-torchserve-wan21/helm \
 
 This creates a GPU-enabled TorchServe deployment, installs dependencies, mounts configuration files, downloads the `.zip` from MinIO, creates `.mar` archive, and starts serving.
 
----
-
 ## 4. Access the API
 
-Forward TorchServe’s REST API to your local machine:
+Forward TorchServe's REST API to your local machine:
 
 ```bash
 kubectl port-forward deployment/wan21-serve-media-torchserve-wan21 8080:8080
@@ -84,8 +78,6 @@ When finished, you can stop the port-forwarding process and clean up the deploym
 ```bash
 kubectl delete deployment wan21-serve-media-torchserve-wan21
 ```
-
----
 
 ## Next Steps
 

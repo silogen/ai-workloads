@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide will help you get started with the SiloGen AI Workloads.
+This guide will help you get started with the AMD Enterprise AI Workloads.
 
 ## Prerequisites
 
@@ -11,18 +11,21 @@ This guide will help you get started with the SiloGen AI Workloads.
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/silogen/ai-workloads
    cd ai-workloads
    ```
 
 2. Set up a virtual environment (optional):
+
    ```bash
    python -m venv .venv
    source .venv/bin/activate  # On Windows, use: venv\Scripts\activate
    ```
 
 3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
