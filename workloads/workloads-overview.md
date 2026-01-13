@@ -170,7 +170,6 @@ download-huggingface-model-to-bucket <download-huggingface-model-to-bucket/helm/
 k8s-namespace-setup <k8s-namespace-setup/helm/README.md>
 llm-evaluation-judge <llm-evaluation-judge/helm/README.md>
 LLM fine-tuning overview <llm-finetune-silogen-engine/helm/README.md>
-Fine-tuning config for the workload <llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md>
 llm-inference-llamacpp-mi300x <llm-inference-llamacpp-mi300x/helm/README.md>
 llm-inference-sglang <llm-inference-sglang/helm/README.md>
 llm-inference-vllm <llm-inference-vllm/helm/README.md>
