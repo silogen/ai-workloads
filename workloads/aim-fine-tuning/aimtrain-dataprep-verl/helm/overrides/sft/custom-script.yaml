@@ -1,0 +1,55 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+# Example override for custom preprocessing script
+outputRemotePath: default-bucket/datasets/sft-verl/custom-multi-turn-dataset
+preprocess:
+  mode: customScript
+  outputDir: /workdir/output
+  # Extra args appended to the custom script invocation
+  extraArgs: []
+  customScript: |
+    #!/usr/bin/env python3
+    """Example custom preprocessing script producing VeRL multiturn parquet."""
+    from pathlib import Path
+
+    import pandas as pd
+    import os
+
+    local_dataset_path = os.environ.get("LOCAL_DATASET_PATH")
+    local_output_dir = os.environ.get("OUTPUT_DIR")
+
+    print(f"Local dataset path: {local_dataset_path}")
+    print(f"Local output dir: {local_output_dir}")
+
+    # Minimal VeRL-compatible multiturn dataset
+    rows = [
+      {
+        "messages": [
+          {"role": "system", "content": "You are a helpful assistant."},
+          {"role": "user", "content": "What is 2+2?"},
+          {"role": "assistant", "content": "4"},
+        ],
+        "data_source": "custom-script-example",
+        "extra_info": {"split": "train", "index": 0, "skip_reason": ""},
+      }
+    ]
+
+    df = pd.DataFrame(rows)
+    output_file = Path(local_output_dir) / "train.parquet"
+    df.to_parquet(output_file, index=False)
+    print(f"Saved {len(df)} rows to {output_file}")
+
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+resources:
+  requests:
+    cpu: "8"
+    memory: 64Gi
+  limits:
+    cpu: "8"
+    memory: 64Gi

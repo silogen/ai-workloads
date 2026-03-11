@@ -76,6 +76,10 @@ nav:
 - Workloads:
   - Overview: docs/workloads.md
   - Workloads:
+    - aim-fine-tuning:
+      - Overview: workloads/aim-fine-tuning/README.md
+      - Data Preparation: workloads/aim-fine-tuning/aimtrain-dataprep-verl/helm/README.md
+      - VeRL Fine-tuning: workloads/aim-fine-tuning/aimtrain-fine-tune-verl/helm/README.md
     - dev-chatui-aiaio: workloads/dev-chatui-aiaio/helm/README.md
     - dev-chatui-openwebui: workloads/dev-chatui-openwebui/helm/README.md
     - dev-text2image-comfyui: workloads/dev-text2image-comfyui/helm/README.md
