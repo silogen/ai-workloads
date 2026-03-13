@@ -42,7 +42,7 @@ finetuning_config:
     metric_for_best_model: "loss"
     greater_is_better: false
   batchsize_conf:
-    total_train_batch_size:
+    total_train_batch_size: 8
     max_per_device_train_batch_size: 1
   peft_conf:
     peft_type: "NO_PEFT"

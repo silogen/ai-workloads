@@ -4,7 +4,8 @@
 echo 'Copying resources to container...';
 mc alias set minio-host $${BUCKET_STORAGE_HOST} $${BUCKET_STORAGE_ACCESS_KEY} $${BUCKET_STORAGE_SECRET_KEY}
 {{- if (hasPrefix "hf://" .Values.basemodel) }}
-huggingface-cli download '{{ trimPrefix "hf://" .Values.basemodel }}' \
+hf_binary=$(which hf 2>/dev/null || which huggingface-cli 2>/dev/null)
+$hf_binary download '{{ trimPrefix "hf://" .Values.basemodel }}' \
   {{- if .Values.hfDownloadExcludeGlob }}
   --exclude '{{ .Values.hfDownloadExcludeGlob }}' \
   {{- end }}
@@ -33,6 +34,7 @@ mc cp \
 {{- end }}
 {{- end }}
 # Sync checkpoints from remote to local
+{{- if not .Values.debug.skip_checkpoint_download }}
 {{- $checkpointsRemotePath := printf "minio-host/'%s'/" (.Values.checkpointsRemote | trimSuffix "/" | replace  "'" "'\\''") }}
 if mc mirror {{ $checkpointsRemotePath }} /workdir/checkpoints 2>/dev/null; then
   echo 'Downloaded checkpoints from {{ .Values.checkpointsRemote | trimSuffix "/" | replace  "'" "'\\''" }} to /workdir/checkpoints'
@@ -40,6 +42,7 @@ if mc mirror {{ $checkpointsRemotePath }} /workdir/checkpoints 2>/dev/null; then
 else
   echo 'No checkpoints found yet'
 fi
+{{- end }}
 {{- end }}
 
 {/* ####################################################################################################################################################### */}}
@@ -49,6 +52,7 @@ fi
 {{- $logsRemotePath := printf "minio-host/'%s'/" ( (default ( .Values.checkpointsRemote | trimSuffix "/" | printf "%s/logs" ) .Values.logsRemote ) | trimSuffix "/" | replace  "'" "'\\''") -}}
 # Print GPU Info:
 rocm-smi
+{{- if not .Values.debug.skip_checkpoint_upload }}
 echo "Starting checkpoint sync process"
 mc mirror \
   --watch \
@@ -61,7 +65,8 @@ if ! ps -p $uploadPID > /dev/null; then
   echo "ERROR: Sync process failed to start"
   exit 1
 fi
-# Run training:
+{{- end }}
+# # Run training:
 {{- if .Values.runTensorboard }}
 tensorboard --logdir /workdir/logs --port 6006 &
 echo "Serving tensorboard on port 6006. Port-forward to access training logs during the training process lifetime."
@@ -82,9 +87,11 @@ accelerate launch \
   --config_file /configs/accelerate_config.yaml \
   --no-python \
   finetuning --num-preprocess-workers 4 {{ .Values.finetuning_config.method }} /configs/finetuning_config.yaml
+{{- if not .Values.debug.skip_checkpoint_upload }}
 echo "Training done, stop the upload process"
 kill $uploadPID
 wait $uploadPID || true
+{{- end }}
 {{- if .Values.runTensorboard }}
 kill $logsPID
 wait $logsPID || true
@@ -92,11 +99,13 @@ wait $logsPID || true
 {{- if (not (eq .Values.finetuning_config.peft_conf.peft_type "NO_PEFT")) }}
 echo "Running adapter post-processing:"
 create_vllm_compatible_adapter --training-config /configs/finetuning_config.yaml ./checkpoints/checkpoint-final-adapter
+{{- if not .Values.debug.skip_checkpoint_upload }}
 # Sync the final checkpoint with overwrite to carry over vLLM-compatibility changes
 mc mirror \
   --overwrite \
   /workdir/checkpoints/checkpoint-final-adapter \
   {{ $checkpointsRemotePath }}checkpoint-final-adapter/
+{{- end }}
 {{- if .Values.mergeAdapter }}
 merge_base=/local_resources/basemodel
 if [ -d ./checkpoints/checkpoint-new-basemodel ]; then
@@ -105,11 +114,13 @@ fi
 merge_adapter $merge_base ./checkpoints/checkpoint-final-adapter ./checkpoints/checkpoint-final
 {{- end }}
 {{- end }}
+{{- if not .Values.debug.skip_checkpoint_upload }}
 # Once more to ensure everything gets uploaded
 echo 'Training done, syncing once more...'
 mc mirror \
   /workdir/checkpoints \
   {{ $checkpointsRemotePath }}
+{{- end }}
 {{- if .Values.runTensorboard }}
 mc mirror \
   /workdir/logs \

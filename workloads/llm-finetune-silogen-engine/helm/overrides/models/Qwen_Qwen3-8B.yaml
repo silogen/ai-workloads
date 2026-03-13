@@ -1,8 +1,6 @@
 # Canonical model name:
 model: Qwen/Qwen3-8B
 
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.6
-
 # Resources:
 downloadsReservedSize: 24Gi
 checkpointsReservedSize: 160Gi

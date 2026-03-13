@@ -1,8 +1,6 @@
 # Canonical model name:
 model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.5
-
 # Resources:
 downloadsReservedSize: 24Gi
 checkpointsReservedSize: 512Gi

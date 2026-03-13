@@ -1,8 +1,6 @@
 # Canonical model name:
 model: CohereLabs/aya-expanse-8b
 
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.5
-
 # Resources:
 downloadsReservedSize: 24Gi
 checkpointsReservedSize: 160Gi
