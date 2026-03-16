@@ -29,7 +29,7 @@ jobs:
           git clone https://x-access-token:${{ secrets.DOCS_REPO_TOKEN }}@github.com/silogen/AMDEnterpriseAISuiteDocs.git target_amd_docs
           cd target_amd_docs
 
-          rsync -av --delete --exclude='.git' ../source_docs/docs/ docs/ai-workloads-docs
+          rsync -av --delete --exclude='.git' ../source_docs/docs/tutorials/ docs/ai-workloads-tutorials
           rsync -av --delete --exclude='.git' ../source_docs/workloads/ docs/ai-workloads-manifests
 
           git add .

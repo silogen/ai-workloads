@@ -1,8 +1,6 @@
 # Canonical model name:
 model: "mistralai/Mixtral-8x7B-Instruct-v0.1"
 
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.5
-
 # Resources:
 downloadsReservedSize: 256Gi
 checkpointsReservedSize: 512Gi

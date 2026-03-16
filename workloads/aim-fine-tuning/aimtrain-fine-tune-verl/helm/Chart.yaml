@@ -1,0 +1,12 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+apiVersion: v2
+name: aimtrain-fine-tune-verl
+description: AIM Fine-tuning with VeRL on the Enterprise AI stack
+version: 0.3.1
+appVersion: 0.6.0
+maintainers:
+- name: AMD
+  url: https://www.amd.com/

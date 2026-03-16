@@ -1,11 +1,13 @@
 # Working with AI workloads on Kubernetes
 
 ## Overview
+
 This document provides a general introduction to deploying AI workloads on Kubernetes using Helm charts and Kubernetes manifests. While each specific AI workload in our solution has its own dedicated documentation, this guide explains the common concepts, structure, and deployment patterns that apply across all our AI workload Helm charts.
 
 Each AI workload is defined as a separate Helm chart that can be submitted to run on a Kubernetes platform.
 
 ## What is Helm?
+
 Helm is the package manager for Kubernetes, often referred to as "the apt/yum for K8s." It simplifies the deployment and management of applications by:
 
 - Packaging Kubernetes resources into reusable charts (pre-configured templates).
@@ -15,11 +17,14 @@ Helm is the package manager for Kubernetes, often referred to as "the apt/yum fo
 Think of it as a blueprint that defines how an application should be installed and run in a Kubernetes cluster.
 
 ### How does Helm relate to Kubernetes manifests?
+
 Helm doesn't replace manifests - it generates them dynamically using:
+
 - Templates: Manifest files with variables (in templates/ directory)
 - Values: Configuration that fills the template variables
 
 ## Why Use Helm for AI Workloads?
+
 Deploying AI/ML workloads (inference, training, batch processing) on Kubernetes can be complex due to:
 
 - Dependencies (models, datasets, GPU drivers).
@@ -30,10 +35,8 @@ Helm addresses these challenges by:
 
 1. Standardizing Deployments:
    - AI components (model servers, preprocessing, monitoring) are defined in a Helm chart (deployment.yaml, service.yaml, etc.).
-
 2. Managing Configurations:
    - values.yaml centralizes tunable parameters (e.g., replicaCount, modelPath, GPU limits). Overrides allow specifying specific models, datasets or environment-specific setups (e.g., dev vs. prod):
-
 3. Supporting AI-Specific Needs
    - GPU/accelerator support: Define resource requests in values.yaml.
    - Model storage: Mount PersistentVolumes or download models at runtime.
@@ -54,19 +57,16 @@ Helm addresses these challenges by:
 ### Understanding the values.yaml file
 
 The values.yaml file is a YAML-formatted configuration file that contains key-value pairs representing the parameters required for your model inference deployment. These parameters include:
+
 - Image name: name of the docker image to use
-
 - Resources: Define GPU, CPU and memory requirements for your deployment.
-
 - Model: Provide the name of the model.
-
 - Storage details
-
 - Environment Variables: Set environment-specific configurations, such as secrets and storage host location.
-
 - Service Configuration: Customize service settings like ports, timeouts, and logging levels.
 
 ### Overrides
+
 Overrides allow customization of the AI workload without modifying the original chart. This includes changing the model and data sets.
 
 ## Running AI workloads on k8s
@@ -76,11 +76,15 @@ It is recommended to use `helm template` and pipe the result to `kubectl create`
 ```bash
 helm template <release-name> . -f <override.yaml> | kubectl apply -f -
 ```
+
 or
+
 ```bash
 helm template <release-name> . --set <parameter>=<value> | kubectl apply -f -
 ```
+
 ### How to use overrides to customize the workload
+
 There are multiple options you can use to customize the workload by applying overrides.
 
 **Alternative 1: Deploy a Specific Model Configuration**
@@ -108,22 +112,27 @@ Helm merges overrides in this order (last takes precedence):
 ### Verifying the Deployment
 
 Check pods
+
 ```bash
 kubectl get pods -n <namespace>
 ```
+
 Check services
+
 ```bash
 kubectl get svc -n <namespace>
 ```
+
 View logs (for a specific pod)
+
 ```bash
 kubectl logs -f <pod-name> -n <namespace>
 ```
 
 ### Monitoring progress, logs, and GPU utilization with k9s
 
-We're interested to see a progress bar of the finetuning training, seeing any messages that a workload logs, and we also want to verify that our GPU Jobs
-are consuming our compute relatively effectively. This information can be fetched from our Kubernetes cluster in many ways, but one convenient and recommended way us using [k9s](https://k9scli.io/).
+We're interested to see a progress bar of the fine-tuning training, seeing any messages that a workload logs, and we also want to verify that our GPU Jobs are consuming our compute relatively effectively. This information can be fetched from our Kubernetes cluster in many ways, but one convenient and recommended way us using [k9s](https://k9scli.io/).
+
 We recommend the official documentation for more thorough guidance, but this section shows some basic commands to get what we want here.
 
 To get right to the Jobs view in the namespace `<namespace>`, we can run:
@@ -134,15 +143,14 @@ k9s --namespace <namespace> --command Jobs
 
 Choose a Job using `arrow keys` and `Enter` to see the Pod that it spawned, then `Enter` again to see the Container in the Pod. From here, we can do three things:
 
-* Look at the logs by pressing `l`. The logs show any output messages produced during the workload runtime.
-
-* Attach to the output of the container by pressing `a`. This is particularly useful to see the interactive progress bar of a finetuning run.
-
-* Spawn a shell inside the container by pressing `s`. Inside the shell we can run `watch -n0.5 rocm-smi` to get a view of the GPU utilization that updates every 0.5s.
+- Look at the logs by pressing `l`. The logs show any output messages produced during the workload runtime.
+- Attach to the output of the container by pressing `a`. This is particularly useful to see the interactive progress bar of a fine-tuning run.
+- Spawn a shell inside the container by pressing `s`. Inside the shell we can run `watch -n0.5 rocm-smi` to get a view of the GPU utilization that updates every 0.5s.
 
 Return from any regular `k9s` view with `Esc` .
 
 ## Editing & reusing workloads
+
 To create a new workload, you can duplicate an existing workload and adapt as needed.
 
 [Example: Using your own model and data in the workloads](https://github.com/silogen/ai-workloads/blob/main/docs/tutorials/tutorial-01-deliver-resources-and-finetune.md#next-steps-how-to-use-your-own-model-and-data)
@@ -153,16 +161,20 @@ caption: Reference AI Workloads
 maxdepth: 1
 hidden: True
 ---
+benchmark-lifescience-swinunetr-inference <benchmark-lifescience-swinunetr-inference/helm/README.md>
 dev-chatui-openwebui <dev-chatui-openwebui/helm/README.md>
-dev-openvscode-server <dev-workspace-vscode/helm/README.md>
+dev-workspace-vscode <dev-workspace-vscode/helm/README.md>
 dev-text2image-comfyui <dev-text2image-comfyui/helm/README.md>
 download-data-to-bucket <download-data-to-bucket/helm/README.md>
 download-huggingface-model-to-bucket <download-huggingface-model-to-bucket/helm/README.md>
 k8s-namespace-setup <k8s-namespace-setup/helm/README.md>
+llm-evaluation-judge <llm-evaluation-judge/helm/README.md>
 LLM fine-tuning overview <llm-finetune-silogen-engine/helm/README.md>
-Fine-tuning config for the workload <llm-finetune-silogen-engine/helm/silogen_finetuning_config_readme.md>
 llm-inference-llamacpp-mi300x <llm-inference-llamacpp-mi300x/helm/README.md>
 llm-inference-sglang <llm-inference-sglang/helm/README.md>
 llm-inference-vllm <llm-inference-vllm/helm/README.md>
 llm-inference-vllm-benchmark-mad <llm-inference-vllm-benchmark-mad/helm/README.md>
+media-finetune-wan <media-finetune-wan/helm/README.md>
+vlm-lora-finetune <vlm-lora-finetune/helm/README.md>
+weather-inference-ai-models-gencast-pangu <weather-inference-ai-models-gencast-pangu/helm/README.md>
 ```

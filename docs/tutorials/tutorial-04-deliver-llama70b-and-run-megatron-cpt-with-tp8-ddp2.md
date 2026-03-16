@@ -1,8 +1,9 @@
 # Tutorial 04: Deliver Llama 70B and data to cluster MinIO, then run Megatron-LM continuous pretraining with DDP=2 (distributed data parallelism) and TP=8 (tensor parallelism)
 
 This tutorial involves the following steps:
-1. Download Llama 3.1 70B from the HuggingFace Hub in HuggingFace Transformers format, convert it to the Megatron-LM compatible format, and save it to the cluster-internal MinIO storage server.
-2. Download a sample dataset from the HuggingFace Hub in `jsonl` format, preprocess it into the Megatron-LM compatible format, and store it in a cluster-internal MinIO storage server.
+
+1. Download Llama 3.1 70B from the Hugging Face Hub in Hugging Face Transformers format, convert it to the Megatron-LM compatible format, and save it to the cluster-internal MinIO storage server.
+2. Download a sample dataset from the Hugging Face Hub in `jsonl` format, preprocess it into the Megatron-LM compatible format, and store it in a cluster-internal MinIO storage server.
 3. Execute a multi-node Megatron-LM continued pretraining job using **distributed data parallelism (DDP=2) and tensor parallelism (TP=8)**, and saving the resulting checkpoints to the cluster-internal MinIO storage.
 4. Perform an inference workload using the final checkpoint from step 3 in Megatron-LM format to validate the results.
 
@@ -15,7 +16,8 @@ Follow the setup in the [tutorial 0 prerequisites section](./tutorial-00-prerequ
 ### 2.1 Prepare model in Megatron-LM format
 
 #### 2.1.1 Download model
-To download the `meta-llama/llama-3.1-70B` model from the HuggingFace Hub and upload it to the in-cluster MinIO bucket, use the Helm chart located at `workloads/download-huggingface-model-to-bucket/helm`:
+
+To download the `meta-llama/llama-3.1-70B` model from the Hugging Face Hub and upload it to the in-cluster MinIO bucket, use the Helm chart located at `workloads/download-huggingface-model-to-bucket/helm`:
 
 ```bash
 helm template workloads/download-huggingface-model-to-bucket/helm \
@@ -24,9 +26,10 @@ helm template workloads/download-huggingface-model-to-bucket/helm \
   | kubectl apply -f -
 ```
 
-The model will be stored in the remote MinIO bucket at the path `default-bucket/models/meta-llama/Llama-3.1-70B` after being downloaded from the HuggingFace Hub.
+The model will be stored in the remote MinIO bucket at the path `default-bucket/models/meta-llama/Llama-3.1-70B` after being downloaded from the Hugging Face Hub.
 
 #### 2.1.2 Convert model checkpoints to Megatron-LM format
+
 To convert the model checkpoints into the Megatron-LM compatible format, use the Helm chart located at `workloads/llm-megatron-ckpt-conversion/helm`:
 
 ```bash
@@ -54,6 +57,7 @@ helm template workloads/prepare-data-for-megatron-lm/helm \
 Refer to the [Monitoring progress, logs, and GPU utilization with k9s](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s) section to track data and tokenizer downloads, data preprocessing, and uploads to the in-cluster MinIO bucket.
 
 ### 2.3 Run multi-node Megatron-LM continuous pretraining job
+
 To launch the Megatron-LM pretraining job use the Helm chart located at `workloads/llm-pretraining-megatron-lm-ray/helm`. Use the following command:
 
 ```bash
@@ -70,7 +74,7 @@ Error from server (Forbidden): rayjobs.ray.io is forbidden: User "system:service
 
 To quickly overcome this issue while waiting for permissions setup one can comment out this line in [https://github.com/silogen/ai-workloads/blob/main/workloads/llm-pretraining-megatron-lm-ray/helm/templates/ray_job.yaml](https://github.com/silogen/ai-workloads/blob/main/workloads/llm-pretraining-megatron-lm-ray/helm/templates/ray_job.yaml#L69)
 
-```
+```bash
 bash /local_resources/mount/gc.sh{{- if and .Values.kaiwo.storageEnabled .Values.kaiwo.enabled}} --skip-pvc{{- end }} {{ include "release.fullname" . }}
 ```
 
@@ -78,12 +82,10 @@ If automatic garbage collection was disabled this way then resources of the work
 
 ### 2.4 Run inference workload with the final checkpoint (2.3) and query it using sample prompts on Llama-3.1-70B
 
-
 In order to perform inference with the just trained Llama-3.1-70B model and verify it's quality, follow the steps:
 
 1. Execute the Llama-3.1-70B single-node Megatron-LM inference workload. This step verifies that the model is correctly deployed and can respond to basic prompts.
 2. Query the model with a simple prompt to confirm it generates coherent responses.
-
 
 #### 2.4.1 Run Megatron-LM inference workload
 
@@ -112,6 +114,7 @@ First, check the deployment status:
 ```bash
 kubectl get deployment
 ```
+
 You should see a deployment with a name in the format `llm-inference-megatron-lm-YYYYMMDD-HHMM` (e.g. `llm-inference-megatron-lm-20250811-1229`) in ready state.
 
 Get the name of the respective service deployed by the workload with
@@ -138,7 +141,7 @@ curl -X PUT -H "Content-Type: application/json" \
   http://localhost:5000/api
 ```
 
-You should receive a JSON response with the model’s answer. For a healthy model, the answer should be `"Paris"` or similar with some extra text.
+You should receive a JSON response with the model's answer. For a healthy model, the answer should be `"Paris"` or similar with some extra text.
 
 Try a few more prompts to check basic reasoning and language ability:
 

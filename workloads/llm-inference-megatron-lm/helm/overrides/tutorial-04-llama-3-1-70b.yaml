@@ -25,6 +25,7 @@ envVars:
   PIPELINE_MODEL_PARALLEL_SIZE: "1"
   CONTEXT_PARALLEL_SIZE: "1"
   MICRO_BATCH_SIZE: "1"
+  TOKENIZER_TYPE: "HuggingFaceTokenizer"
 
 storage:
   ephemeral:
@@ -41,8 +42,6 @@ deployment:
 gpus: 8
 memoryPerGpu: 80
 cpuPerGpu: 8
-
-tensorParallel: 8
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:

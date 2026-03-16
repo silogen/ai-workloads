@@ -27,7 +27,8 @@ torchrun \
     --tensor-model-parallel-size $TENSOR_MODEL_PARALLEL_SIZE \
     --pipeline-model-parallel-size $PIPELINE_MODEL_PARALLEL_SIZE \
     --context-parallel-size $CONTEXT_PARALLEL_SIZE \
-    --tokenizer-type HuggingFaceTokenizer \
+    --tokenizer-type $TOKENIZER_TYPE \
     --tokenizer-model /workload/tokenizer/ \
     --load /workload/model/ \
-    --micro-batch-size $MICRO_BATCH_SIZE
+    --micro-batch-size $MICRO_BATCH_SIZE \
+    $ADDITIONAL_ARGS

@@ -1,0 +1,722 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+{{- $isAdapter := (and .Values.verlConfig.model .Values.verlConfig.model.lora_rank (gt (int .Values.verlConfig.model.lora_rank) 0)) }}
+{{- $transformersPatches := .Values.transformersPatches | default dict }}
+{{- if $isAdapter }}
+{{- required "verlConfig.model.lora_alpha needs to be explicitly specified when using an adapter, so that it can be properly injected in the adapter_config.json" .Values.verlConfig.model.lora_alpha }}
+{{- end }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "release.fullname" . }}-configs"
+data:
+  verl_config.yaml: |
+    # @package _global_
+{{ toYaml .Values.verlConfig | indent 4 }}
+  verl_adapter_fix.py: |
+    #!/usr/bin/env python3
+    # Script to fix the adapter config for VeRL v0.6.0
+    import json
+    import pathlib
+
+    import logging
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.DEBUG)
+
+    def verl_fix(adapter_path, alpha):
+        """Run a fix for VeRL v0.6.0"""
+        config_path = pathlib.Path(adapter_path) / "adapter_config.json"
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        config["lora_alpha"] = alpha
+        config["task_type"] = "CAUSAL_LM"
+        with open(config_path, "w") as f:
+            json.dump(config, f, indent=2)
+        logger.info(f"Applied VeRL v0.6.0 adapter fix with alpha={alpha} to {config_path}")
+
+    if __name__ == "__main__":
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--adapter_path", type=str, required=True, help="Path to the adapter directory containing adapter_config.json")
+        parser.add_argument("--alpha", type=int, required=True, help="The alpha value to set in the adapter config")
+        args = parser.parse_args()
+        verl_fix(args.adapter_path, args.alpha)
+  merge_adapter.py: |
+    #!/usr/bin/env python3
+    # Script to merge an Adapter into a Basemodel and save the result
+    import importlib
+    import json
+
+    from peft import PeftModel
+    from transformers import AutoConfig, AutoTokenizer
+
+    import logging
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.DEBUG)
+
+    MERGE_MODEL_MAPPINGS = json.loads({{ (get $transformersPatches "modelMappings" | default list) | toJson | quote }})
+
+
+    def _import_symbol(symbol_path: str):
+        module_path, _, symbol_name = symbol_path.rpartition(".")
+        if not module_path or not symbol_name:
+            raise ValueError(f"Invalid symbol path: {symbol_path}")
+        return getattr(importlib.import_module(module_path), symbol_name)
+
+
+    def _try_import(symbol_path: str):
+        try:
+            return _import_symbol(symbol_path), None
+        except Exception as exc:
+            return None, exc
+
+
+    def _resolve_model_loader(model_name_or_path, trust_remote_code=True):
+        """Resolve a suitable AutoModel class for merge. """
+
+        cfg = AutoConfig.from_pretrained(model_name_or_path, trust_remote_code=trust_remote_code)
+        cfg_class_path = f"{cfg.__class__.__module__}.{cfg.__class__.__name__}"
+
+        # Use configured mappings from values
+        for mapping_cfg in (MERGE_MODEL_MAPPINGS or []):
+            if not isinstance(mapping_cfg, dict) or mapping_cfg.get("configClass") != cfg_class_path:
+                continue
+            auto_model_class_path = mapping_cfg.get("autoModelClass")
+            if not auto_model_class_path:
+                continue
+
+            auto_model_cls, exc = _try_import(auto_model_class_path)
+            if auto_model_cls is not None:
+                logger.info("Using mapped loader %s for config %s", auto_model_class_path, cfg_class_path)
+                return auto_model_cls
+            logger.warning("Failed to import mapped loader %s: %s", auto_model_class_path, exc)
+
+        # Check if it's a multimodal model and if we have a suitable AutoModel class registered
+        is_multimodal = hasattr(cfg, "vision_config") or hasattr(cfg, "text_config")
+        if is_multimodal:
+            for candidate in (
+                "transformers.AutoModelForVision2Seq",
+                "transformers.AutoModelForImageTextToText",
+            ):
+                auto_model_cls, _ = _try_import(candidate)
+                if auto_model_cls is not None:
+                    logger.info("Using multimodal loader fallback %s", candidate)
+                    return auto_model_cls
+
+        # Use generic AutoModelForCausalLM as fallback
+        return _import_symbol("transformers.AutoModelForCausalLM")
+
+
+    def merge_and_save(model_name_or_path, tokenizer_name_or_path, adapter_name_or_path, outpath, device_map="auto", trust_remote_code=True):
+        """Loads basemodel and adapter, merges, then saves the merged model and the tokenizer at the output path"""
+
+        model_loader = _resolve_model_loader(model_name_or_path, trust_remote_code=trust_remote_code)
+
+        model = model_loader.from_pretrained(
+            model_name_or_path,
+            device_map=device_map,
+            torch_dtype="auto",
+            trust_remote_code=trust_remote_code,
+        )
+        logger.info(f"Loaded base model at {model_name_or_path} using {model_loader.__name__}")
+
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name_or_path, trust_remote_code=trust_remote_code)
+        logger.info(f"Loaded tokenizer at {tokenizer_name_or_path}")
+
+        model = PeftModel.from_pretrained(model, adapter_name_or_path, device_map=device_map)
+        logger.info(f"Loaded adapter at {adapter_name_or_path}")
+
+        model = model.merge_and_unload(safe_merge=True)  # safe_merge protects from numerical issues during merge
+        logger.info("Merged adapter")
+
+        model.save_pretrained(outpath)
+        logger.info(f"Saved model at {outpath}")
+
+        tokenizer.save_pretrained(outpath)
+        logger.info(f"Saved tokenizer at {outpath}")
+
+    if __name__ == "__main__":
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--model_name_or_path", type=str, required=True)
+        parser.add_argument("--tokenizer_name_or_path", type=str, required=True)
+        parser.add_argument("--adapter_name_or_path", type=str, required=True)
+        parser.add_argument("--outpath", type=str, required=True)
+        parser.add_argument("--device_map", type=str, default="auto")
+        parser.add_argument("--trust_remote_code", type=lambda v: str(v).lower() in ("1", "true", "yes", "y"), default=True)
+        parser.add_argument("--iteration", type=str, default="latest")
+        args = parser.parse_args()
+
+        merge_and_save(
+            model_name_or_path=args.model_name_or_path,
+            tokenizer_name_or_path=args.tokenizer_name_or_path,
+            adapter_name_or_path=args.adapter_name_or_path,
+            outpath=args.outpath,
+            device_map=args.device_map,
+            trust_remote_code=args.trust_remote_code,
+        )
+  save_processor.py: |
+    #!/usr/bin/env python3
+    """Save processor artifacts to a directory.
+
+    This is used by the Helm entrypoint to persist any processor assets required
+    for downstream inference (e.g., multimodal processors) into checkpoint-final.
+    """
+
+    from __future__ import annotations
+
+    import argparse
+    import os
+
+    from transformers import AutoProcessor
+
+
+    def _parse_bool(v: str) -> bool:
+      return str(v).lower() in ("1", "true", "yes", "y")
+
+
+    def main() -> None:
+      parser = argparse.ArgumentParser()
+      parser.add_argument("--source", type=str, required=True, help="HF repo id or local path")
+      parser.add_argument("--out_dir", type=str, required=True, help="Directory to write processor files")
+      parser.add_argument("--trust_remote_code", type=_parse_bool, default=True)
+      args = parser.parse_args()
+
+      source = (args.source or "").strip()
+      if not source:
+        raise SystemExit("--source must be non-empty")
+
+      out_dir = args.out_dir
+      token = os.environ.get("HF_TOKEN")
+
+      try:
+        proc = AutoProcessor.from_pretrained(source, token=token, trust_remote_code=args.trust_remote_code)
+      except TypeError:
+        # Backward compatibility for older Transformers argument naming
+        proc = AutoProcessor.from_pretrained(source, use_auth_token=token, trust_remote_code=args.trust_remote_code)
+
+      proc.save_pretrained(out_dir)
+      print("Processor files saved to", out_dir)
+      print("Processor source:", source)
+
+
+    if __name__ == "__main__":
+      main()
+  transformers_patches.py: |
+    """Runtime transformers_patches for the training container.
+
+    This module is auto-imported by Python at startup (via the `site` module) if
+    it is importable on `sys.path`. The Helm entrypoint exports `PYTHONPATH` to
+    include `/configs`, so every torchrun worker sees this.
+
+    Hotfix: Gemma3Config may expose vocab size at `config.text_config.vocab_size`
+    but not `config.vocab_size`, while VeRL expects `self.model.config.vocab_size`.
+    """
+
+    from __future__ import annotations
+
+    import json
+    import os
+    import logging
+    import importlib
+    from typing import Any
+
+    logger = logging.getLogger(__name__)
+
+    PATCH_CONFIG_RAW = os.environ.get("TRANSFORMERS_PATCH_CONFIG", "").strip()
+    if PATCH_CONFIG_RAW:
+      try:
+        _parsed = json.loads(PATCH_CONFIG_RAW)
+        if isinstance(_parsed, dict):
+          PATCH_CONFIG = _parsed
+        else:
+          logger.warning(
+            "TRANSFORMERS_PATCH_CONFIG must decode to a JSON object; got %s",
+            type(_parsed).__name__,
+          )
+          PATCH_CONFIG = {}
+      except Exception as exc:
+        logger.warning("Invalid TRANSFORMERS_PATCH_CONFIG: %s", exc)
+        PATCH_CONFIG = {}
+    else:
+      PATCH_CONFIG = {}
+
+
+    def _import_symbol(symbol_path: str):
+      module_path, _, symbol_name = symbol_path.rpartition(".")
+      if not module_path or not symbol_name:
+        raise ValueError(f"Invalid symbol path: {symbol_path}")
+      module = importlib.import_module(module_path)
+      return getattr(module, symbol_name)
+
+
+    def _patch_automodel_mappings(model_mappings: list[dict[str, Any]]) -> None:
+      """Backport missing AutoModel mappings for configured model configs.
+
+      VeRL's FSDP model merger instantiates a HF model via an AutoModel class.
+      Some container images pin a Transformers version that includes model config
+      classes but does not register them for the expected AutoModel class.
+      """
+
+      if not model_mappings:
+        return
+
+      for mapping_cfg in model_mappings:
+        if not isinstance(mapping_cfg, dict):
+          continue
+
+        auto_model_class_path = mapping_cfg.get("autoModelClass")
+        config_class_path = mapping_cfg.get("configClass")
+        model_class_path = mapping_cfg.get("modelClass")
+        fallback_model_class_paths = mapping_cfg.get("fallbackModelClasses", [])
+
+        if not auto_model_class_path or not config_class_path:
+          continue
+
+        try:
+          auto_model_cls = _import_symbol(auto_model_class_path)
+          config_cls = _import_symbol(config_class_path)
+        except Exception:
+          continue
+
+        model_cls = None
+        candidates = []
+        if model_class_path:
+          candidates.append(model_class_path)
+        if isinstance(fallback_model_class_paths, list):
+          candidates.extend(fallback_model_class_paths)
+
+        for candidate in candidates:
+          try:
+            model_cls = _import_symbol(candidate)
+            break
+          except Exception:
+            continue
+
+        if model_cls is None:
+          continue
+
+        mapping = getattr(auto_model_cls, "_model_mapping", None)
+        if mapping is None:
+          continue
+
+        # LazyAutoMapping supports .register in modern Transformers; be tolerant.
+        try:
+          mapping.register(config_cls, model_cls, exist_ok=True)  # type: ignore[attr-defined]
+        except TypeError:
+          try:
+            mapping.register(config_cls, model_cls)  # type: ignore[attr-defined]
+          except Exception:
+            continue
+        except Exception:
+          continue
+
+        logger.info(
+          "Registered %s for %s using %s",
+          config_class_path,
+          auto_model_class_path,
+          model_cls.__name__,
+        )
+
+
+    def _ensure_vocab_size(model) -> None:
+      cfg = getattr(model, "config", None)
+      if cfg is None or hasattr(cfg, "vocab_size"):
+        return
+      text_cfg = getattr(cfg, "text_config", None)
+      if text_cfg is not None and hasattr(text_cfg, "vocab_size"):
+        cfg.vocab_size = text_cfg.vocab_size
+
+
+    def _patch_pretrained_config() -> None:
+      try:
+        from transformers.configuration_utils import PretrainedConfig
+      except Exception:
+        return
+
+      orig_getattribute = PretrainedConfig.__getattribute__
+      if getattr(orig_getattribute, "__verl_vocab_size_hotfix__", False):
+        return
+
+      def patched_getattribute(self, key):
+        if key == "vocab_size":
+          try:
+            return orig_getattribute(self, key)
+          except AttributeError:
+            text_cfg = getattr(self, "text_config", None)
+            if text_cfg is not None and hasattr(text_cfg, "vocab_size"):
+              value = getattr(text_cfg, "vocab_size")
+              try:
+                setattr(self, "vocab_size", value)
+              except Exception:
+                pass
+              return value
+            raise
+        return orig_getattribute(self, key)
+
+      patched_getattribute.__verl_vocab_size_hotfix__ = True
+      PretrainedConfig.__getattribute__ = patched_getattribute
+
+
+    def _patch_model_loading() -> None:
+      try:
+        from transformers import AutoModelForCausalLM
+      except Exception:
+        return
+
+      orig_from_pretrained = getattr(AutoModelForCausalLM, "from_pretrained", None)
+      if orig_from_pretrained is None or getattr(orig_from_pretrained, "__verl_vocab_size_hotfix__", False):
+        return
+
+      def patched_from_pretrained(*args, **kwargs):
+        model = orig_from_pretrained(*args, **kwargs)
+        _ensure_vocab_size(model)
+        return model
+
+      patched_from_pretrained.__verl_vocab_size_hotfix__ = True
+      AutoModelForCausalLM.from_pretrained = patched_from_pretrained
+
+
+    def _apply_transformers_patches() -> None:
+      try:
+        patch_vocab_size = PATCH_CONFIG.get("patchPretrainedConfigVocabSize", False)
+        # Keep backward compatibility: this key is deprecated and no longer
+        # required in values; model-loading patch is implied by vocab patch.
+        patch_model_loading = PATCH_CONFIG.get("patchAutoModelForCausalLMFromPretrained", False)
+
+        if patch_vocab_size:
+          _patch_pretrained_config()
+        if patch_vocab_size or patch_model_loading:
+          _patch_model_loading()
+        if PATCH_CONFIG.get("patchAutoModelMappings", False):
+          _patch_automodel_mappings(PATCH_CONFIG.get("modelMappings", []))
+      except Exception as exc:
+        logger.debug("Transformers patch failed: %s", exc)
+
+
+    _apply_transformers_patches()
+  sitecustomize.py: |
+    """Auto-import runtime hotfixes for all Python processes.
+
+    Python imports `sitecustomize` automatically at interpreter startup when it
+    is importable on `sys.path`. The entrypoint sets `PYTHONPATH=/configs:...`.
+    """
+
+    try:
+      import transformers_patches  # noqa: F401
+    except Exception:
+      # Best effort only; do not break interpreter startup.
+      pass
+  entrypoint.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    set -x
+    export PYTHONPATH="/configs:${PYTHONPATH:-}"
+    # Print GPU Info:
+    rocm-smi
+    mkdir -p /workdir/checkpoints
+    mkdir -p /workdir/datasets
+
+    {{- if .Values.mlflowTrackingUri }}
+    echo "Installing MLFlow. Remember to append 'mlflow' to verlConfig.trainer.logger"
+    pip install mlflow --no-cache-dir --ignore-installed
+    {{- end }}
+    echo "Installing MinIO:"
+    curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+          --create-dirs \
+          -o /minio-binaries/mc
+    chmod +x /minio-binaries/mc
+    export PATH="${PATH}:/minio-binaries/"
+    # Setup MinIO
+    mc alias set minio-host $BUCKET_STORAGE_HOST $BUCKET_STORAGE_ACCESS_KEY $BUCKET_STORAGE_SECRET_KEY
+    {{- if .Values.modelRemote }}
+    # copy model from remote to local
+    echo "Downloading model from remote: {{ .Values.modelRemote }}"
+    mc cp --recursive \
+      minio-host/{{ .Values.modelRemote | trimSuffix "/" }}/ \
+      /workdir/basemodel
+    export MODEL_PATH=/workdir/basemodel
+    {{- else if .Values.modelName }}
+    echo "Downloading model from Hugging Face: {{ .Values.modelName }}"
+    python3 - << 'PY'
+    import os
+    from huggingface_hub import snapshot_download
+
+    model_name = "{{ .Values.modelName }}"
+    if not model_name:
+      raise SystemExit("modelName must be set")
+
+    out_dir = "/workdir/basemodel"
+    token = os.environ.get("HF_TOKEN")
+    snapshot_download(
+      repo_id=model_name,
+      local_dir=out_dir,
+      local_dir_use_symlinks=False,
+      token=token,
+      ignore_patterns=["original/*"],
+    )
+    print("Model cached at", out_dir)
+    PY
+    export MODEL_PATH=/workdir/basemodel
+    {{- else }}
+    {{- fail "either modelName or modelRemote must be set" }}
+    {{- end }}
+    {{- $tokenizerOverrides := .Values.tokenizerOverrides | default dict }}
+    {{- $hasOverrides := gt (len $tokenizerOverrides) 0 }}
+    python3 -c "import transformers;transformers.pipeline('text-generation', model='$MODEL_PATH')"
+
+    {{- $verl := .Values.verlConfig | default dict }}
+    {{- $verlData := (get $verl "data") | default dict }}
+    {{- $dataTokenizer := (get $verlData "tokenizer") | default "" }}
+    {{- if and $hasOverrides (not $dataTokenizer) }}
+    echo "Downloading tokenizer and applying overrides"
+    python3 - << 'PY'
+    import os
+    from transformers import AutoTokenizer
+
+    overrides = {{ $tokenizerOverrides | toJson }}
+    token = os.environ.get("HF_TOKEN")
+    model_source = os.environ.get("MODEL_PATH", "").strip() or "{{ .Values.modelName }}".strip()
+    if not model_source:
+      raise SystemExit("MODEL_PATH or modelName must be set when tokenizerOverrides is provided")
+
+    try:
+      tok = AutoTokenizer.from_pretrained(model_source, use_fast=True, token=token)
+    except TypeError:
+      # Backward compatibility for older Transformers argument naming
+      tok = AutoTokenizer.from_pretrained(model_source, use_fast=True, use_auth_token=token)
+    out_dir = os.environ.get("MODEL_PATH", "/workdir/tokenizer")
+    os.makedirs(out_dir, exist_ok=True)
+
+    applied = []
+    skipped = []
+
+    known_special_keys = {
+      "bos_token",
+      "eos_token",
+      "unk_token",
+      "pad_token",
+      "sep_token",
+      "cls_token",
+      "mask_token",
+      "additional_special_tokens",
+    }
+
+    for k, v in overrides.items():
+      try:
+        if k == "additional_special_tokens":
+          values = v if isinstance(v, (list, tuple)) else [v]
+          # Apply only if tokenizer supports additional special tokens
+          tok.add_special_tokens({"additional_special_tokens": list(values)})
+          applied.append(k)
+        elif k in known_special_keys or hasattr(tok, k):
+          setattr(tok, k, v)
+          applied.append(k)
+        else:
+          skipped.append(k)
+      except Exception:
+        skipped.append(k)
+
+    {{- $applyKwargs := (get $verlData "apply_chat_template_kwargs") | default dict }}
+    {{- $chatTemplate := (get $applyKwargs "chat_template") | default "" }}
+    {{- if $chatTemplate }}
+    print("Setting chat template to tokenizer")
+    tok.chat_template = ""{{ $chatTemplate | quote }}""
+    {{- end }}
+
+    tok.save_pretrained(out_dir)
+
+    print("Tokenizer overrides applied to", out_dir)
+    if applied:
+      print("Applied overrides:", ", ".join(applied))
+    if skipped:
+      print("WARNING: The following overrides did not apply:", ", ".join(skipped))
+    print("TOKENIZER_OVERRIDE_PATH=", out_dir)
+    PY
+    export TOKENIZER_OVERRIDE_PATH=$MODEL_PATH
+    {{- end }}
+
+    {{- if .Values.datasetRemote }}
+    echo "Downloading dataset from remote: {{ .Values.datasetRemote }}"
+    mc cp --recursive \
+      minio-host/{{ .Values.datasetRemote | trimSuffix "/" }}/ \
+      /workdir/datasets/{{ .Values.datasetRemote | trimSuffix "/" }}
+    export DATASET_PATH=/workdir/datasets/{{ .Values.datasetRemote | trimSuffix "/" }}
+    {{- else if .Values.dataset }}
+    {{- if eq .Values.dataset "full_hh_rlhf" }}
+    python3 /workspace/verl/examples/data_preprocess/{{ .Values.dataset }}.py --split rm --local_save_dir /workdir/datasets/{{ .Values.dataset }}
+    export DATASET_PATH=/workdir/datasets/{{ .Values.dataset }}/rm
+    {{- else }}
+    python3 /workspace/verl/examples/data_preprocess/{{ .Values.dataset }}.py --local_save_dir /workdir/datasets/{{ .Values.dataset }}
+    export DATASET_PATH=/workdir/datasets/{{ .Values.dataset }}
+    {{- end }}
+    {{- else }}
+    {{- fail "either dataset or datasetRemote must be set" }}
+    {{- end }}
+
+    {{- $checkpointsRemotePath := printf "minio-host/'%s'/" (.Values.checkpointsRemote | trimSuffix "/" | replace  "'" "'\\''") }}
+    {{- if .Values.checkpointsRemote }}
+    {{- if .Values.resumeFromCheckpoint }}
+    # Sync checkpoints from remote to local
+    if mc mirror {{ $checkpointsRemotePath }} /workdir/checkpoints 2>/dev/null; then
+      echo 'Downloaded checkpoints from {{ .Values.checkpointsRemote}} to /workdir/checkpoints'
+      ls -lah /workdir/checkpoints
+      RESUME_MODE='resume_path'
+    else
+      echo 'No checkpoints found yet'
+      RESUME_MODE='disable'
+    fi
+    {{- else }}
+    RESUME_MODE='disable'
+    {{- end }}
+    echo "Starting checkpoint sync process"
+    mc mirror \
+      --watch \
+      --overwrite \
+      /workdir/checkpoints \
+      {{ $checkpointsRemotePath }} &
+    uploadPID=$!
+    # Check if the sync process started successfully
+    sleep 1
+    if ! ps -p $uploadPID > /dev/null; then
+      echo "ERROR: Sync process failed to start"
+      exit 1
+    fi
+    {{- else }}
+    RESUME_MODE='disable'
+    {{- end }}
+
+    export HIP_VISIBLE_DEVICES=$(rocm-smi --showall --csv | grep -P '^card\d+,' | cut -d',' -f1 | sed 's/card//g' | paste -sd ',' -)
+    export NUM_GPUS=$(echo $HIP_VISIBLE_DEVICES | tr ',' '\n' | wc -l)
+    export CUDA_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
+    export ROCR_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
+    TRAINING_MODE={{ default "ppo" .Values.trainingMode | quote }}
+
+    # copy config file into the verl directory, this is necessary to apply it as an override with hydra
+    mkdir -p /workspace/verl/verl/trainer/config/override
+    cp /configs/verl_config.yaml /workspace/verl/verl/trainer/config/override/helm.yaml
+
+    echo "Dataset verified, starting training"
+    if [ "$TRAINING_MODE" = "sft" ]; then
+      echo "Starting SFT training process"
+      torchrun --nproc_per_node=$NUM_GPUS -m verl.trainer.fsdp_sft_trainer +override=helm \
+          data.train_files=$DATASET_PATH/train.parquet \
+          data.val_files=$DATASET_PATH/test.parquet \
+          model.partial_pretrain=$MODEL_PATH \
+          trainer.n_gpus_per_node=$NUM_GPUS \
+          trainer.default_local_dir=/workdir/checkpoints \
+          trainer.resume_mode=$RESUME_MODE \
+          trainer.resume_from_path=/workdir/checkpoints
+    else
+      echo "Starting PPO training process"
+      python3 -m verl.trainer.main_ppo +override=helm \
+          data.train_files=$DATASET_PATH/train.parquet \
+          data.val_files=$DATASET_PATH/test.parquet \
+          actor_rollout_ref.model.path=$MODEL_PATH \
+          critic.model.path=$MODEL_PATH \
+          trainer.n_gpus_per_node=$NUM_GPUS \
+          trainer.default_local_dir=/workdir/checkpoints \
+          trainer.resume_mode=$RESUME_MODE \
+          trainer.resume_from_path=/workdir/checkpoints
+    fi
+
+    {{- if .Values.checkpointsRemote }}
+    echo "Training done, stop the upload process"
+    kill $uploadPID
+    wait $uploadPID || true
+    {{- end }}
+
+    # Handle final checkpoint, potentially merge
+    last_ckpt=global_step_$(cat /workdir/checkpoints/latest_checkpointed_iteration.txt)
+    echo "Last checkpoint in $last_ckpt"
+
+    {{- if $isAdapter }}
+    echo "Merging final FSDP checkpoint to checkpoint-final-adapter"
+    python3 -m verl.model_merger merge \
+    --backend fsdp \
+    --local_dir "/workdir/checkpoints/$last_ckpt/" \
+    --target_dir "/workdir/checkpoints/checkpoint-final-adapter/"
+    python3 /configs/verl_adapter_fix.py \
+        --adapter_path /workdir/checkpoints/checkpoint-final-adapter/lora_adapter \
+        --alpha {{ .Values.verlConfig.model.lora_alpha }}
+    {{- if .Values.mergeAdapter }}
+    echo "Merging adapter into base model, saving to checkpoint-final"
+    python3 /configs/merge_adapter.py \
+        --model_name_or_path $MODEL_PATH \
+        --tokenizer_name_or_path /workdir/checkpoints/checkpoint-final-adapter \
+        --adapter_name_or_path /workdir/checkpoints/checkpoint-final-adapter/lora_adapter \
+        --outpath /workdir/checkpoints/checkpoint-final
+    {{- end }}
+    {{- else }}
+    echo "Merging final FSDP checkpoint to checkpoint-final"
+    python3 -m verl.model_merger merge \
+    --backend fsdp \
+    --local_dir "/workdir/checkpoints/$last_ckpt/" \
+    --target_dir "/workdir/checkpoints/checkpoint-final/"
+    {{- end }}
+
+    {{- if .Values.copyProcessorToFinal }}
+    echo "Saving processor artifacts to checkpoint-final"
+    mkdir -p /workdir/checkpoints/checkpoint-final
+    PROC_SOURCE="{{ .Values.processorSourceModel }}"
+    if [ -z "$PROC_SOURCE" ]; then
+      PROC_SOURCE="${MODEL_PATH:-}"
+    fi
+    if [ -z "$PROC_SOURCE" ]; then
+      PROC_SOURCE="{{ .Values.modelName }}"
+    fi
+    python3 /configs/save_processor.py \
+      --source "$PROC_SOURCE" \
+      --out_dir /workdir/checkpoints/checkpoint-final \
+      --trust_remote_code true
+    {{- end }}
+
+    # Copy the AIMModel Manifest to the checkpoint:
+    cp /configs/aim-model-manifest.yaml /workdir/checkpoints/checkpoint-final/
+
+    {{- if .Values.checkpointsRemote }}
+    # Once more to ensure everything gets uploaded
+    echo 'Training done, syncing once more...'
+    mc mirror --overwrite \
+      /workdir/checkpoints \
+      {{ $checkpointsRemotePath }}
+    {{- end }}
+    echo 'All done, exiting'
+  aim-model-manifest.yaml: |
+    apiVersion: aim.eai.amd.com/v1alpha1
+    kind: AIMModel
+    metadata:
+      name: {{ required "aimManifest.modelName is required!" (tpl .Values.aimManifest.modelName .) | quote }}
+    spec:
+      image: {{ .Values.aimManifest.image | quote }}
+      modelSources:
+        - modelId: {{ required "aimManifest.modelId is required!" (tpl .Values.aimManifest.modelId .) | quote }}
+          sourceUri: "s3://{{ .Values.checkpointsRemote }}/checkpoint-final"
+      customTemplates:
+        {{- toYaml .Values.aimManifest.customTemplates | nindent 8 }}
+      env:
+        {{- range .Values.aimManifest.extraEnv }}
+        - name: {{ .name | quote }}
+          {{- if and .value (kindIs "map" .value) .value.name .value.key }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .value.name | quote }}
+              key: {{ .value.key | quote }}
+          {{- else }}
+          value: {{ .value | quote }}
+          {{- end }}
+        {{ end }}
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bucketCredentialsSecret.name | quote }}
+              key: {{ .Values.bucketCredentialsSecret.accessKeyKey | quote }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bucketCredentialsSecret.name | quote }}
+              key: {{ .Values.bucketCredentialsSecret.secretKeyKey | quote }}
+        - name: AWS_ENDPOINT_URL
+          value: {{ .Values.bucketStorageHost | quote }}

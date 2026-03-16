@@ -102,7 +102,7 @@ megatronArguments:
 - "--no-save-optim"
 - "--no-save-rng"
 - "--eval-iters 10"
-- "--tensorboard-dir experiment/"
+- "--tensorboard-dir {{ .Values.tensorboardDir }}"
 - "--ckpt-format torch"
 - "--no-gradient-accumulation-fusion"
 - "--distributed-timeout-minutes 120"

@@ -1,5 +1,5 @@
 ### General chart values ###
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.4
+finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.7
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:
@@ -93,3 +93,8 @@ finetuning_config:
   sft_args:
     max_seq_length: 2048
   tracking: null
+
+# Debug features that may be helpful during recipe development:
+debug:
+  skip_checkpoint_upload: false # If true, skip the upload of checkpoints and logs to the bucket storage.
+  skip_checkpoint_download: false # If true, skip the download of checkpoints from the bucket storage at the start of the run.

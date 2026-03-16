@@ -31,6 +31,10 @@ mc cp --recursive minio-host/$model_path /workload/model/
 echo '--------------------------------------------'
 echo 'Downloading the tokenizer to the local container'
 echo '--------------------------------------------'
-mc cp minio-host/$tokenizer_path/special_tokens_map.json /workload/tokenizer/special_tokens_map.json
-mc cp minio-host/$tokenizer_path/tokenizer.json /workload/tokenizer/tokenizer.json
-mc cp minio-host/$tokenizer_path/tokenizer_config.json /workload/tokenizer/tokenizer_config.json
+
+tokenizerFiles=("special_tokens_map.json" "tokenizer.json" "tokenizer_config.json" "vocab.json" "merges.txt" "tokenizer.model")
+for file in "${tokenizerFiles[@]}"; do
+  mc cp minio-host/$tokenizer_path/$file /workload/tokenizer/$file || echo "Did not copy minio-host/$tokenizer_path/$file."
+done
+echo "Download completed."
+echo '--------------------------------------------'

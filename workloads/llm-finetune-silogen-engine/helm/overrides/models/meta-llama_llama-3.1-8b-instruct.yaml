@@ -1,5 +1,6 @@
 # Canonical model name:
 model: "meta-llama/Llama-3.1-8B-Instruct"
+hfDownloadExcludeGlob: "original/*"
 
 # Resources:
 downloadsReservedSize: 64Gi

@@ -1,6 +1,10 @@
 remoteSourceModelPath: default-bucket/models/meta-llama/Llama-3.1-70B
 remoteDestinationModelPath: default-bucket/megatron-models/meta-llama/Llama-3.1-70B/
 
+# Setting job labels
+metadata:
+  labels: null
+
 # Resources of main workload container
 resources:
   gpu: 1
@@ -21,7 +25,7 @@ conversionArgs:
   modelType: "GPT"
   loader: "llama_mistral"
   saver: "mcore"
-  tensorParallel: 8
+  targetTensorParallel: 8
 
 env:
 - name: CUDA_DEVICE_MAX_CONNECTIONS # Required when sequence parallelism is enabled as a result of tensor parallelism > 1

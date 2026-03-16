@@ -1,0 +1,37 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+outputRemotePath: default-bucket/datasets/sft-verl/dolly-15k
+
+preprocess:
+  mode: hfScript
+  hfScriptArgs:
+    dataset: "databricks/databricks-dolly-15k"
+
+    responseField: "response"
+
+    # Prompt template that can reference any field from the dataset and becomes the prompt
+    # Use {field_name} placeholders to insert field values
+    promptTemplate: "{instruction}\nContext:\n{context}"
+    # If you want to pick a prompt directly from a field, you can use:
+    # promptField: "instruction"
+
+    # Process the train split
+    splits: "train"
+
+    outputDir: "/data/dolly-15k"
+    maxRows: 10000
+    previewRows: 3
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+resources:
+  requests:
+    cpu: "8"
+    memory: 64Gi
+  limits:
+    cpu: "8"
+    memory: 64Gi

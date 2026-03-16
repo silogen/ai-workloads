@@ -60,7 +60,7 @@ index 935613b1..4a2297f6 100644
 +        pass
      main()
 diff --git a/tools/checkpoint/loader_llama_mistral.py b/tools/checkpoint/loader_llama_mistral.py
-index b6697964..c96fec45 100644
+index b6697964..992ee328 100644
 --- a/tools/checkpoint/loader_llama_mistral.py
 +++ b/tools/checkpoint/loader_llama_mistral.py
 @@ -320,6 +320,13 @@ def load_args_from_checkpoint(args):
@@ -69,9 +69,9 @@ index b6697964..c96fec45 100644
  
 +    if "rope_theta" in model_args:
 +        args.rotary_base = int(model_args["rope_theta"])
-+    if "rope_scaling" in model_args and model_args["rope_scaling"].get("type", "") == "linear" and "factor" in model_args["rope_scaling"]:
++    if "rope_scaling" in model_args and model_args["rope_scaling"] and model_args["rope_scaling"].get("type", "") == "linear" and "factor" in model_args["rope_scaling"]:
 +        args.rotary_seq_len_interpolation_factor = int(model_args["rope_scaling"]["factor"])
-+    if "rope_scaling" in model_args and model_args["rope_scaling"].get("rope_type", "") == "llama3":
++    if "rope_scaling" in model_args and model_args["rope_scaling"] and model_args["rope_scaling"].get("rope_type", "") == "llama3":
 +        args.use_rope_scaling = True
 +
      if "num_key_value_heads" in model_args:
@@ -96,11 +96,707 @@ index b6697964..c96fec45 100644
  
      margs.model_size = args.model_size
  
+diff --git a/tools/checkpoint/loader_mcore.py b/tools/checkpoint/loader_mcore.py
+index 9185969b..c09e4179 100644
+--- a/tools/checkpoint/loader_mcore.py
++++ b/tools/checkpoint/loader_mcore.py
+@@ -28,6 +28,12 @@ def add_arguments(parser):
+     group.add_argument('--loader-transformer-impl', default='transformer_engine',
+                        choices=['local', 'transformer_engine'],
+                        help='Which Transformer implementation to use.')
++    group.add_argument('--source-tensor-parallel-size', type=int, default=1,
++                       help='Source tensor model parallel size, defaults to 1')
++    group.add_argument('--source-pipeline-parallel-size', type=int, default=1,
++                       help='Source pipeline model parallel size, defaults to 1')
++    group.add_argument('--source-expert-parallel-size', type=int, default=1,
++                       help='Source expert model parallel size, defaults to 1')
+ 
+ 
+ def _load_checkpoint(queue, args):
+@@ -35,6 +41,7 @@ def _load_checkpoint(queue, args):
+     # Search in directory above this
+     sys.path.append(os.path.abspath(
+         os.path.join(os.path.dirname(__file__),
++                     os.path.pardir,
+                      os.path.pardir)))
+     if args.megatron_path is not None:
+         sys.path.insert(0, args.megatron_path)
+@@ -65,9 +72,13 @@ def _load_checkpoint(queue, args):
+                 '--no-save-optim',
+                 '--no-save-rng',
+                 '--no-initialization',
++                '--no-gradient-accumulation-fusion',
+                 '--mock-data', # To pass the "blend data checks" in arguments.py
+                 '--load', args.load_dir,
+                 '--position-embedding-type', args.position_embedding_type,
++                '--tensor-model-parallel-size', str(args.source_tensor_parallel_size),
++                '--pipeline-model-parallel-size', str(args.source_pipeline_parallel_size),
++                '--expert-model-parallel-size', str(args.source_expert_parallel_size),
+                 '--exit-on-missing-checkpoint',
+                 '--no-one-logger',
+                 ]
+@@ -87,6 +98,11 @@ def _load_checkpoint(queue, args):
+     if margs.expert_model_parallel_size > 1:
+         margs.sequence_parallel = True
+ 
++    # Sequence parallel is required if use both tensor-parallel and Moe.
++    if args.source_tensor_parallel_size is not None:
++        if args.source_tensor_parallel_size > 1:
++            margs.sequence_parallel = True
++
+     # Validate margs.
+     margs = validate_args(margs)
+ 
+@@ -253,6 +269,11 @@ def _load_checkpoint(queue, args):
+     def queue_put(name, msg):
+         print(f"sending {name}")
+         msg["name"] = name
++        # Convert tensors to NumPy arrays to avoid torch multiprocessing fd sharing issues
++        for key, value in msg.items():
++            if torch.is_tensor(value):
++                # Convert to numpy array (forces a copy, no shared storage)
++                msg[key] = value.cpu().detach().float().numpy()
+         queue.put(msg)
+ 
+     # Model schema.
+diff --git a/tools/checkpoint/saver_llama_mistral.py b/tools/checkpoint/saver_llama_mistral.py
+new file mode 100644
+index 00000000..10eefb7f
+--- /dev/null
++++ b/tools/checkpoint/saver_llama_mistral.py
+@@ -0,0 +1,603 @@
++import json
++import os
++import sys
++import torch
++import gc
++
++def add_arguments(parser):
++    group = parser.add_argument_group(title='Llama/Mistral saver.')
++
++    parser.add_argument('--model-size', type=str, required=True,
++                        choices=['llama2-7B', 'llama2-13B', 'llama2-70B', 'llama2-7Bf', 'llama2-13Bf', 'llama2-70Bf',
++                                 'llama3-8B', 'llama3-70B', 'llama3-8Bf', 'llama3-70Bf',
++                                 'mistral-7B', 'mistral-7Bf', 'yi-34B',
++                                 'qwen2.5-7B', 'qwen2.5-72B', 'qwen2.5-7Bf', 'qwen2.5-72Bf',
++                                 'deepseek-coder-6.7B', 'deepseek-coder-6.7Bf'],
++                        help='Model size to determine configuration.')
++    group.add_argument('--tokenizer-model', required=True,
++                       help='Tokenizer model file or directory.')
++    parser.add_argument('--bf16', action='store_true', help='Load weights in bf16 (used for metadata, actual loading handled by loader).')
++    parser.add_argument('--fp16', action='store_true', help='Load weights in fp16 (used for metadata, actual loading handled by loader).')
++
++
++def compute_intermediate_size(n, ffn_dim_multiplier=1, multiple_of=256):
++    return multiple_of * ((int(ffn_dim_multiplier * int(8 * n / 3)) + multiple_of - 1) // multiple_of)
++
++
++def save_checkpoint(queue, args):
++    """
++    Save checkpoint in HuggingFace format.
++    Receives model weights from queue and reconstructs HF model structure.
++    """
++    print("Saver started, importing transformers...")
++    sys.stdout.flush()
++    try:
++        import transformers
++    except ImportError as e:
++        print(f"ERROR: Failed to import transformers: {e}")
++        raise ImportError("The 'transformers' package is not installed.")
++    print("Transformers imported successfully")
++    sys.stdout.flush()
++
++    def queue_get(name=None):
++        if name is not None:
++            print(f"Waiting for {name}...")
++        else:
++            print("Waiting for metadata...")
++        sys.stdout.flush()
++
++        val = queue.get()
++
++        if val == "exit":
++            print("Loader exited, exiting saver")
++            sys.stdout.flush()
++            exit(1)
++        if name is not None and args.checking and val["name"] != name:
++            val_name = val["name"]
++            print(f'Unexpected message. Expecting "{name}" but got "{val_name}". Exiting saver.')
++            sys.stdout.flush()
++            exit(1)
++        if name is not None:
++            print(f"received {name}")
++        else:
++            print("Received metadata")
++        sys.stdout.flush()
++
++        # Convert numpy arrays back to torch tensors
++        if isinstance(val, dict):
++            import numpy as np
++            for key, value in val.items():
++                if isinstance(value, np.ndarray):
++                    val[key] = torch.from_numpy(value)
++
++        return val
++
++    def check_message(msg):
++        if not args.checking:
++            return
++        msg_name = msg.pop("name")
++        if len(msg.keys()) > 0:
++            print(f"Unexpected values in {msg_name}:")
++            for key in msg.keys():
++                print(f"   {key}")
++            print(f"Exiting. If you want to ignore this, use the argument --no-checking.")
++            exit(1)
++
++    # Get metadata
++    md = queue_get()
++
++    model_size = args.model_size
++
++    # Determine model configuration based on metadata
++    if "llama2" in model_size or "llama3" in model_size:
++        from transformers import LlamaConfig, LlamaForCausalLM
++        ModelConfig = LlamaConfig
++        ModelClass = LlamaForCausalLM
++    elif "mistral" in model_size:
++        from transformers import MistralConfig, MistralForCausalLM
++        ModelConfig = MistralConfig
++        ModelClass = MistralForCausalLM
++    elif "qwen2.5" in model_size:
++        from transformers import Qwen2Config, Qwen2ForCausalLM
++        ModelConfig = Qwen2Config
++        ModelClass = Qwen2ForCausalLM
++    elif "yi" in model_size:
++        from transformers import LlamaConfig, LlamaForCausalLM
++        ModelConfig = LlamaConfig
++        ModelClass = LlamaForCausalLM
++    elif "deepseek-coder" in model_size.lower():
++        from transformers import LlamaConfig, LlamaForCausalLM
++        ModelConfig = LlamaConfig
++        ModelClass = LlamaForCausalLM
++    else:
++        raise ValueError(f"Unsupported model size: {model_size}")
++
++    # Extract model dimensions from metadata
++    hidden_size = md.hidden_size
++    num_attention_heads = md.num_attention_heads
++    num_layers = md.num_layers
++    max_position_embeddings = md.max_position_embeddings
++
++    # Determine num_key_value_heads (for GQA)
++    if hasattr(md, 'checkpoint_args') and hasattr(md.checkpoint_args, 'num_query_groups'):
++        num_key_value_heads = md.checkpoint_args.num_query_groups
++    else:
++        num_key_value_heads = num_attention_heads
++
++    # Get vocab size
++    if hasattr(md, 'true_vocab_size') and md.true_vocab_size is not None:
++        vocab_size = md.true_vocab_size
++    elif hasattr(md, 'checkpoint_args') and hasattr(md.checkpoint_args, 'vocab_size'):
++        vocab_size = md.checkpoint_args.vocab_size
++    else:
++        # Will be set from embeddings (may be padded)
++        vocab_size = None
++
++    # Get other config parameters
++    # Initialize with model-specific defaults as fallback
++    if "deepseek-coder" in model_size.lower():
++        rms_norm_eps_default = 1e-6
++        rope_theta_default = 100000.0
++    else:
++        rms_norm_eps_default = 1e-5
++        rope_theta_default = 10000.0
++
++    # Try to extract from checkpoint metadata (preferred)
++    if hasattr(md, 'checkpoint_args'):
++        # RMS Norm Epsilon
++        if hasattr(md.checkpoint_args, 'norm_epsilon'):
++            rms_norm_eps = md.checkpoint_args.norm_epsilon
++            print(f"✓ rms_norm_eps={rms_norm_eps} (from checkpoint metadata: norm_epsilon)")
++        else:
++            rms_norm_eps = rms_norm_eps_default
++            print(f"⚠ rms_norm_eps={rms_norm_eps} (using model-specific default, not found in checkpoint)")
++
++        # FFN Hidden Size
++        if hasattr(md.checkpoint_args, 'ffn_hidden_size'):
++            intermediate_size = md.checkpoint_args.ffn_hidden_size
++            print(f"✓ intermediate_size={intermediate_size} (from checkpoint metadata)")
++        else:
++            intermediate_size = compute_intermediate_size(hidden_size)
++            print(f"⚠ intermediate_size={intermediate_size} (computed, not found in checkpoint)")
++
++        # RoPE Theta
++        if hasattr(md.checkpoint_args, 'rotary_base'):
++            rope_theta = md.checkpoint_args.rotary_base
++            print(f"✓ rope_theta={rope_theta} (from checkpoint metadata: rotary_base)")
++        else:
++            rope_theta = rope_theta_default
++            print(f"⚠ rope_theta={rope_theta} (using model-specific default, not found in checkpoint)")
++    else:
++        rms_norm_eps = rms_norm_eps_default
++        rope_theta = rope_theta_default
++        intermediate_size = compute_intermediate_size(hidden_size)
++        print(f"⚠ No checkpoint_args found, using all defaults:")
++        print(f"  rms_norm_eps={rms_norm_eps}")
++        print(f"  rope_theta={rope_theta}")
++        print(f"  intermediate_size={intermediate_size}")
++
++    # Receive embeddings
++    embeddings_msg = queue_get("embeddings")
++    word_embeddings = embeddings_msg.pop("word embeddings")
++
++    # Handle vocab size padding
++    embedding_vocab_size = word_embeddings.shape[0]
++    if vocab_size is None:
++        vocab_size = embedding_vocab_size
++    elif embedding_vocab_size < vocab_size:
++        # Pad embeddings to match true vocab size
++        print(f"WARNING: Padding embeddings from {embedding_vocab_size} to {vocab_size}")
++        padding_size = vocab_size - embedding_vocab_size
++        padding = torch.zeros(padding_size, word_embeddings.shape[1], dtype=word_embeddings.dtype)
++        word_embeddings = torch.cat([word_embeddings, padding], dim=0)
++    elif embedding_vocab_size > vocab_size:
++        print(f"WARNING: Embedding vocab size {embedding_vocab_size} is larger than target vocab size {vocab_size}. Truncating embeddings.")
++        word_embeddings = word_embeddings[:vocab_size, :]
++
++    check_message(embeddings_msg)
++
++    # Set model-specific defaults for special token IDs (used as fallback)
++    if "llama3" in model_size.lower():
++        bos_token_id_default = 128000
++        eos_token_id_default = 128001
++    elif "llama2" in model_size.lower():
++        bos_token_id_default = 1
++        eos_token_id_default = 2
++    elif "mistral" in model_size.lower():
++        bos_token_id_default = 1
++        eos_token_id_default = 2
++    elif "deepseek-coder" in model_size.lower():
++        bos_token_id_default = 32013
++        eos_token_id_default = 32014
++    else:
++        bos_token_id_default = 1
++        eos_token_id_default = 2
++
++    bos_token_id = None
++    eos_token_id = None
++    bos_token_id_found = False
++    eos_token_id_found = False
++    # Load config.json to extract special token IDs
++    try:
++        config_path = os.path.join(args.tokenizer_model, "config.json")
++        if os.path.exists(config_path):
++            with open(config_path) as f:
++                config = json.load(f)
++                if "bos_token_id" in config:
++                    bos_token_id = config["bos_token_id"]
++                    bos_token_id_found = True
++                    print(f"✓ bos_token_id={bos_token_id} (from config.json)")
++                if "eos_token_id" in config:
++                    eos_token_id = config["eos_token_id"]
++                    eos_token_id_found = True
++                    print(f"✓ eos_token_id={eos_token_id} (from config.json)")
++    except Exception as e:
++        print(f"⚠ Failed to load config.json: {e}")
++
++    # Load tokenizer to extract special token IDs
++    print("Loading tokenizer to extract special token IDs...")
++    sys.stdout.flush()
++
++    try:
++        if not bos_token_id_found or not eos_token_id_found:
++            from transformers import AutoTokenizer
++            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_model, trust_remote_code=True)
++        
++        # Extract bos_token_id and eos_token_id from tokenizer
++        if not bos_token_id_found:
++            if hasattr(tokenizer, 'bos_token_id') and tokenizer.bos_token_id is not None:
++                bos_token_id = tokenizer.bos_token_id
++                bos_token_id_found = True
++                print(f"✓ bos_token_id={bos_token_id} (from tokenizer)")
++            else:
++                bos_token_id = bos_token_id_default
++                print(f"⚠ bos_token_id={bos_token_id} (using model-specific default, not found in tokenizer)")
++        if not eos_token_id_found:
++            if hasattr(tokenizer, 'eos_token_id') and tokenizer.eos_token_id is not None:
++                eos_token_id = tokenizer.eos_token_id
++                eos_token_id_found = True
++                print(f"✓ eos_token_id={eos_token_id} (from tokenizer)")
++            else:
++                eos_token_id = eos_token_id_default
++                print(f"⚠ eos_token_id={eos_token_id} (using model-specific default, not found in tokenizer)")
++    except Exception as e:
++        print(f"⚠ Failed to load tokenizer: {e}")
++        print(f"⚠ Using model-specific defaults:")
++        if not bos_token_id_found:
++            bos_token_id = bos_token_id_default
++            print(f"⚠ bos_token_id={bos_token_id}")
++        if not eos_token_id_found:
++            eos_token_id = eos_token_id_default
++            print(f"⚠ eos_token_id={eos_token_id}")
++
++    # Build rope_scaling config - intelligently infer from checkpoint metadata
++    rope_scaling = None
++    rope_scaling_found = False
++
++    # Define the Llama3-style rope_scaling (used when use_rope_scaling=True)
++    llama3_style_rope_scaling = {
++        "factor": 8.0,
++        "low_freq_factor": 1.0,
++        "high_freq_factor": 4.0,
++        "original_max_position_embeddings": 8192,
++        "rope_type": "llama3"
++    }
++
++    # Try to extract rope_scaling from checkpoint metadata
++    if hasattr(md, 'checkpoint_args'):
++        # Priority 1: Check for rotary_seq_len_interpolation_factor (linear rope scaling)
++        # This takes precedence regardless of use_rope_scaling flag
++        if hasattr(md.checkpoint_args, 'rotary_seq_len_interpolation_factor'):
++            interpolation_factor = md.checkpoint_args.rotary_seq_len_interpolation_factor
++            if interpolation_factor is not None and interpolation_factor > 1.0:
++                rope_scaling = {
++                    "factor": interpolation_factor,
++                    "type": "linear"
++                }
++                print(f"✓ rope_scaling={rope_scaling} (from checkpoint metadata: rotary_seq_len_interpolation_factor)")
++                rope_scaling_found = True
++
++        # Priority 2: Check for use_rope_scaling flag
++        # When True, use Llama3-style defaults (model-independent)
++        if not rope_scaling_found and hasattr(md.checkpoint_args, 'use_rope_scaling'):
++            use_rope_scaling = md.checkpoint_args.use_rope_scaling
++            if use_rope_scaling:
++                rope_scaling = llama3_style_rope_scaling
++                print(f"✓ rope_scaling={rope_scaling} (from checkpoint metadata: use_rope_scaling=True)")
++                rope_scaling_found = True
++            else:
++                # use_rope_scaling=False, so no rope scaling
++                rope_scaling = None
++                print(f"✓ rope_scaling=None (from checkpoint metadata: use_rope_scaling=False)")
++                rope_scaling_found = True
++
++    # Fallback: Use model-specific defaults if not found in metadata
++    if not rope_scaling_found:
++        if "llama3" in model_size.lower():
++            rope_scaling = llama3_style_rope_scaling
++            print(f"⚠ rope_scaling={rope_scaling} (using Llama3 default, not found in checkpoint)")
++        elif "deepseek-coder" in model_size.lower():
++            # DeepSeek Coder default uses linear scaling
++            rope_scaling = {
++                "factor": 4.0,
++                "type": "linear"
++            }
++            print(f"⚠ rope_scaling={rope_scaling} (using DeepSeek default, not found in checkpoint)")
++        else:
++            rope_scaling = None
++            print(f"✓ rope_scaling=None (no scaling needed, not found in checkpoint)")
++
++    # Add summary log
++    print("\n" + "="*80)
++    print("Configuration Summary:")
++    print("="*80)
++    print(f"  rms_norm_eps: {rms_norm_eps}")
++    print(f"  rope_theta: {rope_theta}")
++    print(f"  bos_token_id: {bos_token_id}")
++    print(f"  eos_token_id: {eos_token_id}")
++    print(f"  rope_scaling: {rope_scaling}")
++    print(f"  vocab_size: {vocab_size}")
++    print(f"  intermediate_size: {intermediate_size}")
++    print("="*80 + "\n")
++
++    # Determine torch_dtype from metadata and actual tensor dtype for saving
++    torch_dtype_str = "bfloat16" if args.bf16 else ("float16" if args.fp16 else "float32")
++    save_dtype = torch.bfloat16 if args.bf16 else (torch.float16 if args.fp16 else torch.float32)
++
++    # Determine architectures based on model class
++    if ModelClass.__name__ == "LlamaForCausalLM":
++        architectures = ["LlamaForCausalLM"]
++    elif ModelClass.__name__ == "MistralForCausalLM":
++        architectures = ["MistralForCausalLM"]
++    elif ModelClass.__name__ == "Qwen2ForCausalLM":
++        architectures = ["Qwen2ForCausalLM"]
++    else:
++        architectures = [ModelClass.__name__]
++
++    # Create config with all fields
++    config = ModelConfig(
++        hidden_size=hidden_size,
++        intermediate_size=intermediate_size,
++        num_attention_heads=num_attention_heads,
++        num_hidden_layers=num_layers,
++        num_key_value_heads=num_key_value_heads,
++        vocab_size=vocab_size,
++        max_position_embeddings=max_position_embeddings,
++        rms_norm_eps=rms_norm_eps,
++        rope_theta=rope_theta,
++        bos_token_id=bos_token_id,
++        eos_token_id=eos_token_id,
++        rope_scaling=rope_scaling,
++        torch_dtype=torch_dtype_str,
++        architectures=architectures,
++    )
++
++    print(f"Created config with:")
++    print(f"  bos_token_id: {config.bos_token_id}")
++    print(f"  eos_token_id: {config.eos_token_id}")
++    print(f"  rope_scaling: {config.rope_scaling}")
++    print(f"  torch_dtype: {config.torch_dtype}")
++
++    # Create output directory
++    os.makedirs(args.save_dir, exist_ok=True)
++
++    # Save config (transformers_version will be auto-added by transformers library)
++    config.save_pretrained(args.save_dir)
++
++    # Copy tokenizer files if they exist
++    if os.path.isdir(args.tokenizer_model):
++        import shutil
++        tokenizer_files = ['tokenizer.json', 'tokenizer.model', 'tokenizer_config.json',
++                          'special_tokens_map.json', 'generation_config.json']
++        for fname in tokenizer_files:
++            src = os.path.join(args.tokenizer_model, fname)
++            dst = os.path.join(args.save_dir, fname)
++            if os.path.exists(src) and not os.path.exists(dst):
++                shutil.copy2(src, dst)
++
++    # Initialize state dict
++    state_dict = {}
++
++    print(f"word_embeddings.shape= {word_embeddings.shape}")
++    # Set embeddings
++    state_dict["model.embed_tokens.weight"] = word_embeddings
++
++    # Process transformer layers
++    for layer_idx in range(num_layers):
++        msg = queue_get(f"transformer layer {layer_idx}")
++
++        # Get QKV weight and split it
++        qkv_weight = msg.pop("qkv weight")
++
++        # Calculate dimensions
++        head_dim = hidden_size // num_attention_heads
++        num_query_groups = num_key_value_heads
++        heads_per_group = num_attention_heads // num_query_groups
++
++        # Split QKV
++        # In Megatron format: [ng, (dim*nh//ng + dim + dim), hidden_size]
++        # Reshaped from concatenation of Q, K, V
++        qkv_weight = qkv_weight.reshape(num_query_groups, -1, hidden_size)
++
++        q_dim_per_group = head_dim * heads_per_group
++        k_dim = head_dim
++        v_dim = head_dim
++
++        # Split into Q, K, V
++        q_proj = qkv_weight[:, :q_dim_per_group, :].reshape(hidden_size, hidden_size)
++        k_proj = qkv_weight[:, q_dim_per_group:q_dim_per_group+k_dim, :].reshape(num_key_value_heads * head_dim, hidden_size)
++        v_proj = qkv_weight[:, q_dim_per_group+k_dim:, :].reshape(num_key_value_heads * head_dim, hidden_size)
++
++        state_dict[f"model.layers.{layer_idx}.self_attn.q_proj.weight"] = q_proj
++        state_dict[f"model.layers.{layer_idx}.self_attn.k_proj.weight"] = k_proj
++        state_dict[f"model.layers.{layer_idx}.self_attn.v_proj.weight"] = v_proj
++
++        # QKV bias if present
++        if md.qkv_bias:
++            qkv_bias = msg.pop("qkv bias")
++            qkv_bias = qkv_bias.reshape(num_query_groups, -1)
++
++            q_bias = qkv_bias[:, :q_dim_per_group].reshape(-1)
++            k_bias = qkv_bias[:, q_dim_per_group:q_dim_per_group+k_dim].reshape(-1)
++            v_bias = qkv_bias[:, q_dim_per_group+k_dim:].reshape(-1)
++
++            state_dict[f"model.layers.{layer_idx}.self_attn.q_proj.bias"] = q_bias
++            state_dict[f"model.layers.{layer_idx}.self_attn.k_proj.bias"] = k_bias
++            state_dict[f"model.layers.{layer_idx}.self_attn.v_proj.bias"] = v_bias
++
++        # Dense (output projection)
++        dense_weight = msg.pop("dense weight")
++        state_dict[f"model.layers.{layer_idx}.self_attn.o_proj.weight"] = dense_weight
++
++        # MLP
++        if md.swiglu:
++            # Gate and Up projections are split
++            mlp_l0_weight_W = msg.pop("mlp l0 weight W")
++            mlp_l0_weight_V = msg.pop("mlp l0 weight V")
++            state_dict[f"model.layers.{layer_idx}.mlp.gate_proj.weight"] = mlp_l0_weight_W
++            state_dict[f"model.layers.{layer_idx}.mlp.up_proj.weight"] = mlp_l0_weight_V
++
++            if md.linear_bias:
++                mlp_l0_bias_W = msg.pop("mlp l0 bias W")
++                mlp_l0_bias_V = msg.pop("mlp l0 bias V")
++                state_dict[f"model.layers.{layer_idx}.mlp.gate_proj.bias"] = mlp_l0_bias_W
++                state_dict[f"model.layers.{layer_idx}.mlp.up_proj.bias"] = mlp_l0_bias_V
++        else:
++            mlp_l0_weight = msg.pop("mlp l0 weight")
++            # Split into gate and up
++            gate_proj, up_proj = torch.chunk(mlp_l0_weight, 2, dim=0)
++            state_dict[f"model.layers.{layer_idx}.mlp.gate_proj.weight"] = gate_proj
++            state_dict[f"model.layers.{layer_idx}.mlp.up_proj.weight"] = up_proj
++
++            if md.linear_bias:
++                mlp_l0_bias = msg.pop("mlp l0 bias")
++                gate_bias, up_bias = torch.chunk(mlp_l0_bias, 2, dim=0)
++                state_dict[f"model.layers.{layer_idx}.mlp.gate_proj.bias"] = gate_bias
++                state_dict[f"model.layers.{layer_idx}.mlp.up_proj.bias"] = up_bias
++
++        mlp_l1_weight = msg.pop("mlp l1 weight")
++        state_dict[f"model.layers.{layer_idx}.mlp.down_proj.weight"] = mlp_l1_weight
++
++        # Layer norms
++        input_norm_weight = msg.pop("input norm weight")
++        post_norm_weight = msg.pop("post norm weight")
++        state_dict[f"model.layers.{layer_idx}.input_layernorm.weight"] = input_norm_weight
++        state_dict[f"model.layers.{layer_idx}.post_attention_layernorm.weight"] = post_norm_weight
++
++        check_message(msg)
++
++        # Explicitly delete message dict and intermediate tensors to free memory
++        del msg, qkv_weight
++        if layer_idx % 5 == 0:
++            gc.collect()  # Run garbage collection every 5 layers
++
++    # Final norm
++    final_norm_msg = queue_get("final norm")
++    final_norm_weight = final_norm_msg.pop("weight")
++    state_dict["model.norm.weight"] = final_norm_weight
++    check_message(final_norm_msg)
++
++    # Output layer (lm_head)
++    if md.output_layer:
++        output_msg = queue_get("output layer")
++        output_weight = output_msg.pop("weight")
++
++        # Handle vocab size padding for output layer
++        if output_weight.shape[0] < vocab_size:
++            print(f"Padding output layer from {output_weight.shape[0]} to {vocab_size}")
++            padding_size = vocab_size - output_weight.shape[0]
++            padding = torch.zeros(padding_size, output_weight.shape[1], dtype=output_weight.dtype)
++            output_weight = torch.cat([output_weight, padding], dim=0)
++        elif output_weight.shape[0] > vocab_size:
++            print(f"Truncating output layer from {output_weight.shape[0]} to {vocab_size}")
++            output_weight = output_weight[:vocab_size, :]
++
++        state_dict["lm_head.weight"] = output_weight
++        check_message(output_msg)
++    else:
++        # Tied embeddings (already padded)
++        state_dict["lm_head.weight"] = word_embeddings
++
++    # Check for done message
++    msg = queue_get()
++    if msg != "done":
++        print(f"ERROR: Expected 'done' but got {msg}")
++        exit(1)
++
++    print(f"Saving checkpoint to {args.save_dir}")
++
++    # Convert all tensors to the correct dtype
++    print(f"Converting tensors to {save_dtype}...")
++    for key in state_dict.keys():
++        state_dict[key] = state_dict[key].to(save_dtype)
++
++    # Import safetensors
++    try:
++        from safetensors.torch import save_file
++    except ImportError:
++        print("ERROR: safetensors package not found. Installing...")
++        import subprocess
++        subprocess.check_call([sys.executable, "-m", "pip", "install", "safetensors"])
++        from safetensors.torch import save_file
++
++    # Calculate total size and split into shards
++    total_size = sum(v.numel() * v.element_size() for v in state_dict.values())
++    max_shard_size = 5 * 1024 * 1024 * 1024  # 5GB per shard
++
++    # Sort keys for consistent ordering
++    sorted_keys = sorted(state_dict.keys())
++
++    # Distribute weights across shards by size
++    shards = []
++    current_shard = {}
++    current_size = 0
++
++    for key in sorted_keys:
++        tensor = state_dict[key]
++        tensor_size = tensor.numel() * tensor.element_size()
++
++        # Start new shard if current would exceed limit
++        if current_size > 0 and current_size + tensor_size > max_shard_size:
++            shards.append(current_shard)
++            current_shard = {}
++            current_size = 0
++
++        current_shard[key] = tensor
++        current_size += tensor_size
++
++    # Add the last shard
++    if current_shard:
++        shards.append(current_shard)
++
++    num_shards = len(shards)
++    print(f"Splitting checkpoint into {num_shards} shards...")
++
++    # Save each shard and build weight map
++    weight_map = {}
++    for idx, shard in enumerate(shards):
++        shard_filename = f"model-{idx+1:05d}-of-{num_shards:05d}.safetensors"
++        shard_path = os.path.join(args.save_dir, shard_filename)
++
++        print(f"Saving shard {idx+1}/{num_shards}: {shard_filename}")
++        # Add metadata required by transformers
++        save_file(shard, shard_path, metadata={"format": "pt"})
++
++        # Update weight map
++        for key in shard.keys():
++            weight_map[key] = shard_filename
++
++        # Free memory
++        del shard
++        gc.collect()
++
++    # Create index file
++    index_dict = {
++        "metadata": {"total_size": total_size},
++        "weight_map": weight_map
++    }
++
++    index_path = os.path.join(args.save_dir, "model.safetensors.index.json")
++    with open(index_path, "w") as f:
++        json.dump(index_dict, f, indent=2)
++
++    print("Done saving checkpoint!")
 diff --git a/tools/checkpoint/saver_mcore.py b/tools/checkpoint/saver_mcore.py
-index 2caf26a9..83c7951b 100644
+index 2caf26a9..a09b44c3 100644
 --- a/tools/checkpoint/saver_mcore.py
 +++ b/tools/checkpoint/saver_mcore.py
-@@ -137,6 +137,15 @@ def save_checkpoint(queue, args):
+@@ -19,7 +19,7 @@ def add_arguments(parser):
+                        help='Target tensor model parallel size, defaults to the tensor parallel size '
+                        'in the input checkpoint if provided by the loader, otherwise to 1')
+     group.add_argument('--target-pipeline-parallel-size', type=int,
+-                       help='Target tensor model parallel size, default to the pipeline parall size '
++                       help='Target pipeline model parallel size, default to the pipeline parallel size '
+                        'in the input checkpoint if provided by the loader, otherwise to 1')
+     group.add_argument('--saver-transformer-impl', default='transformer_engine',
+                        choices=['local', 'transformer_engine'],
+@@ -66,6 +66,14 @@ def save_checkpoint(queue, args):
+             exit(1)
+         if name is not None:
+             print(f"received {name}")
++
++        # Convert numpy arrays back to torch tensors
++        if isinstance(val, dict):
++            import numpy as np
++            for key, value in val.items():
++                if isinstance(value, np.ndarray):
++                    val[key] = torch.from_numpy(value)
++
+         return val
+ 
+     def check_message(msg):
+@@ -137,6 +145,15 @@ def save_checkpoint(queue, args):
                  '--no-one-logger',
                  ]
  
@@ -116,7 +812,7 @@ index 2caf26a9..83c7951b 100644
      if md.make_vocab_size_divisible_by is not None:
          sys.argv.extend(['--make-vocab-size-divisible-by', str(md.make_vocab_size_divisible_by)])
      if md.params_dtype == torch.float16:
-@@ -188,8 +197,8 @@ def save_checkpoint(queue, args):
+@@ -188,8 +205,8 @@ def save_checkpoint(queue, args):
      margs.apply_query_key_layer_scaling = md.checkpoint_args.apply_query_key_layer_scaling
  
      # Sequence parallel is required if use both tensor-parallel and Moe.

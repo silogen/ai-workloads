@@ -29,6 +29,7 @@ envVars:
   NO_MASKED_SOFTMAX_FUSION: "true"
   NO_ROPE_FUSION: "true"
   NO_GRADIENT_ACCUMULATION_FUSION: "true"
+  TOKENIZER_TYPE: "HuggingFaceTokenizer"
 
 storage:
   ephemeral:
@@ -49,3 +50,6 @@ cpuPerGpu: 4
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:
   enabled: false
+
+# Additional args to pass to inference script, e.g. architecture specific
+additionalArgs: []

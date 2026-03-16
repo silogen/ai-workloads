@@ -1,10 +1,12 @@
 # Tutorial 01: Deliver model and data to cluster MinIO, then run fine-tune
 
-This tutorial shows how to download a model and some data from HuggingFace Hub to a cluster-internal MinIO storage server, and then launch fine-tuning jobs that use those resources. The checkpoints are also synced into the same cluster-internal MinIO storage. Finally, an inference workload is spawned to make it possible to discuss with the newly fine-tuned model. At the end of the tutorial, there are some instructions on changing the model and the data.
+This tutorial shows how to download a model and some data from Hugging Face Hub to a cluster-internal MinIO storage server, and then launch fine-tuning jobs that use those resources. The checkpoints are also synced into the same cluster-internal MinIO storage. Finally, an inference workload is spawned to make it possible to discuss with the newly fine-tuned model. At the end of the tutorial, there are some instructions on changing the model and the data.
 
 The fine-tuning work in this tutorial is meant for demonstration purposes, small enough to be run live. We start from Tiny-Llama 1.1B Chat, a small LLM. This is already a chat-fine-tuned model.
 
-We train it with some additional instruction data in the form of single prompt-and-answer pairs. The prompts in this data were gathered from real human prompts to LLMs, mostly ones that were shared on the now deprecated sharegpt.com site. The answers to those human prompts were generated with the [Mistral Large model](https://huggingface.co/mistralai/Mistral-Large-Instruct-2407). In essence, training on this data makes our model respond more like Mistral Large. And there's another thing that this training accomplishes, which is to change the chat template, meaning the way the input to the model is formatted. More specifically, this adds special tokens that signal the start and end of message. Our experience is that such special tokens make the inference time message end signaling and message formatting a bit more robust.
+We train it with some additional instruction data in the form of single prompt-and-answer pairs. The prompts in this data were gathered from real human prompts to LLMs, mostly ones that were shared on the now deprecated sharegpt.com site. The answers to those human prompts were generated with the [Mistral Large model](https://huggingface.co/mistralai/Mistral-Large-Instruct-2407).
+
+In essence, training on this data makes our model respond more like Mistral Large. And there's another thing that this training accomplishes, which is to change the chat template, meaning the way the input to the model is formatted. More specifically, this adds special tokens that signal the start and end of message. Our experience is that such special tokens make the inference time message end signaling and message formatting a bit more robust.
 
 ## 1. Setup
 
@@ -68,7 +70,7 @@ helm template workloads/llm-finetune-silogen-engine/helm \
   | kubectl apply -f -
 ```
 
-We can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions above](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s). The training steps of this multi-gpu training run take merely 75 seconds, which reflects the nature of fine-tuning: fast, iterative, with a focus on flexible experimentation.
+We can see logs, a progress bar, and the full 8-GPU compute utilization following the [instructions above](./tutorial-00-prerequisites.md#monitoring-progress-logs-and-gpu-utilization-with-k9s). The training steps of this multi-GPU training run take merely 75 seconds, which reflects the nature of fine-tuning: fast, iterative, with a focus on flexible experimentation.
 
 If we want to compare to an equivalent single-GPU run, we can run:
 
@@ -132,7 +134,9 @@ When we want to stop port-forwarding, we can just run:
 ```bash
 kill $portforwardPID
 ```
+
 and to stop the deployment, we run:
+
 ```bash
 name="tiny-llama-argilla-v1"
 kubectl delete deployments/llm-inference-vllm-$name
@@ -146,7 +150,7 @@ This section should get us started, but ultimately, this opens the whole topic o
 
 ### Preparing your own model and data
 
-The workload `workloads/download-huggingface-model-to-bucket/helm` delivers [HuggingFace Hub](https://huggingface.co/) models. To get models from elsewhere, we may for instance do it manually by downloading them to our own computers and uploading to our bucket storage from there. The data delivery workload `workloads/download-data-to-bucket/helm` uses a free script to download and preprocess the data, so it is more flexible in this regard.
+The workload `workloads/download-huggingface-model-to-bucket/helm` delivers [Hugging Face Hub](https://huggingface.co/) models. To get models from elsewhere, we may for instance do it manually by downloading them to our own computers and uploading to our bucket storage from there. The data delivery workload `workloads/download-data-to-bucket/helm` uses a free script to download and preprocess the data, so it is more flexible in this regard.
 
 The bucket storage used in this tutorial is a MinIO server hosted inside the cluster itself. To use some other S3-compatible bucket storage, we need to change the `bucketStorageHost` field, add our credentials (HMAC keys) as a Secret in our namespace (this is generally achieved via an External Secret that in turn fetches the info from some secret store that we have access to), and then refer to that bucket storage credentials Secret in the `bucketCredentialsSecret` nested fields.
 
@@ -156,7 +160,7 @@ To prepare our own data, we structure our values file like `workloads/download-d
 
 #### Data
 
-The `dataScript` is a script instead of just a dataset identifier, because the datasets on HuggingFace hub don't have a standard format that can be always directly passed to our fine-tuning engine. The data script should format the data into the format that the silogen fine-tuning engine expects. For supervised fine-tuning, this is JSON lines, where each line has a JSON dictionary formatted as follows:
+The `dataScript` is a script instead of just a dataset identifier, because the datasets on Hugging Face hub don't have a standard format that can be always directly passed to our fine-tuning engine. The data script should format the data into the format that the silogen fine-tuning engine expects. For supervised fine-tuning, this is JSON lines, where each line has a JSON dictionary formatted as follows:
 
 ```json
 {
@@ -166,6 +170,7 @@ The `dataScript` is a script instead of just a dataset identifier, because the d
   ]
 }
 ```
+
 There can be an arbitrary number of messages. Additionally, each dictionary can contain a `dataset` field that has the dataset identifier, and an `id` field that identifies the data point uniquely. For [Direct Preference Optimization](https://arxiv.org/pdf/2305.18290), the data format is as follows:
 
 ```json
@@ -192,7 +197,7 @@ The dataset is uploaded to the directory pointed to by `bucketDataDir`, with the
 
 #### Model
 
-Preparing a model is simple than data. We simply set the `modelID` to the HuggingFace Hub ID of the model (in the `Organization/ModelName` format). The model is the uploaded to the path pointed to by `bucketModelPath`.
+Preparing a model is simple than data. We simply set the `modelID` to the Hugging Face Hub ID of the model (in the `Organization/ModelName` format). The model is the uploaded to the path pointed to by `bucketModelPath`.
 
 ### Setting fine-tuning parameters
 

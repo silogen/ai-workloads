@@ -1,0 +1,59 @@
+{{- define "deployment" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "release.fullname" . }}
+  labels:
+    app: {{ include "release.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "release.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "release.fullname" . }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.entrypoint }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - {{ .Values.entrypoint | quote }}
+          {{- end }}
+          {{- if .Values.env_vars }}
+          env:
+{{ include "container.env" . | indent 12 }}
+          {{- end }}
+          ports:
+            {{- range $key, $value := .Values.deployment.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $value }}
+            {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+{{ .Values.livenessProbe | toYaml | indent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+{{ .Values.readinessProbe | toYaml | indent 12 }}
+          {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+{{ .Values.startupProbe | toYaml | indent 12 }}
+          {{- end }}
+          resources:
+{{ include "container.resources" . | indent 12 }}
+          volumeMounts:
+{{ include "container.volumeMounts" . | indent 12 }}
+      volumes:
+{{ include "container.volumes" . | indent 8 }}
+{{- end -}}
+
+{{ include "deployment" . }}

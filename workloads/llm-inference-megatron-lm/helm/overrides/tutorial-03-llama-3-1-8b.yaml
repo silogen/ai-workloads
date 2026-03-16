@@ -29,6 +29,7 @@ envVars:
   NO_MASKED_SOFTMAX_FUSION: "true"
   NO_ROPE_FUSION: "true"
   NO_GRADIENT_ACCUMULATION_FUSION: "true"
+  TOKENIZER_TYPE: "HuggingFaceTokenizer"
 
 storage:
   ephemeral:

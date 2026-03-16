@@ -1,8 +1,9 @@
 # Tutorial 03: Deliver model and data to cluster MinIO, then run Megatron-LM continuous pretraining
 
 This tutorial involves the following steps:
-1. Download a model from the HuggingFace Hub in HuggingFace Transformers format, convert it to the Megatron-LM compatible format, and save it to the cluster-internal MinIO storage server.
-2. Download a sample dataset from the HuggingFace Hub in `jsonl` format, preprocess it into the Megatron-LM compatible format, and store it in a cluster-internal MinIO storage server.
+
+1. Download a model from the Hugging Face Hub in Hugging Face Transformers format, convert it to the Megatron-LM compatible format, and save it to the cluster-internal MinIO storage server.
+2. Download a sample dataset from the Hugging Face Hub in `jsonl` format, preprocess it into the Megatron-LM compatible format, and store it in a cluster-internal MinIO storage server.
 3. Execute a multi-node Megatron-LM continuous pretraining job using the base model and dataset prepared in steps 1 and 2, and saving the resulting checkpoints to the cluster-internal MinIO storage.
 4. Perform an inference workload using the final checkpoint from step 3 in Megatron-LM format to validate the results.
 
@@ -15,7 +16,8 @@ Follow the setup in the [tutorial 0 prerequisites section](./tutorial-00-prerequ
 ### 2.1 Prepare model in Megatron-LM format
 
 #### 2.1.1 Download model
-To download the `meta-llama/llama-3.1-8B` model from the HuggingFace Hub and upload it to the in-cluster MinIO bucket, use the Helm chart located at `workloads/download-huggingface-model-to-bucket/helm`.
+
+To download the `meta-llama/llama-3.1-8B` model from the Hugging Face Hub and upload it to the in-cluster MinIO bucket, use the Helm chart located at `workloads/download-huggingface-model-to-bucket/helm`.
 
 ```bash
 helm template workloads/download-huggingface-model-to-bucket/helm \
@@ -24,9 +26,10 @@ helm template workloads/download-huggingface-model-to-bucket/helm \
   | kubectl apply -f -
 ```
 
-The model will be stored in the remote MinIO bucket at the path `default-bucket/models/meta-llama/Llama-3.1-8B` after being downloaded from the HuggingFace Hub.
+The model will be stored in the remote MinIO bucket at the path `default-bucket/models/meta-llama/Llama-3.1-8B` after being downloaded from the Hugging Face Hub.
 
 #### 2.1.2 Convert model checkpoints to Megatron-LM format
+
 To convert the model checkpoints into the Megatron-LM compatible format, use the Helm chart located at `workloads/llm-megatron-ckpt-conversion/helm`.
 
 ```bash
@@ -40,7 +43,7 @@ The conversion process begins by copying the model checkpoint files from the Min
 
 ### 2.2 Prepare data in Megatron-LM format
 
-We will use the Helm chart located at `workloads/prepare-data-for-megatron-lm/helm` to download and preprocess a sample of the `HuggingFaceFW/fineweb-edu` dataset using the HuggingFace tokenizer downloaded during the previous step [Download model](#211-download-model).
+We will use the Helm chart located at `workloads/prepare-data-for-megatron-lm/helm` to download and preprocess a sample of the `HuggingFaceFW/fineweb-edu` dataset using the Hugging Face tokenizer downloaded during the previous step [Download model](#download-model).
 
 The user input file is `workloads/prepare-data-for-megatron-lm/helm/overrides/tutorial-03-fineweb-data-sample.yaml`.
 
@@ -71,7 +74,7 @@ Error from server (Forbidden): rayjobs.ray.io is forbidden: User "system:service
 
 To quickly overcome this issue while waiting for permissions setup one can comment out this line in [https://github.com/silogen/ai-workloads/blob/main/workloads/llm-pretraining-megatron-lm-ray/helm/templates/ray_job.yaml](https://github.com/silogen/ai-workloads/blob/main/workloads/llm-pretraining-megatron-lm-ray/helm/templates/ray_job.yaml#L69)
 
-```
+```bash
 bash /local_resources/mount/gc.sh{{- if and .Values.kaiwo.storageEnabled .Values.kaiwo.enabled}} --skip-pvc{{- end }} {{ include "release.fullname" . }}
 ```
 
@@ -83,7 +86,6 @@ In order to perform inference with the just trained Llama-3.1-8B model and verif
 
 1. Execute the Llama-3.1-8B single-node Megatron-LM inference workload. This step verifies that the model is correctly deployed and can respond to basic prompts.
 2. Query the model with a simple prompt to confirm it generates coherent responses.
-
 
 #### 2.4.1 Run Megatron-LM inference workload
 
@@ -105,7 +107,6 @@ k9s --command pods
 
 Navigate using the `arrow keys` to select a the pod containg the keyword "inference" and  and press `Enter` to view the pod running the inference server. View logs by pressing `l`. Logs display output messages generated during runtime. Press `Esc` to return to the previous `k9s` view.
 
-
 #### 2.4.3 Connect to the inference service and query it to sample prompt continuations
 
 First, check the deployment status:
@@ -113,6 +114,7 @@ First, check the deployment status:
 ```bash
 kubectl get deployment
 ```
+
 You should see a deployment with a name in the format `llm-inference-megatron-lm-YYYYMMDD-HHMM` (e.g. `llm-inference-megatron-lm-20250811-1229`) in ready state.
 
 Get the name of the respective service deployed by the workload with
@@ -139,7 +141,7 @@ curl -X PUT -H "Content-Type: application/json" \
   http://localhost:5000/api
 ```
 
-You should receive a JSON response with the model’s answer. For a healthy model, the answer should be `"Paris"` or similar with some extra text.
+You should receive a JSON response with the model's answer. For a healthy model, the answer should be `"Paris"` or similar with some extra text.
 
 Try a few more prompts to check basic reasoning and language ability:
 

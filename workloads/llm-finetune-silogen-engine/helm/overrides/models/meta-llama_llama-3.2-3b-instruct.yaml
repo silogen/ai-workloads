@@ -1,7 +1,6 @@
 # Canonical model name:
 model: "meta-llama/Llama-3.2-3B-Instruct"
-
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.5
+hfDownloadExcludeGlob: "original/*"
 
 # Resources:
 downloadsReservedSize: 10Gi

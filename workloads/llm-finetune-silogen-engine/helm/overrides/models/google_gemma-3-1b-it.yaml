@@ -1,15 +1,13 @@
 # Canonical model name:
 model: "google/gemma-3-1b-it"
 
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.6
-
 # Resources:
 downloadsReservedSize: 10Gi
 checkpointsReservedSize: 512Gi
 finetuningGpus: 1
 
 # Runtime configuration:
-distributedType: "auto-deepspeed-stage3"
+distributedType: "auto-deepspeed-stage1"
 
 ### Finetuning config section ###
 finetuning_config:
