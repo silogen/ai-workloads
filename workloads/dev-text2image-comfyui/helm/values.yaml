@@ -10,6 +10,8 @@ metadata:
   workload_id: # defaults to the release name
 
 image: "rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0"
+comfyui_version: "v0.18.1"
+comfyui_manager_version: "3.39.3"
 model: Comfy-Org/flux1-dev
 tag: fp8
 
