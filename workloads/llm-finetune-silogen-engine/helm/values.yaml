@@ -98,3 +98,18 @@ finetuning_config:
 debug:
   skip_checkpoint_upload: false # If true, skip the upload of checkpoints and logs to the bucket storage.
   skip_checkpoint_download: false # If true, skip the download of checkpoints from the bucket storage at the start of the run.
+
+aimManifest:
+  enabled: false
+  autoApply: true
+  serviceAccountName: null  # Optional: use an existing ServiceAccount instead of creating one
+  modelName: null
+  modelId: null
+  image: amdenterpriseai/aim-base:0.10
+  manifestApplierImage: ghcr.io/silogen/logistics:v0.3 # Image used for the sidecar that applies the AIMModel manifest
+  customTemplates:
+  - hardware:
+      gpu:
+        requests: 1
+  extraEnv: []
+  maxWait: 172800  # 48 hours in seconds

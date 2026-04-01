@@ -116,6 +116,126 @@
         ],
         "title": "Finetuning Config"
       },
+      "memoryPerGpu": {
+        "type": "integer",
+        "description": "Memory per GPU in GiB",
+        "default": 64
+      },
+      "cpusPerGpu": {
+        "type": "integer",
+        "description": "CPUs per GPU",
+        "default": 8
+      },
+      "runTensorboard": {
+        "type": "boolean",
+        "description": "If true, run tensorboard in the background in the same container",
+        "default": false
+      },
+      "logsRemote": {
+        "type": ["string", "null"],
+        "description": "Path where to sync logs in bucket storage (defaults to <checkpointsRemote>/logs if not set)"
+      },
+      "debug": {
+        "type": "object",
+        "description": "Debug features that may be helpful during recipe development",
+        "properties": {
+          "skip_checkpoint_upload": {
+            "type": "boolean",
+            "description": "If true, skip the upload of checkpoints and logs to the bucket storage",
+            "default": false
+          },
+          "skip_checkpoint_download": {
+            "type": "boolean",
+            "description": "If true, skip the download of checkpoints from the bucket storage at the start of the run",
+            "default": false
+          }
+        }
+      },
+      "aimManifest": {
+        "type": "object",
+        "description": "Configuration for creating an AIMModel manifest after successful training",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "If true, create and apply an AIMModel manifest after successful training. Requires either full parameter finetune (peft_type: NO_PEFT) or adapter merging (mergeAdapter: true)",
+            "default": false
+          },
+          "serviceAccountName": {
+            "type": ["string", "null"],
+            "description": "Optional: use an existing ServiceAccount instead of creating one. The ServiceAccount must have permissions to create AIMModel resources and read Pod status",
+            "default": null
+          },
+          "modelName": {
+            "type": ["string", "null"],
+            "description": "Name for the AIMModel resource. Required when enabled is true",
+            "default": null
+          },
+          "modelId": {
+            "type": ["string", "null"],
+            "description": "Model ID for the AIMModel resource. Required when enabled is true",
+            "default": null
+          },
+          "image": {
+            "type": "string",
+            "description": "Container image to use for serving the model",
+            "default": "amdenterpriseai/aim-base:0.10"
+          },
+          "manifestApplierImage": {
+            "type": "string",
+            "description": "Image used for the sidecar that applies the AIMModel manifest",
+            "default": "registry.k8s.io/kubectl:v1.31.0"
+          },
+          "customTemplates": {
+            "type": "array",
+            "description": "Custom templates for the AIMModel spec",
+            "items": {
+              "type": "object"
+            },
+            "default": [
+              {
+                "hardware": {
+                  "gpu": {
+                    "requests": 1
+                  }
+                }
+              }
+            ]
+          },
+          "extraEnv": {
+            "type": "array",
+            "description": "Additional environment variables for the AIMModel",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "value": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "key": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name", "key"]
+                    }
+                  ]
+                }
+              },
+              "required": ["name", "value"]
+            },
+            "default": []
+          }
+        }
+      },
       "kaiwo": {
         "type": "object",
         "properties": {

@@ -114,6 +114,11 @@ fi
 merge_adapter $merge_base ./checkpoints/checkpoint-final-adapter ./checkpoints/checkpoint-final
 {{- end }}
 {{- end }}
+{{- if .Values.aimManifest.enabled }}
+# Copy AIMModel manifest to checkpoint directory for archival
+echo 'Copying AIMModel manifest to checkpoint directory...'
+cp /configs/aim-model-manifest.yaml /workdir/checkpoints/aim-model-manifest.yaml
+{{- end }}
 {{- if not .Values.debug.skip_checkpoint_upload }}
 # Once more to ensure everything gets uploaded
 echo 'Training done, syncing once more...'

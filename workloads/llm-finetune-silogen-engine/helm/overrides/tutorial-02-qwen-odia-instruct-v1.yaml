@@ -74,3 +74,7 @@ finetuning_config:
     resume_from_checkpoint: auto
   sft_args:
     max_seq_length: 4096
+
+aimManifest:
+  modelName: "finetune-tutorial-qwen-1.5-odia-7b-chat"
+  modelId: "finetune-tutorial/qwen-1.5-odia-7b-chat"

@@ -15,6 +15,9 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      {{- if .Values.aimManifest.enabled }}
+      serviceAccountName: {{ .Values.aimManifest.serviceAccountName | default (printf "%s-sa" .Release.Name) | quote }}
+      {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
@@ -95,6 +98,68 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop: ["ALL"]
+        {{- if and .Values.aimManifest.enabled .Values.aimManifest.autoApply }}
+        - name: aimmodel-applier
+          image: {{ .Values.aimManifest.manifestApplierImage | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+          args:
+            - |
+              set -e
+              echo "Waiting for training container to complete..."
+
+              # Poll for container completion
+              MAX_WAIT={{ .Values.aimManifest.maxWait }}
+              ELAPSED=0
+              INTERVAL=10
+
+              while [ $ELAPSED -lt $MAX_WAIT ]; do
+                # Get container state
+                STATE=$(kubectl get pod $HOSTNAME -o jsonpath='{.status.containerStatuses[?(@.name=="finetuning")].state}' || echo "{}")
+
+                # Check if container is terminated
+                if echo "$STATE" | grep -q "terminated"; then
+                  EXIT_CODE=$(kubectl get pod $HOSTNAME \
+                    -o jsonpath='{.status.containerStatuses[?(@.name=="finetuning")].state.terminated.exitCode}' || echo "")
+
+                  if [ "$EXIT_CODE" = "0" ]; then
+                    echo "Training completed successfully, applying AIMModel manifest..."
+                    kubectl apply -f /configs/aim-model-manifest.yaml
+                    exit 0
+                  else
+                    echo "Training container failed with exit code $EXIT_CODE, skipping AIMModel creation"
+                    exit 1
+                  fi
+                fi
+
+                sleep $INTERVAL
+                ELAPSED=$((ELAPSED + INTERVAL))
+              done
+
+              echo "Timeout waiting for training to complete after 48 hours"
+              exit 1
+          volumeMounts:
+            - name: configs
+              mountPath: /configs
+              readOnly: true
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+        {{- end }}
       securityContext:
         fsGroup: 1000
       volumes:

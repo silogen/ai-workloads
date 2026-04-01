@@ -1,0 +1,19 @@
+{{- if and .Values.aimManifest.enabled (not .Values.aimManifest.serviceAccountName) .Values.aimManifest.autoApply }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "{{ .Release.Name }}-role"
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+rules:
+- apiGroups: ["aim.eai.amd.com"]
+  resources: ["aimmodels"]
+  verbs: ["create", "get", "list", "patch", "update"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch"]
+{{- end }}

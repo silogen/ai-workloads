@@ -23,3 +23,7 @@ finetuning_config:
     training_data:
       datasets:
         - path: "default-bucket/datasets/OPI_updated_160k.sample1000.jsonl"
+
+aimManifest:
+  modelName: "finetune-tutorial-llama-31-8B-lora-opi-1k"
+  modelId: "finetune-tutorial/llama-31-8B-lora-opi-1k"
