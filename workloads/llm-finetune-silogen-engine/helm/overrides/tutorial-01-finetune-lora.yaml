@@ -1,3 +1,5 @@
+finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.7
+
 # Bucket storage inputs
 bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
 
@@ -33,7 +35,7 @@ finetuning_config:
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1
-    chat_template_name: "chat-ml"
+    chat_template_name: "mistral-with-system"
     missing_pad_token_strategy: "bos-repurpose"
   training_args:
     learning_rate: 0.00005
