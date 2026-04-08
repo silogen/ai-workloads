@@ -91,3 +91,23 @@ helm template debug-dpo . \
  | kubectl apply -f - -nkaiwo
 ```
 Note that first you must download Ultrafeedback Binarized with the `workloads/download-data-to-bucket/helm` chart using the override file `workloads/download-data-to-bucket/helm/overrides/ultrafeedback-binarized-to-minio.yaml`.
+
+## AIM Manifest integration
+
+With `aimManifest.enabled: true`, the workload will create and upload an AIMModel manifest to bucket storage, and by default apply it in the cluster. This makes the successfully fine-tuned model available to deploy.
+
+This feature needs a service account with the correct permissions. An account is created by default, but if the user wants to use an existing account instead, it's possible to provide by reference with `aimManifest.serviceAccountName`.
+The service account referred to by `serviceAccountName` should have:
+```yaml
+rules:
+- apiGroups: ["aim.eai.amd.com"]
+  resources: ["aimmodels"]
+  verbs: ["create", "get", "list", "patch", "update"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch"]
+```
+
+## Compatible Accelerator Metadata
+
+The `metadata.compatibleAccelerators` section has no effect on the workloads, but overrides in `overrides/models/` use this to indicate the accelerator that the recipe is compatible with.

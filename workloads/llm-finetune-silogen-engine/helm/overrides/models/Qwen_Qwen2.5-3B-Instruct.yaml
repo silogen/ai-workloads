@@ -1,3 +1,20 @@
+metadata:
+  compatibleAccelerators:
+    # MI300X:
+    - 74a1
+    - 74a9
+    - 74b5
+    - 74bd
+    # MI325X:
+    - 74a5
+    - 74b9
+    # MI350X:
+    - 75a0
+    - 75b0
+    # MI355X:
+    - 75a3
+    - 75b3
+
 # Canonical model name:
 model: Qwen/Qwen2.5-3B-Instruct
 

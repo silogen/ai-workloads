@@ -120,3 +120,45 @@ data:
       {{- toYaml .tracking | nindent 6 }}
     {{- end }}
     {{- end }}
+  {{- if .Values.aimManifest.enabled }}
+  {{- $isPeft := ne .Values.finetuning_config.peft_conf.peft_type "NO_PEFT" }}
+  {{- if and $isPeft (not .Values.mergeAdapter) }}
+    {{- fail "aimManifest.enabled requires either a full parameter finetune (peft_type: NO_PEFT) or adapter merging enabled (mergeAdapter: true). Currently using PEFT without merging, which produces only an adapter, not a complete model." }}
+  {{- end }}
+  aim-model-manifest.yaml: |
+    apiVersion: aim.eai.amd.com/v1alpha1
+    kind: AIMModel
+    metadata:
+      name: {{ required "aimManifest.modelName is required when aimManifest.enabled is true!" .Values.aimManifest.modelName | quote }}
+    spec:
+      image: {{ .Values.aimManifest.image | quote }}
+      modelSources:
+        - modelId: {{ required "aimManifest.modelId is required when aimManifest.enabled is true!" .Values.aimManifest.modelId | quote }}
+          sourceUri: "s3://{{ .Values.checkpointsRemote }}/checkpoint-final"
+      customTemplates:
+        {{- toYaml .Values.aimManifest.customTemplates | nindent 8 }}
+      env:
+        {{- range .Values.aimManifest.extraEnv }}
+        - name: {{ .name | quote }}
+          {{- if and .value (kindIs "map" .value) .value.name .value.key }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .value.name | quote }}
+              key: {{ .value.key | quote }}
+          {{- else }}
+          value: {{ .value | quote }}
+          {{- end }}
+        {{ end }}
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bucketCredentialsSecret.name | quote }}
+              key: {{ .Values.bucketCredentialsSecret.accessKeyKey | quote }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bucketCredentialsSecret.name | quote }}
+              key: {{ .Values.bucketCredentialsSecret.secretKeyKey | quote }}
+        - name: AWS_ENDPOINT_URL
+          value: {{ .Values.bucketStorageHost | quote }}
+  {{- end }}
