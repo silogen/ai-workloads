@@ -107,3 +107,7 @@ rules:
   resources: ["pods"]
   verbs: ["get", "watch"]
 ```
+
+## Compatible Accelerator Metadata
+
+The `metadata.compatibleAccelerators` section has no effect on the workloads, but overrides in `overrides/models/` use this to indicate the accelerator that the recipe is compatible with.
