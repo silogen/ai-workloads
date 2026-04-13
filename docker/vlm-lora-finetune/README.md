@@ -2,7 +2,7 @@
 
 Original repo used as base: https://github.com/awilliamson10/clipora/tree/main/clipora
 
-Added Dockerfile, AMD GPU support and some changes like ability to load model with finetuned LORA adapters.
+Added Dockerfile, AMD GPU support and some changes like ability to load model with fine-tuned LORA adapters.
 
 Also added a quick-and-dirty API that can be used for demoing, see [README_api.md](./README_api.md).
 

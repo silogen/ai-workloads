@@ -2,7 +2,7 @@
 
 https://github.com/pierotofy/OpenSplat
 
-A free and open source implementation of 3D gaussian splatting written in C++, focused on being portable, lean and fast.
+A free and open source implementation of 3D Gaussian splatting written in C++, focused on being portable, lean and fast.
 
 OpenSplat takes camera poses + sparse points in COLMAP, OpenSfM, ODM, OpenMVG or nerfstudio project format and computes a scene file (.ply or .splat) that can be later imported for viewing, editing and rendering in other software.
 

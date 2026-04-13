@@ -10,7 +10,7 @@ models: 1. Swin Transformer - a hierarchical vision transformer that captures lo
 information efficiently and 2. UNETR (UNet with Transformers) - a transformer-based encoder-decoder architecture
 tailored for medical image segmentation.
 
-Model weights are loaded from [HuggingFace](https://huggingface.co/darragh/swinunetr-btcv-base).
+Model weights are loaded from [Hugging Face](https://huggingface.co/darragh/swinunetr-btcv-base).
 
 Check out the [demo_inference_service.ipynb](../examples/demo_inference_service.ipynb) example to see how it works.
 

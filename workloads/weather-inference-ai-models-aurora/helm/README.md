@@ -1,6 +1,6 @@
 # ECMWF ai-models — Helm Deployment
 
-This Helm chart deploys aurora using ai-models library by ecmwf. It handles model setup, packaging, and inference in a fully containerized GPU environment.
+This Helm chart deploys aurora using the `ai-models` library by ECMWF. It handles model setup, packaging, and inference in a fully containerized GPU environment.
 
 First you need to get API key from **The Climate Data Store (CDS)** in order to download ERA5 dataset. Instructions for generating the key are available on the [CDSAPI setup](https://cds.climate.copernicus.eu/how-to-api) page. This CDS API Key should be added as a Kubernetes secret (<code>cds-api-secret</code> in our case).
 
@@ -35,7 +35,7 @@ helm template aurora ./helm | kubectl apply -f -
 
 This sets up the pod, installs dependencies, downloads the model, runs inference and writes outputs to the `.grib` file. Then visualizes the `.grib` files and writes everything to minio.
 
-## Script params
+## Script parameters
 
 | **Parameter**           | **Description**                          | **Default**                   |
 |-------------------------|------------------------------------------|-------------------------------|

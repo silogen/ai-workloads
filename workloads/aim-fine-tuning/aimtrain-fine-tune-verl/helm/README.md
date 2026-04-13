@@ -42,7 +42,7 @@ To use your own datasets from MinIO, specify the path as `datasetRemote`. It sho
 
 ## Model specification
 
-To use a base model from HuggingFace or other source directly supported by VeRL, specify the model name in `modelName`.
+To use a base model from Hugging Face or other source directly supported by VeRL, specify the model name in `modelName`.
 
 Alternatively to use a model from MinIO, specify the path to the model in `modelRemote`.
 

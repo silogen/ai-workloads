@@ -5,13 +5,13 @@ This Helm chart submits a job to benchmark the performance of [vLLM](https://doc
 ## Prerequisites
 
 1. **Helm**: Install `helm`. Refer to the [Helm documentation](https://helm.sh/) for instructions.
-2. **MinIO Storage** (optional): To use pre-downloaded model weights from MinIO storage, the following environment variables must be set, otherwise models will be downloaded from HuggingFace. MinIO storage is also used for saving benchmark results.
+2. **MinIO Storage** (optional): To use pre-downloaded model weights from MinIO storage, the following environment variables must be set, otherwise models will be downloaded from Hugging Face. MinIO storage is also used for saving benchmark results.
     - `BUCKET_STORAGE_HOST`
     - `BUCKET_STORAGE_ACCESS_KEY`
     - `BUCKET_STORAGE_SECRET_KEY`
     - `BUCKET_MODEL_PATH`
 
-3. **HF Token** (optional): If you need to download gated models from HuggingFace (e.g., Mistral and LLaMA 3.x) that are not available locally, ensure a secret named `hf-token` exists in the namespace.
+3. **HF Token** (optional): If you need to download gated models from Hugging Face (e.g., Mistral and LLaMA 3.x) that are not available locally, ensure a secret named `hf-token` exists in the namespace.
 
 ## Implementation
 
@@ -20,7 +20,7 @@ Basic configurations are defined in the `values.yaml` file, with key settings:
 - `env_vars.TESTOPT`: Must be set to either "latency" or "throughput"
 - `env_vars.USE_MAD`: Controls whether to apply the MAD approach (see below)
 
-**Note**: If the specified model cannot be found locally, the workload will attempt to download it from HuggingFace.
+**Note**: If the specified model cannot be found locally, the workload will attempt to download it from Hugging Face.
 
 ### A. Scenario-specific approach
 

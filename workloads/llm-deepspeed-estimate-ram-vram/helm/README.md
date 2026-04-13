@@ -3,7 +3,7 @@
 Deepspeed can require a large amount of RAM, and save on the VRAM, depending on the configuration. Deepspeed includes a [memory estimation utility](https://deepspeed.readthedocs.io/en/latest/memory.html), and this chart exposes that utility in a convenient package.
 
 ## Specifying the inputs
-You can get estimates for a specifc model on bucket storage or on HuggingFace Hub. In that case, the model config is downloaded to the container and a model loaded onto a meta device, meaning that no parameters are actually constructed.
+You can get estimates for a specific model on bucket storage or on Hugging Face Hub. In that case, the model config is downloaded to the container and a model loaded onto a meta device, meaning that no parameters are actually constructed.
 The number of parameters is computed based on the loaded model, but note that any shared parameters will be counted multiple times, since the meta device cannot distinguish between shared layers and non-shared ones. That may slightly inflate the estimates. Specify the model in the `modelPath` field. If the model is on an S3-bucket, prefix the bucket path with `s3://`.
 
 You can also simply specify the number of parameters. Then, the estimates are based on your given number. Note that if you give both `modelPath` and `numParameters`, then `modelPath` is used. If you're using stage 3, you must also specify `largestLayerParameters`.

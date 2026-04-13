@@ -1,8 +1,8 @@
-# Finetuning with Axolotl
+# Fine-tuning with Axolotl
 
-This is a Helm Chart for running an Axolotl finetuning job.
+This is a Helm Chart for running an Axolotl fine-tuning job.
 
-Currently the base model and input data are assumed to be from HuggingFace, or some other source directly supported by Axolotl.
+Currently the base model and input data are assumed to be from Hugging Face, or some other source directly supported by Axolotl.
 The output is saved with MinIO in the directory specified by `checkpointsRemote`.
 If any checkpoints already exist in the directory, the training can be resumed from there (by setting `auto_resume_from_checkpoints`)
 

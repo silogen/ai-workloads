@@ -5,7 +5,7 @@ This Helm Chart deploys a [ComfyUI](https://github.com/comfyanonymous/ComfyUI) w
 ## Features
 
 - **Pre-configured ComfyUI Environment**: Automatically installs and configures ComfyUI with ROCm support
-- **Model Management**: Support for downloading models from HuggingFace or MinIO/S3 storage
+- **Model Management**: Support for downloading models from Hugging Face or MinIO/S3 storage
 - **ComfyUI Manager**: Includes [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) for easy extension management
 
 ## Configuration Parameters
@@ -17,7 +17,7 @@ You can configure the following parameters in the `values.yaml` file or override
 | `image`                      | Container image repository and tag                                    | `rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0` |
 | `imagePullSecrets`           | List of Kubernetes secrets for pulling images from private registries | `[]`                                       |
 | `gpus`                       | Number of GPUs to allocate                                            | `1`                                        |
-| `model`                      | HuggingFace model path (e.g., `Comfy-Org/flux1-dev`)                  | Not set                                    |
+| `model`                      | Hugging Face model path (e.g., `Comfy-Org/flux1-dev`)                  | Not set                                    |
 | `tag`                        | Specific model binaries (**\*tag\*.safetensors**)  to download (optional) | Clone the repo when not set            |
 | `storage.ephemeral.quantity` | Ephemeral storage size                                                | `200Gi`                                    |
 | `kaiwo.enabled`              | Enable Kaiwo operator management                                      | `false`                                    |
@@ -55,9 +55,9 @@ The following environment variables are configured for MinIO/S3 integration:
 
 ## Model Configuration
 
-### Using HuggingFace Models
+### Using Hugging Face Models
 
-Configure models from HuggingFace by setting the `model` parameter:
+Configure models from Hugging Face by setting the `model` parameter:
 
 ```yaml
 # Example: FLUX.1-dev model

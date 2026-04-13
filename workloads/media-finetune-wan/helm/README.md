@@ -1,7 +1,7 @@
 # Fine-Tuning Wan 2.2
 
 ## Introduction
-This Helm Chart is used to deploy the media-finetune-wan workload, i.e. a Job for customizing Wan 2.2 models, by performing either full-parameter of LoRA fine-tuning, using DiffSynth framework. There are two options to run the workload:
+This Helm Chart is used to deploy the `media-finetune-wan` workload, i.e. a Job for customizing Wan 2.2 models, by performing either full-parameter of LoRA fine-tuning, using DiffSynth framework. There are two options to run the workload:
 
 - Interactive (e.g. for testing)
 - Automated
@@ -62,7 +62,7 @@ helm template ./helm -f ./helm/overrides/5B_lora.yaml --name-template wan-finetu
 ```
 
 You can choose the override from any of the provided:
-- `5B_full.yaml` - (5B full parameter finetuning)
-- `5B_lora.yaml` - (5B LoRA finetuning)
-- `14B_full_highnoise.yaml` & `14B_full_lownoise.yaml` - (14B full parameter finetuning)
-- `14B_lora_highnoise.yaml` & `14B_lora_lownoise.yaml` - (14B LoRA finetuning)
+- `5B_full.yaml` - (5B full parameter fine-tuning)
+- `5B_lora.yaml` - (5B LoRA fine-tuning)
+- `14B_full_highnoise.yaml` & `14B_full_lownoise.yaml` - (14B full parameter fine-tuning)
+- `14B_lora_highnoise.yaml` & `14B_lora_lownoise.yaml` - (14B LoRA fine-tuning)
