@@ -2,7 +2,7 @@
 
 This workload downloads data from the Climate Data Storage (CDS) operated by the
 European Centre for Medium-Range Weather Forecasts (ECMWF). The data is
-preprocessed to be compatible with Google's Weatherbench and then uploaded to
+preprocessed to be compatible with Google's WeatherBench and then uploaded to
 Minio.
 
 ## 🔧 Project Structure
@@ -28,7 +28,7 @@ helm template ./helm -f ./helm/overrides/my_override.yaml --name-template my-job
 
 This sets up the pod, downloads the data, preprocesses it and uploads it into Minio.
 
-## Script params
+## Script parameters
 
 | **Parameter**           | **Description**                          | **Default**                      |
 |-------------------------|------------------------------------------|-------------------------------   |
@@ -37,9 +37,9 @@ This sets up the pod, downloads the data, preprocesses it and uploads it into Mi
 | `start_date`            | Starting date for data.                  | `2023-01-01`                     |
 | `end_date`              | Ending date for data.                    | `2023-01-31`                     |
 | `tods`                  | Times of day for data.                   | `00:00 12:00`                    |
-| `surface_variables`     | Surface variables to download.           | Weatherbench headline variables. |
-| `vertical_variables`    | Vertical variables to download.          | Weatherbench headline variables. |
-| `pressure_levels`       | Pressure levels to download.             | Weatherbench defaults.           |
+| `surface_variables`     | Surface variables to download.           | WeatherBench headline variables. |
+| `vertical_variables`    | Vertical variables to download.          | WeatherBench headline variables. |
+| `pressure_levels`       | Pressure levels to download.             | WeatherBench defaults.           |
 
 
 ## Environment Variables

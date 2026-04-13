@@ -1,8 +1,8 @@
-# Weatherbench runner
+# WeatherBench runner
 
 This workload downloads preprocessed European Centre for Medium-Range Weather
 Forecasts (ECMWF) reference data and preprocessed weather model forecast data,
-runs Google's Weatherbench on these datasets, and finally uploads the resulting
+runs Google's WeatherBench on these datasets, and finally uploads the resulting
 metrics file to Minio.
 
 ## 🔧 Project Structure
@@ -26,9 +26,9 @@ helm template ./helm -f ./helm/overrides/my_override.yaml --name-template my-job
 
 ```
 
-This sets up the pod, downloads the data, preprocesses it and uploads the result back into Minio.
+This sets up the pod, downloads the data, preprocesses it and uploads the result back into MinIO.
 
-## Script params
+## Script parameters
 
 | **Parameter**           | **Description**                               | **Default**                         |
 |-------------------------|-----------------------------------------------|-------------------------------------|

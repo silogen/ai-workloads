@@ -18,7 +18,7 @@ For example: run the following command within the `helm/` folder to deploy the s
 helm template . --set env_vars.TEMP="0.8" | kubectl apply -f -
 ```
 
-**Note**: Compiling llama.cpp executables and downloading/merging the GGUF files of DeepSeek R1 (~200GB) from HuggingFace can take a significant amount of time. The deployment process may take over 30 minutes before the LLM inference service is ready.
+**Note**: Compiling llama.cpp executables and downloading/merging the GGUF files of DeepSeek R1 (~200GB) from Hugging Face can take a significant amount of time. The deployment process may take over 30 minutes before the LLM inference service is ready.
 
 ## Interacting with the Deployed Model
 

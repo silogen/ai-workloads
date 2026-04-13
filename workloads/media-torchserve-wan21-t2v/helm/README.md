@@ -20,9 +20,9 @@ helm/
 ├── overrides/ # Optional values overrides
 ```
 
-## 📚Prerequisits
+## Prerequisites
 
-The TorchServe workload is heavilly dependent on `torchserve-model-packager` workload, which is responsible for compressing the model into .zip and uploading it to MiniO object storage. For this workload it's important to be sure that compressed model is already available for downloading in MiniO.
+The TorchServe workload is heavily dependent on `torchserve-model-packager` workload, which is responsible for compressing the model into .zip and uploading it to MinIO object storage. For this workload it's important to be sure that compressed model is already available for downloading in MinIO.
 
 You can run the workload `torchserve-model-packager` by:
 
@@ -66,10 +66,10 @@ curl -X POST http://localhost:8080/predictions/wan21 \
 
 ## ⚙️ TorchServe Files Explained
 
-| File                                     | Purpos                                                     |
+| File                                     | Purpose                                                    |
 | ---------------------------------------- | ---------------------------------------------------------- |
 | `entrypoint.sh`                        | Installs dependencies, builds model, and starts TorchServe |
-| `wan_handler.py`                       | Custom inference handler using HuggingFace Diffusers       |
+| `wan_handler.py`                       | Custom inference handler using Hugging Face Diffusers       |
 | `config.properties`                    | Sets TorchServe ports, timeouts, etc.                      |
 | `requirements-torchserve.txt`          | Dependencies for serving                                   |
 | `torchserve_rocm62_requirements.patch` | Patch to adjust ROCm-specific install                      |

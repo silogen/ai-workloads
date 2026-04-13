@@ -10,7 +10,7 @@ This project creates a novel equivariant attention-based message passing archite
 
 ## Scripts
 
-There are 4 scripts in the original semlaflow repository:
+There are 4 scripts in the original SemlaFlow repository:
 * `preprocess` - Used for preprocessing larger datasets into the internal representation used by the model for training
 * `train` - Trains a MolFlow model on preprocessed data
 * `evaluate` - Evaluates a trained model and prints the results
@@ -19,7 +19,7 @@ There are 4 scripts in the original semlaflow repository:
 ## Instructions on choosing a GPU to attach a docker container to
  1. check with `amd-smi process` which GPU is free
  2. check with `rocm-smi` what is the node id of the free GPU (Note: node id is not the same as the device id and is displayed in the second column of the rocm-smi output)
- 3. If say, the node id 2 gpu is free, the device to be added to docker run is given by `cat /sys/class/kfd/kfd/topology/nodes/2/properties | grep drm_render_minor`
+ 3. If say, the node id 2 GPU is free, the device to be added to docker run is given by `cat /sys/class/kfd/kfd/topology/nodes/2/properties | grep drm_render_minor`
  4. you can directly create a container using docker run --device=/dev/kfd --device=/dev/dri/renderD<ID output from step 3>
 
 ## Running inference interactively

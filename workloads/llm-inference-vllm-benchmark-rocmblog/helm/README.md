@@ -5,13 +5,13 @@ This Helm chart deploys a job to benchmark the performance of [vLLM](https://doc
 ## Prerequisites
 
 1. **Helm**: Ensure `helm` is installed. Refer to the [Helm documentation](https://helm.sh/) for installation instructions.
-2. **MinIO Storage** (optional): To use pre-downloaded model weights from MinIO storage, set the following environment variables. If not set, models will be downloaded from HuggingFace. MinIO storage is also used for saving benchmark results:
+2. **MinIO Storage** (optional): To use pre-downloaded model weights from MinIO storage, set the following environment variables. If not set, models will be downloaded from Hugging Face. MinIO storage is also used for saving benchmark results:
     - `BUCKET_STORAGE_HOST`
     - `BUCKET_STORAGE_ACCESS_KEY`
     - `BUCKET_STORAGE_SECRET_KEY`
     - `BUCKET_MODEL_PATH`
 
-3. **HuggingFace Token** (optional): Required for downloading gated models (e.g., Mistral and LLaMA 3.x) from HuggingFace if they are not available locally.
+3. **Hugging Face Token** (optional): Required for downloading gated models (e.g., Mistral and LLaMA 3.x) from Hugging Face if they are not available locally.
 
 ## Implementation
 

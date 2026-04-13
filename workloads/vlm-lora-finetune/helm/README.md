@@ -1,28 +1,28 @@
-# VLM-LORA finetuning using OpenCLIP Workload
+# VLM-LORA fine-tuning using OpenCLIP Workload
 
-This workload showcases finetuning [Low-rank adaptation (LORA)](https://en.wikipedia.org/wiki/Fine-tuning_(deep_learning)#Low-rank_adaptation) layers for an OpenCLIP model. LORA layer finetuning is often much faster compared to full and makes sharing more space efficient.
+This workload showcases fine-tuning [Low-rank adaptation (LORA)](https://en.wikipedia.org/wiki/Fine-tuning_(deep_learning)#Low-rank_adaptation) layers for an OpenCLIP model. LORA layer fine-tuning is often much faster compared to full and makes sharing more space efficient.
 
-Repo 'clipora' is used as a base with minor modifications: https://github.com/awilliamson10/clipora. clipora is an example of LORA finetuning from github user 'awilliamson10'. See files used to build the image in the [docker folder](/docker/vlm-lora-finetune).
+Repo 'clipora' is used as a base with minor modifications: https://github.com/awilliamson10/clipora. clipora is an example of LORA fine-tuning from github user 'awilliamson10'. See files used to build the image in the [docker folder](/docker/vlm-lora-finetune).
 
 ## Links
 
-- Openclip repo: https://github.com/mlfoundations/open_clip
-- CLIP finetuning guide (not LORA): https://github.com/mlfoundations/open_clip/discussions/812
+- OpenCLIP repo: https://github.com/mlfoundations/open_clip
+- CLIP fine-tuning guide (not LORA): https://github.com/mlfoundations/open_clip/discussions/812
 
 ## Steps
 
 - Use an available OpenCLIP model (such as ViT-L-14) as a base with pretrained weights
 - Inject new LORA layers to the base model
-- Finetune just the LORA layers with new data, using huggingface peft
-- Save the finetuned LORA layers and use them later for inference with the base model. The save folder will contain
+- Fine-tune just the LORA layers with new data, using Hugging Face's `peft`
+- Save the fine-tuned LORA layers and use them later for inference with the base model. The save folder will contain
 LORA config, (clipora) train config that was used and the LORA weights
-- During inference, the pretrained model (including weights) is loaded again and the LORA layers injected with finetuned weights.
+- During inference, the pretrained model (including weights) is loaded again and the LORA layers injected with fine-tuned weights.
 
 You can change some settings in clipora config, see [mount/bridge_train_config.yml](mount/bridge_train_config.yml) for example.
 
 ## Using custom data
 
-You can use your own dataset for finetuning. Easiest way is to use a CSV file with a format OpenCLIP/clipora expects. It should have an image path and text as columns like this:
+You can use your own dataset for fine-tuning. Easiest way is to use a CSV file with a format OpenCLIP/clipora expects. It should have an image path and text as columns like this:
 
 ```
 image_path,language_instruction
@@ -36,16 +36,16 @@ Where each 'image_path' points to an image and each 'language_instruction' is a 
 
 ## Example run
 
-`helm` folder contains a fully working example of finetuning on a kubernetes cluster with an AMD GPU. It uses a subset of robotics dataset BridgeData https://github.com/rail-berkeley/bridge_data_v2 located in huggingface: https://huggingface.co/datasets/dusty-nv/bridge_orig_ep100. The bridge dataset contains multiple items of a robot's trajectory and the correct language instruction. In our case all trajectory images get a separate row and the language instruction is used as the correct text. The huggingface dataset is in TFRecords format and is parsed and modified to the CSV dataset format. NOTE: understanding the example dataset parsing script is not required, it's a one-off that's used to modify TFRecords to the openCLIP format of raw images and a CSV with image paths and texts. Example steps:
+`helm` folder contains a fully working example of fine-tuning on a Kubernetes cluster with an AMD GPU. It uses a subset of the BridgeData robotics dataset (https://github.com/rail-berkeley/bridge_data_v2) hosted on Hugging Face: https://huggingface.co/datasets/dusty-nv/bridge_orig_ep100. The bridge dataset contains multiple items of a robot's trajectory and the correct language instruction. In our case all trajectory images get a separate row and the language instruction is used as the correct text. The Hugging Face dataset is in TFRecords format and is parsed and modified to the CSV dataset format. NOTE: understanding the example dataset parsing script is not required, it's a one-off that's used to modify TFRecords to the OpenCLIP format of raw images and a CSV with image paths and texts. Example steps:
 
-- download example bridge sample dataset and prepare it for openCLIP training with the format mentioned above.
+- download example bridge sample dataset and prepare it for OpenCLIP training with the format mentioned above.
 - train LORAs with clipora on bridge sample dataset (note: training might take 15 minutes or more, logs do not instantly update)
 - print probabilities and output an image visualizing results in PVC using the latest checkpoint
 
 Workload should run successfully from start to finish with these commands:
 
 ```
-# Create finetuning job and run it
+# Create fine-tuning job and run it
 helm template vlm-lora-openclip . --set metadata.user_id=username_here | kubectl apply -f -
 ```
 
@@ -83,7 +83,7 @@ It may take several minutes until the logs update. You might also see some warni
 
 ### Example results
 
-Comparing original and lora model on evaluation set:
+Comparing original and LORA models on evaluation set:
 
 ```
 Running inference comparison...
@@ -102,4 +102,4 @@ probs after:
 ```
 
 ![Example results](output_image.png)
-*Highest probability bolded. First text is the correct one. As seen, after LORA layer training the result is correct. Note that this was picked randomly from evaluation set, in another case the finetuning might not have worked so well. Used for illustrative purposes.*
+*Highest probability in bold. First text is the correct one. As seen, after LORA layer training the result is correct. Note that this was picked randomly from evaluation set, in another case the fine-tuning might not have worked so well. Used for illustrative purposes.*

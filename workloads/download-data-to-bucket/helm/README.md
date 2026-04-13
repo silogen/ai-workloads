@@ -14,15 +14,15 @@ helm template workloads/download-data-to-bucket/helm \
 ## User input values
 
 See the `values.yaml` file for all user input values that you can provide, with instructions.
-In values.yaml, the `dataScript` is a script instead of just a dataset identifier, because the datasets on HuggingFace hub don't have a standard format that can be always directly passed to any training framework.
+In values.yaml, the `dataScript` is a script instead of just a dataset identifier, because the datasets on Hugging Face Hub don't have a standard format that can be always directly passed to any training framework.
 The data script should format the data into the format that the training framework expects.
 
 Any data files output of the data script should be saved to the `/downloads/datasets/`.
 The files are uploaded to the directory pointed to by `bucketDataDir`, with the same filename as they had under `/downloads/datasets`.
 
-### Silogen finetuning engine format
-For the silogen finetuning engine, the data format is JSON lines.
-For supervised finetuning, each line has a JSON dictionary formatted as follows:
+### Silogen fine-tuning engine format
+For the silogen fine-tuning engine, the data format is JSON lines.
+For supervised fine-tuning, each line has a JSON dictionary formatted as follows:
 ```json
 {
   "messages": [
@@ -47,7 +47,7 @@ For [Direct Preference Optimization](https://arxiv.org/pdf/2305.18290), the data
 }
 ```
 
-The HuggingFace datasets library can save the output in JSON lines format with the `to_json` function:
+The Hugging Face datasets library can save the output in JSON lines format with the `to_json` function:
 ```python
 dataset.to_json("/downloads/datasets/<name of your dataset file.jsonl>")
 ```

@@ -22,7 +22,7 @@ where
 - *--set &lt;name>=&lt;value>*: optional, can be multiple and allows overriding single entry from the default values.
 - *namespace*: is an optional kubernetes namespace of the deployment, if different from the default one.
 
-An example of the command that will use default helm values and deploys workload to a default namespoace is shown below
+An example of the command that will use default helm values and deploys workload to a default namespace is shown below
 ```bash
 helm template workloads/llm-inference-megatron-lm/helm/ | kubectl apply -f -
 ```

@@ -1,6 +1,6 @@
 # Serving xLstm Model with Torchserve — Helm Deployment
 
-This Helm chart deploys a TorchServe service serving xLSTM model (developed by NXAI). This heml chart handles model setup, preprocessing and serving in a fully containerized GPU environment with AMD ROCm support.
+This Helm chart deploys a TorchServe service serving xLSTM model (developed by NXAI). This Helm chart handles model setup, preprocessing and serving in a fully containerized GPU environment with AMD ROCm support.
 
 ## 📋 Prerequisites
 

@@ -6,11 +6,11 @@ Medium-Range Weather Forecasts (ECMWF).
 
 The `ai-models` tool presents an unified front-end for running various
 state-of-the-art machine learning weather prediction models. However, the model
-outputs must be preprocessed for compatibility with the Weatherbench weather
+outputs must be preprocessed for compatibility with the WeatherBench weather
 prediction model evaluation suite, developed by Google.
 
 This workload downloads the given `ai-models` output files for a particular
-model. It then preprocesses them for Weatherbench compatibility and combines
+model. It then preprocesses them for WeatherBench compatibility and combines
 them into a single file. This file is then uploaded back into Minio.
 
 ## 🔧 Project Structure
@@ -36,7 +36,7 @@ helm template ./helm -f ./helm/overrides/my_override.yaml --name-template my-job
 
 This sets up the pod, downloads the data, preprocesses it and uploads the result back into Minio.
 
-## Script params
+## Script parameters
 
 | **Parameter**           | **Description**                          | **Default**                   |
 |-------------------------|------------------------------------------|-------------------------------|

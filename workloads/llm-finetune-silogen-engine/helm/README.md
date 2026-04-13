@@ -1,7 +1,7 @@
-# Finetuning with the SiloGen finetuning engine
+# Fine-tuning with the SiloGen fine-tuning engine
 
-This is a Helm Chart for finetuning Jobs based on the SiloGen finetuning engine.
-The chart integrates the finetuning config as part of the `values.yaml` input.
+This is a Helm Chart for fine-tuning Jobs based on the SiloGen fine-tuning engine.
+The chart integrates the fine-tuning config as part of the `values.yaml` input.
 
 See the `values.yaml` file for the general structure (more documentation coming soon).
 
@@ -19,12 +19,12 @@ helm template . \
 
 ## Multiple overlays, simplified interface
 
-This chart supports two ways of specifying certain inputs, one on the top level and one as part of the finetuning_config:
+This chart supports two ways of specifying certain inputs, one on the top level and one as part of the `finetuning_config`:
 - Training data can be provided as `trainingData` or `finetuning_config.data_conf.training_data.datasets`
 - The total batch size target can be provided as `batchSize` or `finetuning_config.batchsize_conf.total_train_batch_size`
 - The number of epochs to run for can be provided as `numberOfEpochs` or `finetuning_config.training_args.num_train_epochs`
 
-The top level inputs provide a simpler interface to run finetuning. However, they're not enough alone to fully specify a sensible training setup.
+The top level inputs provide a simpler interface to run fine-tuning. However, they're not enough alone to fully specify a sensible training setup.
 The expectation is that these top-level inputs are used in conjuction with a set of override files that specify most arguments. This is the expected
 way that the chart is used in conjuction with the so called Silogen developer console.
 An example of such use is:
@@ -73,11 +73,11 @@ kubectl port-forward --namespace YOUR_NAMESPACE pods/YOUR_POD_NAME 6006:6006
 ```
 Then browse to [localhost:6006](localhost:6006).
 
-Note that the logging frequency is set by the HuggingFace Transformers [logging options](https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.TrainingArguments.logging_strategy).
+Note that the logging frequency is set by the Hugging Face Transformers [logging options](https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.TrainingArguments.logging_strategy).
 
 ## Best-known-configuration model overrides
 
-The directory `overrides/models` hosts finetuning recipes for various models. The files are named according to model canonical names, which is the huggingface pattern of `organization/model-name` just changed into `organization_model-name`. These configurations have been shown to work well in experiments, but that does not guarantee that these exact parameters are always optimal. The best parameters still depend on the data, too.
+The directory `overrides/models` hosts fine-tuning recipes for various models. The files are named according to model canonical names, which is the Hugging Face pattern of `organization/model-name` just changed into `organization_model-name`. These configurations have been shown to work well in experiments, but that does not guarantee that these exact parameters are always optimal. The best parameters still depend on the data, too.
 
 ## Running DPO
 

@@ -14,9 +14,9 @@ This Helm chart defines a batch job to benchmark LLM performance using vLLM's be
 
 3. **API Endpoint**: An OpenAI-compatible API endpoint is required. Configure this in `values.yaml` as `env_vars.OPENAI_API_BASE_URL` or override using the `--set` option with Helm.
 
-4. **Tokenizer**: Required for token calculations. Specify a HuggingFace model repository in `values.yaml` by setting `env_vars.TOKENIZER`. The default is `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B`.
+4. **Tokenizer**: Required for token calculations. Specify a Hugging Face model repository in `values.yaml` by setting `env_vars.TOKENIZER`. The default is `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B`.
 
-5. **HuggingFace Token** (optional): Set the `env_vars.HF_TOKEN` environment variable if using gated tokenizers (e.g., Mistral and Llama models) from HuggingFace.
+5. **Hugging Face Token** (optional): Set the `env_vars.HF_TOKEN` environment variable if using gated tokenizers (e.g., Mistral and Llama models) from Hugging Face.
 
 ## Benchmark Configuration
 

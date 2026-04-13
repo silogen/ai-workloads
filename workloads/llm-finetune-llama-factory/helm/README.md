@@ -1,6 +1,6 @@
-# Finetuning with LLaMA-Factory
+# Fine-tuning with LLaMA-Factory
 
-This is a Helm Chart for running a finetuning job using [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)
+This is a Helm Chart for running a fine-tuning job using [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)
 
 The output is saved with MinIO in the directory specified by `checkpointsRemote`.
 
@@ -25,13 +25,13 @@ helm template workloads/llm-finetune-llama-factory/helm \
 
 Specify the name of data set used for training as `dataset`. This can include datasets predefined in LLaMA-Factory or those defined in `datasetInfo`. Use commas to separate multiple data sets.
 
-To use other datasets, create an entry in `datasetInfo` following the [LLaMA-Factory dataset info format](https://github.com/hiyouga/LLaMA-Factory/blob/main/data/README.md). Note that LLaMA-Factory directly supports loading datasets from HuggingFace, ModelScope, or s3/gcs cloud storage by setting the urls according to the documentation.
+To use other datasets, create an entry in `datasetInfo` following the [LLaMA-Factory dataset info format](https://github.com/hiyouga/LLaMA-Factory/blob/main/data/README.md). Note that LLaMA-Factory directly supports loading datasets from Hugging Face, ModelScope, or S3/GCS cloud storage by setting the urls according to the documentation.
 
-This workload adds a custom way to load data from MinIO. In `datasetInfo` specify the path to the dataset in the remote bucket as `pathRemote`, and the workload will load the file and update the configuration. See the override file [`overrides/finetune-model_data_from_minio.yaml`](overrides/finetune-model_data_from_minio.yaml) for an example of finetuning where the data and model are loaded from MinIO.
+This workload adds a custom way to load data from MinIO. In `datasetInfo` specify the path to the dataset in the remote bucket as `pathRemote`, and the workload will load the file and update the configuration. See the override file [`overrides/finetune-model_data_from_minio.yaml`](overrides/finetune-model_data_from_minio.yaml) for an example of fine-tuning where the data and model are loaded from MinIO.
 
 ## Model specification
 
-To use a base model from HuggingFace or other source directly supported by LLaMA-Factory, specify the model name in `modelName`.
+To use a base model from Hugging Face or other source directly supported by LLaMA-Factory, specify the model name in `modelName`.
 
 Alternatively to use a model from MinIO, specify the path to the model in `modelRemote`.
 
@@ -50,7 +50,7 @@ helm template workloads/llm-finetune-llama-factory/helm \
   | kubectl delete -f -
 ```
 
-## Multi-node finetuning with ray
+## Multi-node fine-tuning with ray
 
 The chart supports multi-node jobs by setting `nodes` to an integer greater than 1. Doing so enables ray and creates a RayJob instead. An example config is provided in [`overrides/finetune-lora-ray.yaml`](overrides/finetune-lora-ray.yaml). The example also shows how to use [DeepSpeed ZeRO Stage 2](https://deepspeed.readthedocs.io/en/latest/zero3.html) to partition the gradients. To enable DeepSpeed, set the `deepspeed` parameter in the LLaMA-Factory config to point to one of the [deepspeed configs](https://github.com/hiyouga/LLaMA-Factory/tree/main/examples/deepspeed) included in LLaMA-Factory or a dictionary.
 

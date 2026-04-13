@@ -13,8 +13,8 @@ This Helm chart deploys a batch job that benchmarks LLM performance against an O
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `env_vars.OPENAI_API_BASE_URL` | OpenAI-compatible API endpoint URL | `"http://example-open-ai-api-server.com/v1"` |
-| `env_vars.TOKENIZER` | HuggingFace model repository for token calculations | `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B` |
-| `env_vars.HF_TOKEN` | HuggingFace access token (required for gated models like Mistral or Llama) | not set |
+| `env_vars.TOKENIZER` | Hugging Face model repository for token calculations | `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B` |
+| `env_vars.HF_TOKEN` | Hugging Face access token (required for gated models like Mistral or Llama) | not set |
 
 ## Deployment
 

@@ -1,6 +1,6 @@
-# Finetuning with VeRL
+# Fine-tuning with VeRL
 
-This is a Helm Chart for running a finetuning job using [VeRL](https://github.com/volcengine/verl)
+This is a Helm Chart for running a fine-tuning job using [VeRL](https://github.com/volcengine/verl)
 
 The output is saved with MinIO in the directory specified by `checkpointsRemote`.
 
@@ -31,7 +31,7 @@ To use your own datasets from MinIO, specify the path as `datasetRemote`. It sho
 
 ## Model specification
 
-To use a base model from HuggingFace or other source directly supported by LLaMA-Factory, specify the model name in `modelName`.
+To use a base model from Hugging Face or other source directly supported by LLaMA-Factory, specify the model name in `modelName`.
 
 Alternatively to use a model from MinIO, specify the path to the model in `modelRemote`.
 

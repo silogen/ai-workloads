@@ -6,8 +6,8 @@ Files in this directory are mounted to the workload at `/workload/mount`.
 
 
 ##
-- run model inference for weather forecasts using the ai-models plugin
-- use simple tools to  visualize forecasts of models from ecmwf ai-models.
+- run model inference for weather forecasts using the `ai-models` plugin
+- use simple tools to  visualize forecasts of models from ECMWF `ai-models`.
 - analyze performance using some simple tools
 
 ## Quick Start
@@ -45,7 +45,7 @@ Visualizations are generated as animated GIFs in:
 ## Scripts
 
 - `run_model.sh` - Main script that downloads models. data and runs inference
-- `grib_visualizer.py` - Creates visualizations (gifs) from GRIB files
+- `grib_visualizer.py` - Creates visualizations (GIFs) from GRIB files
 
 ## Note
 Currently tested only aurora.
