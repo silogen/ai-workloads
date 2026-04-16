@@ -113,3 +113,4 @@ aimManifest:
         requests: 1
   extraEnv: []
   maxWait: 172800  # 48 hours in seconds
+  labels: {}

@@ -130,6 +130,12 @@ data:
     kind: AIMModel
     metadata:
       name: {{ required "aimManifest.modelName is required when aimManifest.enabled is true!" .Values.aimManifest.modelName | quote }}
+      {{- if .Values.aimManifest.labels }}
+      labels:
+        {{- range $key, $value := .Values.aimManifest.labels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
     spec:
       image: {{ .Values.aimManifest.image | quote }}
       modelSources:
