@@ -1,27 +1,29 @@
 metadata:
   compatibleAccelerators:
     # MI300X:
-    - 74a1
-    - 74a9
-    - 74b5
-    - 74bd
+  - 74a1
+  - 74a9
+  - 74b5
+  - 74bd
     # MI325X:
-    - 74a5
-    - 74b9
+  - 74a5
+  - 74b9
     # MI350X:
-    - 75a0
-    - 75b0
+  - 75a0
+  - 75b0
     # MI355X:
-    - 75a3
-    - 75b3
+  - 75a3
+  - 75b3
 
 # Canonical model name:
-model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+model: Qwen/Qwen3-14B
 
 # Resources:
-downloadsReservedSize: 24Gi
-checkpointsReservedSize: 512Gi
+downloadsReservedSize: 32Gi
+checkpointsReservedSize: 160Gi
 finetuningGpus: 1
+memoryPerGpu: 192
+cpuPerGpu: 8
 
 # Runtime configuration:
 distributedType: "auto-deepspeed-stage3"
@@ -50,8 +52,6 @@ finetuning_config:
     save_strategy: "no"
     seed: 42
     bf16: true
-    report_to:
-      - none
     push_to_hub: false
     gradient_checkpointing: true
     gradient_checkpointing_kwargs:
@@ -64,7 +64,22 @@ finetuning_config:
   batchsize_conf:
     max_per_device_train_batch_size: 1
   peft_conf:
-    peft_type: "NO_PEFT"
+    peft_type: "LORA"
+    task_type: "CAUSAL_LM"
+    peft_kwargs:
+      r: 64
+      lora_alpha: 16.0
+      lora_dropout: 0.05
+      target_modules:
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+      - up_proj
+      - down_proj
+      - gate_proj
+      - lm_head
+      - embed_token
   run_conf:
     model_args:
       torch_dtype: bfloat16
@@ -73,3 +88,8 @@ finetuning_config:
     resume_from_checkpoint: auto
   sft_args:
     max_seq_length: 8192
+
+basemodel: hf://Qwen/Qwen3-14B
+aimManifest:
+  modelId: Qwen/Qwen3-14B
+  aimId: Qwen/Qwen3-14B

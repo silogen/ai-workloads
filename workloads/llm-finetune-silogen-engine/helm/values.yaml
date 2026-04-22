@@ -65,7 +65,8 @@ finetuning_config:
       ratio: 0.1
     chat_template_name: "keep-original"  # "keep-original" | "simplified-llama31" | "chat-ml"
     missing_pad_token_strategy: "bos-repurpose"  # "bos-repurpose" | "unk-repurpose"
-  training_args: {}
+  training_args:
+    logging_first_step: true
     # training_args is like Huggingface TrainingArguments, but certain inputs are not allowed:
     # - Do not set output_dir, the checkpoints should be saved to the default location to be uploaded
     # - Do not set per_device_train_batch_size nor gradient_accumulation, they are automatically set
@@ -103,14 +104,15 @@ aimManifest:
   enabled: false
   autoApply: true
   serviceAccountName: null  # Optional: use an existing ServiceAccount instead of creating one
-  modelName: null
-  modelId: null
-  image: amdenterpriseai/aim-base:0.10
   manifestApplierImage: ghcr.io/silogen/logistics:v0.3 # Image used for the sidecar that applies the AIMModel manifest
-  customTemplates:
-  - hardware:
-      gpu:
-        requests: 1
-  extraEnv: []
   maxWait: 172800  # 48 hours in seconds
+  # AIMModel manifest fields:
+  aimId: null
+  modelId: null
+  modelName: null
+  image: null
+  custom:
+    versionPolicy: latest
+  customTemplates: null
+  extraEnv: []
   labels: {}

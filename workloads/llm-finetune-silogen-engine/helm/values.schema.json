@@ -176,7 +176,7 @@
             "default": null
           },
           "image": {
-            "type": "string",
+            "type": ["string", "null"],
             "description": "Container image to use for serving the model",
             "default": "amdenterpriseai/aim-base:0.10"
           },
@@ -185,8 +185,39 @@
             "description": "Image used for the sidecar that applies the AIMModel manifest",
             "default": "registry.k8s.io/kubectl:v1.31.0"
           },
+          "autoApply": {
+            "type": "boolean",
+            "description": "If true, automatically apply the AIMModel manifest after training",
+            "default": true
+          },
+          "maxWait": {
+            "type": "integer",
+            "description": "Maximum time to wait for the training to finish before applying the manifest",
+            "default": 172800
+          },
+          "aimId": {
+            "type": ["string", "null"],
+            "description": "AIM ID for the AIMModel resource",
+            "default": null
+          },
+          "custom": {
+            "type": ["object", "null"],
+            "description": "Custom fields for the AIMModel spec",
+            "properties": {
+              "versionPolicy": {
+                "type": "string",
+                "default": "latest"
+              }
+            },
+            "additionalProperties": true
+          },
+          "labels": {
+            "type": "object",
+            "description": "Labels to add to the AIMModel resource",
+            "additionalProperties": true
+          },
           "customTemplates": {
-            "type": "array",
+            "type": ["array", "null"],
             "description": "Custom templates for the AIMModel spec",
             "items": {
               "type": "object"
