@@ -1,27 +1,31 @@
 metadata:
   compatibleAccelerators:
     # MI300X:
-    - 74a1
-    - 74a9
-    - 74b5
-    - 74bd
+  - 74a1
+  - 74a9
+  - 74b5
+  - 74bd
     # MI325X:
-    - 74a5
-    - 74b9
+  - 74a5
+  - 74b9
     # MI350X:
-    - 75a0
-    - 75b0
+  - 75a0
+  - 75b0
     # MI355X:
-    - 75a3
-    - 75b3
+  - 75a3
+  - 75b3
 
 # Canonical model name:
-model: Qwen/Qwen3-8B
+model: meta-llama/Llama-3.1-70B
+hfDownloadExcludeGlob: "original/*"
 
+# To use this with the Llama 3.1 70B downloaded with the workload workloads/download-huggingface-model-to-bucket/helm
+# and the override file workloads/download-huggingface-model-to-bucket/helm/overrides/models/meta-llama_llama-3.1-70b.yaml
+# Specify: --set basemodel=default-bucket/models/meta-llama/Llama-3.1-70B in your helm template command.
 # Resources:
-downloadsReservedSize: 24Gi
+downloadsReservedSize: 160Gi
 checkpointsReservedSize: 160Gi
-finetuningGpus: 1
+finetuningGpus: 8
 memoryPerGpu: 192
 cpuPerGpu: 8
 
@@ -37,7 +41,7 @@ finetuning_config:
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1
-    chat_template_name: "keep-original"
+    chat_template_name: "simplified-llama31"
     missing_pad_token_strategy: "bos-repurpose"
   training_args:
     learning_rate: 0.000005
@@ -72,4 +76,9 @@ finetuning_config:
       attn_implementation: "flash_attention_2"
     resume_from_checkpoint: auto
   sft_args:
-    max_seq_length: 8192
+    max_seq_length: 4096
+
+basemodel: hf://meta-llama/Llama-3.1-70B
+aimManifest:
+  modelId: meta-llama/Llama-3.1-70B
+  aimId: meta-llama/Llama-3.1-70B

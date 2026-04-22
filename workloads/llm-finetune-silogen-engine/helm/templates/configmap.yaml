@@ -130,6 +130,7 @@ data:
     kind: AIMModel
     metadata:
       name: {{ required "aimManifest.modelName is required when aimManifest.enabled is true!" .Values.aimManifest.modelName | quote }}
+      {{- include "validateResourceName" .Values.aimManifest.modelName }}
       {{- if .Values.aimManifest.labels }}
       labels:
         {{- range $key, $value := .Values.aimManifest.labels }}
@@ -137,12 +138,27 @@ data:
         {{- end }}
       {{- end }}
     spec:
+      {{- if .Values.aimManifest.aimId }}
+      aimId: {{ .Values.aimManifest.aimId | quote }}
+      {{- end }}
+      {{- if .Values.aimManifest.image }}
       image: {{ .Values.aimManifest.image | quote }}
+      {{- else }}
+      {{- if not .Values.aimManifest.aimId }}
+      {{- fail "When aimManifest.enabled is true, either aimManifest.image or aimManifest.aimId must be set!" }}
+      {{- end }}
+      {{- end }}
       modelSources:
         - modelId: {{ required "aimManifest.modelId is required when aimManifest.enabled is true!" .Values.aimManifest.modelId | quote }}
           sourceUri: "s3://{{ .Values.checkpointsRemote }}/checkpoint-final"
+      {{- if .Values.aimManifest.customTemplates }}
       customTemplates:
         {{- toYaml .Values.aimManifest.customTemplates | nindent 8 }}
+      {{- end }}
+      {{- if .Values.aimManifest.custom }}
+      custom:
+        {{- toYaml .Values.aimManifest.custom | nindent 8 }}
+      {{- end }}
       env:
         {{- range .Values.aimManifest.extraEnv }}
         - name: {{ .name | quote }}

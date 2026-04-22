@@ -1,25 +1,25 @@
 metadata:
   compatibleAccelerators:
     # MI300X:
-    - 74a1
-    - 74a9
-    - 74b5
-    - 74bd
+  - 74a1
+  - 74a9
+  - 74b5
+  - 74bd
     # MI325X:
-    - 74a5
-    - 74b9
+  - 74a5
+  - 74b9
     # MI350X:
-    - 75a0
-    - 75b0
+  - 75a0
+  - 75b0
     # MI355X:
-    - 75a3
-    - 75b3
+  - 75a3
+  - 75b3
 
 # Canonical model name:
-model: Qwen/Qwen2.5-7B-Instruct
+model: Qwen/Qwen2.5-1.5B-Instruct
 
 # Resources:
-downloadsReservedSize: 24Gi
+downloadsReservedSize: 10Gi
 checkpointsReservedSize: 160Gi
 finetuningGpus: 1
 memoryPerGpu: 192
@@ -73,3 +73,8 @@ finetuning_config:
     resume_from_checkpoint: auto
   sft_args:
     max_seq_length: 8192
+
+basemodel: hf://Qwen/Qwen2.5-1.5B-Instruct
+aimManifest:
+  modelId: Qwen/Qwen2.5-1.5B-Instruct
+  aimId: Qwen/Qwen2.5-1.5B-Instruct

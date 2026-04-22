@@ -1,19 +1,19 @@
 metadata:
   compatibleAccelerators:
     # MI300X:
-    - 74a1
-    - 74a9
-    - 74b5
-    - 74bd
+  - 74a1
+  - 74a9
+  - 74b5
+  - 74bd
     # MI325X:
-    - 74a5
-    - 74b9
+  - 74a5
+  - 74b9
     # MI350X:
-    - 75a0
-    - 75b0
+  - 75a0
+  - 75b0
     # MI355X:
-    - 75a3
-    - 75b3
+  - 75a3
+  - 75b3
 
 # Canonical model name:
 model: "meta-llama/Llama-3.2-1B-Instruct"
@@ -52,7 +52,7 @@ finetuning_config:
     seed: 42
     bf16: true
     report_to:
-      - none
+    - none
     push_to_hub: false
     gradient_checkpointing: true
     gradient_checkpointing_kwargs:
@@ -74,3 +74,8 @@ finetuning_config:
     resume_from_checkpoint: auto
   sft_args:
     max_seq_length: 8192
+
+basemodel: hf://meta-llama/Llama-3.2-1B-Instruct
+aimManifest:
+  modelId: "meta-llama/Llama-3.2-1B-Instruct"
+  aimId: "meta-llama/Llama-3.2-1B-Instruct"

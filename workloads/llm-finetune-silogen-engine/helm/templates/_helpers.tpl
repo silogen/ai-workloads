@@ -133,3 +133,24 @@ mc mirror \
 {{- end }}
 echo 'All done, exiting'
 {{- end }}
+
+{{/*
+Validate a resource name based on DNS label names (RFC 1123).
+https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
+1. contain at most 63 characters
+2. contain only lowercase alphanumeric characters or '-'
+3. start with an alphanumeric character
+4. end with an alphanumeric character
+*/}}
+{{- define "validateResourceName" -}}
+{{- $name := . -}}
+{{- if gt (len $name) 63 }}
+{{- fail (printf "Resource name '%s' is too long (max 63 characters)" $name) -}}
+{{- end -}}
+{{- if regexMatch "[A-Z]" $name -}}
+{{- fail (printf "Resource name '%s' contains uppercase letters. It must be lowercase." $name) -}}
+{{- end -}}
+{{- if not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $name) -}}
+{{- fail (printf "Resource name '%s' is invalid. It must consist of lowercase alphanumeric characters (ASCII only) or '-', and must start and end with an alphanumeric character (regex: '^[a-z0-0]([-a-z0-0]*[a-z0-0])?$')" $name) -}}
+{{- end -}}
+{{- end -}}
