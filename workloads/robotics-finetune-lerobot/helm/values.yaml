@@ -1,0 +1,63 @@
+### General chart values ###
+image: rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.10.0
+
+jobName: act_pusht_finetune
+
+# Your lerobot dataset huggingface id
+hfDatasetId: lerobot/pusht
+# Huggingface repo id of the finetuned model, where final checkpoint will be pushed to. This can be any repo you have write access to, make sure you have the correct permissions, e.g. by setting the appropriate HF_TOKEN env var.
+hfFinetunedModelId: ""
+
+setup:
+  # These extra packages e.g. "pi,peft" separated with commas will be installed during lerobot library installation.
+  lerobotExtraPackages: null
+
+# Main policy settings
+policy:
+  type: act
+  # Base model to finetune from (if applicable). This can be any Hugging Face repo id, or a local path.
+  hfPretrainedModelId: null
+
+# Main training script args
+training:
+  steps: 300 # How many steps to train for
+  save_freq: 300 # Save a checkpoint every save_freq steps
+  eval_freq: 100 # Evaluate every eval_freq steps
+  batch_size: 8 # Batch size per step
+
+# Any additional args to pass to the training script
+extraArgs:
+  - "--policy.device=cuda"
+  - "--wandb.enable=true"
+
+envVars:
+  WANDB_API_KEY:
+    name: wandb-token
+    key: wandb-token
+  HF_TOKEN:
+    name: hf-token
+    key: hf-token
+  HF_HOME: /workload/.cache/huggingface
+
+# Resources of main workload container
+resources:
+  gpu: 1 # 1 or 8, values in between are not robust at the moment
+  cpu: 8
+  memory: 128Gi
+
+storage:
+  ephemeral:
+    quantity: 128Gi
+    storageClassName: mlstorage
+    accessModes:
+    - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+# Setting job labels
+metadata:
+  labels: {}
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

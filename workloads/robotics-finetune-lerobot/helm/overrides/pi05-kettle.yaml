@@ -1,0 +1,31 @@
+jobName: pi05-kettle-training
+
+# Your lerobot dataset huggingface id
+hfDatasetId: aivanni/SO-101-KATTLE-v1
+
+setup:
+  # These extra packages separated with commas will be installed during lerobot library installation.
+  lerobotExtraPackages: "pi"
+
+# Main policy settings
+policy:
+  type: pi05
+  # Base model to finetune from (if applicable). This can be any Hugging Face repo id, or a local path.
+  hfPretrainedModelId: lerobot/pi05_base
+
+# Main training script args
+training:
+  steps: 3000 # How many steps to train for
+  save_freq: 3000 # Save a checkpoint every save_freq steps
+  eval_freq: 200 # Evaluate every eval_freq steps
+  batch_size: 32 # Batch size per step
+
+# Any additional args to pass to the training script
+extraArgs:
+  - "--policy.device=cuda"
+  - "--policy.compile_model=true"
+  - "--policy.gradient_checkpointing=true"
+  - "--wandb.enable=true"
+  - "--policy.dtype=bfloat16"
+  - "--policy.freeze_vision_encoder=false"
+  - "--policy.train_expert_only=false"
