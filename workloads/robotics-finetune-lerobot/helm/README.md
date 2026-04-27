@@ -11,6 +11,10 @@ For more information, see:
 - [Imitation Learning Tutorial](https://huggingface.co/docs/lerobot/il_robots)
 - [LeRobot GitHub Repository](https://github.com/huggingface/lerobot)
 
+## Compatibility
+
+The workload was tested on MI300 AMD GPU using `rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.10.0` image.
+
 ## Typical Workflow
 
 The complete robot learning workflow consists of four stages:
@@ -29,7 +33,7 @@ This Helm chart handles the finetuning stage, taking pre-collected demonstration
 
 The training job is configured through the `values.yaml` file. Refer to the `values.yaml` file for the complete list of configuration options.
 
-Some of the important points are related to setting up Weight&Biases (for tracking the progress) and Huggingface tokens (for uploading finetuned checkpoints and potentially downloading pretrained models from gated repos). To set them properly one has to give working values to the `.envVars.WANDB_API_KEY` and `envVars.HF_TOKEN`. By default `WANDB_API_KEY` env variable is set from the `wandb-token` secret with `wandb-token` key and `HF_TOKEN` is is set from the `hf-token` secret with `hf-token` key:
+Some of the important points are related to setting up Weight&Biases (for tracking the progress) and Huggingface tokens (for uploading finetuned checkpoints and potentially downloading pretrained models from gated repos). To set them properly one has to give working values to the `.envVars.WANDB_API_KEY` and `envVars.HF_TOKEN`. By default `WANDB_API_KEY` env variable is set from the `wandb-token` secret with `wandb-token` key and `HF_TOKEN` is set from the `hf-token` secret with `hf-token` key:
 
 ```
 envVars:

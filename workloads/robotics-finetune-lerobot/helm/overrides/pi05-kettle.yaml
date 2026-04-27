@@ -5,7 +5,7 @@ hfDatasetId: aivanni/SO-101-KATTLE-v1
 
 setup:
   # These extra packages separated with commas will be installed during lerobot library installation.
-  lerobotExtraPackages: "pi"
+  lerobotExtraPackages: "pi,dataset,training"
 
 # Main policy settings
 policy:
