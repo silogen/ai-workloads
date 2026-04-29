@@ -6,10 +6,10 @@ apt-get update && apt-get install -y --no-install-recommends ffmpeg=7:6.1.1-3ubu
 
 # Install lerobot
 cd /workload
-git clone --depth 1 https://github.com/huggingface/lerobot.git
+git clone https://github.com/huggingface/lerobot.git
 cd lerobot
 {{- if .Values.setup.lerobotGitRef }}
-git checkout {{ .Values.setup.lerobotGitRef }}
+git checkout {{ .Values.setup.lerobotGitRef | quote }}
 {{- end }}
 {{- if .Values.setup.lerobotExtraPackages }}
 pip install -e ".[{{ .Values.setup.lerobotExtraPackages }}]"

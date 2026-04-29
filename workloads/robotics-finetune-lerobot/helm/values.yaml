@@ -11,7 +11,7 @@ hfFinetunedModelId: ""
 setup:
   # These extra packages e.g. "pi,peft" separated with commas will be installed during lerobot library installation.
   lerobotExtraPackages: "dataset,training"
-  lerobotGitRef: 05a5223885bcd36064fc1a967620329696595a76
+  lerobotGitRef: v0.5.1
 
 # Main policy settings
 policy:
