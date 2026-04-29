@@ -119,6 +119,15 @@ merge_adapter $merge_base ./checkpoints/checkpoint-final-adapter ./checkpoints/c
 echo 'Copying AIMModel manifest to checkpoint directory...'
 cp /configs/aim-model-manifest.yaml /workdir/checkpoints/aim-model-manifest.yaml
 {{- end }}
+# Copy preprocessor config into final checkpoint if present in downloaded base model.
+# This keeps deployment artifacts self-contained without a separate processor job.
+if [ -f /local_resources/basemodel/preprocessor_config.json ]; then
+  mkdir -p /workdir/checkpoints/checkpoint-final
+  cp /local_resources/basemodel/preprocessor_config.json /workdir/checkpoints/checkpoint-final/preprocessor_config.json
+  echo 'Copied preprocessor_config.json to checkpoint-final'
+else
+  echo 'No preprocessor_config.json found in basemodel, skipping copy'
+fi
 {{- if not .Values.debug.skip_checkpoint_upload }}
 # Once more to ensure everything gets uploaded
 echo 'Training done, syncing once more...'
