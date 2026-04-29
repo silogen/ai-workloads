@@ -1,5 +1,5 @@
 ### General chart values ###
-finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.7
+finetuningImage: ghcr.io/silogen/rocm-silogen-finetuning-worker:v0.7.2
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:

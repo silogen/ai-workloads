@@ -1,32 +1,29 @@
 metadata:
   compatibleAccelerators:
-    # MI300X:
+  # MI300X:
   - 74a1
   - 74a9
   - 74b5
-  - 74bd
-    # MI325X:
+  - 74bd # MI325X:
   - 74a5
-  - 74b9
-    # MI350X:
+  - 74b9 # MI350X:
   - 75a0
-  - 75b0
-    # MI355X:
+  - 75b0 # MI355X:
   - 75a3
   - 75b3
 
 # Canonical model name:
-model: "mistralai/Mixtral-8x7B-Instruct-v0.1"
+model: "google/gemma-3-27b-it"
 
 # Resources:
-downloadsReservedSize: 256Gi
-checkpointsReservedSize: 512Gi
+downloadsReservedSize: 80Gi
+checkpointsReservedSize: 160Gi
 finetuningGpus: 1
 memoryPerGpu: 192
 cpuPerGpu: 8
 
 # Runtime configuration:
-distributedType: "auto-deepspeed-stage3"
+distributedType: "auto-deepspeed-stage1"
 
 ### Finetuning config section ###
 finetuning_config:
@@ -55,9 +52,9 @@ finetuning_config:
     report_to:
     - none
     push_to_hub: false
-    gradient_checkpointing: false
-    #gradient_checkpointing_kwargs:
-    #  use_reentrant: true
+    gradient_checkpointing: true
+    gradient_checkpointing_kwargs:
+      use_reentrant: false
     eval_steps: 0.2
     eval_strategy: "steps"
     metric_for_best_model: "loss"
@@ -69,30 +66,26 @@ finetuning_config:
     peft_type: "LORA"
     task_type: "CAUSAL_LM"
     peft_kwargs:
-      bias: "none"
-      fan_in_fan_out: false
-      lora_alpha: 16
+      r: 64
+      lora_alpha: 16.0
       lora_dropout: 0.05
-      r: 16
       target_modules:
-        - "o_proj"
-        - "v_proj"
-        - "k_proj"
-        - "q_proj"
-        - "w1"
-        - "gate"
-        - "w3"
-        - "w2"
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+      - up_proj
+      - down_proj
+      - gate_proj
   run_conf:
     model_args:
       torch_dtype: bfloat16
-      use_cache: false
       attn_implementation: "flash_attention_2"
     resume_from_checkpoint: auto
   sft_args:
-    max_seq_length: 4096
+    max_seq_length: 8192
 
-basemodel: hf://mistralai/Mixtral-8x7B-Instruct-v0.1
+basemodel: hf://google/gemma-3-27b-it
 aimManifest:
-  modelId: "mistralai/Mixtral-8x7B-Instruct-v0.1"
-  aimId: "mistralai/Mixtral-8x7B-Instruct-v0.1"
+  modelId: "google/gemma-3-27b-it"
+  aimId: "google/gemma-3-27b-it"

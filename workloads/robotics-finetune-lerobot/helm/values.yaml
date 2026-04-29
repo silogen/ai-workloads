@@ -10,7 +10,8 @@ hfFinetunedModelId: ""
 
 setup:
   # These extra packages e.g. "pi,peft" separated with commas will be installed during lerobot library installation.
-  lerobotExtraPackages: null
+  lerobotExtraPackages: "dataset,training"
+  lerobotGitRef: v0.5.1
 
 # Main policy settings
 policy:
@@ -20,9 +21,9 @@ policy:
 
 # Main training script args
 training:
-  steps: 300 # How many steps to train for
-  save_freq: 300 # Save a checkpoint every save_freq steps
-  eval_freq: 100 # Evaluate every eval_freq steps
+  steps: 600 # How many steps to train for
+  save_freq: 600 # Save a checkpoint every save_freq steps
+  eval_freq: 200 # Evaluate every eval_freq steps
   batch_size: 8 # Batch size per step
 
 # Any additional args to pass to the training script
@@ -54,9 +55,9 @@ storage:
   dshm:
     sizeLimit: 32Gi
 
-# Setting job labels
+# Setting job labels (dictionary or null)
 metadata:
-  labels: {}
+  labels: null
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:

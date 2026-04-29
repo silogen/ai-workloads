@@ -1,6 +1,6 @@
 # Wait for vLLM server (localhost) to be ready
 mkdir -p /workload/output
-curl https://dl.min.io/client/mc/release/linux-amd64/mc -o /workload/mc
+curl https://dl.min.io/client/mc/release/linux-amd64/mc --location -o /workload/mc
 chmod +x /workload/mc
 /workload/mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
 /workload/mc mirror --watch /workload/output/ minio-host/"${BUCKET_RESULT_PATH}" &

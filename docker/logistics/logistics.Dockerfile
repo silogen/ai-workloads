@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install minio
 RUN curl https://dl.min.io/client/mc/release/linux-amd64/mc \
     --create-dirs \
+    --location \
     -o /minio-binaries/mc && \
     chmod +x /minio-binaries/mc
 

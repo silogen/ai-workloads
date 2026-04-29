@@ -2,12 +2,15 @@
 set -euo pipefail
 
 # Install ffmpeg
-apt update && apt install ffmpeg=7:6.1.1-3ubuntu5 -y
+apt-get update && apt-get install -y --no-install-recommends ffmpeg=7:6.1.1-3ubuntu5 && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install lerobot
 cd /workload
 git clone https://github.com/huggingface/lerobot.git
 cd lerobot
+{{- if .Values.setup.lerobotGitRef }}
+git checkout {{ .Values.setup.lerobotGitRef | quote }}
+{{- end }}
 {{- if .Values.setup.lerobotExtraPackages }}
 pip install -e ".[{{ .Values.setup.lerobotExtraPackages }}]"
 {{- else }}
@@ -23,7 +26,7 @@ lerobot-train \
     {{- end }}
     --output_dir=/workload/outputs \
     --job_name={{ .Values.jobName }} \
-    --policy.repo_id={{ .Values.hfFinetunedModelId }} \
+    --policy.repo_id={{ required "hfFinetunedModelId is required!" .Values.hfFinetunedModelId | quote }} \
     --steps={{ .Values.training.steps }} \
     --save_freq={{ .Values.training.save_freq }} \
     --eval_freq={{ .Values.training.eval_freq }} \

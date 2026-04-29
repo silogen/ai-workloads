@@ -58,6 +58,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install minio
 RUN curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+    --location \
     --create-dirs \
     -o /minio-binaries/mc && \
     chown -hR ${USER_NAME} /minio-binaries/ && \
