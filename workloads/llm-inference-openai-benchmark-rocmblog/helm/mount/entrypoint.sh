@@ -56,7 +56,7 @@ for req_in_out in "${Req_In_Out[@]}"; do
     done
 done
 
-curl https://dl.min.io/client/mc/release/linux-amd64/mc --create-dirs -o /minio-binaries/mc
+curl https://dl.min.io/client/mc/release/linux-amd64/mc --location --create-dirs -o /minio-binaries/mc
 chmod +x /minio-binaries/mc
 export PATH="${PATH}:/minio-binaries/"
 

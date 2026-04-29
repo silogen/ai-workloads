@@ -10,7 +10,7 @@ export OUTPATH=$WORKPATH/output/$(date +%Y%m%d%H%M)
 export NUM_GPUS=$(rocm-smi -a --csv | grep ^card | wc -l)
 
 # get minio
-curl https://dl.min.io/client/mc/release/linux-amd64/mc -o $WORKPATH/bin/mc
+curl https://dl.min.io/client/mc/release/linux-amd64/mc --location -o $WORKPATH/bin/mc
 chmod +x $WORKPATH/bin/mc
 mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
 

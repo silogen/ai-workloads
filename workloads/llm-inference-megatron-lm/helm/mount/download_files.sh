@@ -19,6 +19,7 @@ echo '--------------------------------------------'
 echo 'Installing minio client'
 echo '--------------------------------------------'
 curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+      --location \
       --create-dirs \
       -o /minio-binaries/mc
 chmod +x /minio-binaries/mc
