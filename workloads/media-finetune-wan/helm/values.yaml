@@ -1,0 +1,39 @@
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
+
+# Use to add labels to the metadata of the resources created by this workload
+labels: {}
+
+# Image configuration
+image: rocm/pytorch-training:v25.7
+
+# Container resources
+resources:
+  cpu: 1
+  gpus: 1
+  memory: 16Gi
+workspaceReservedSize: 32Gi
+downloadsReservedSize: 32Gi
+checkpointsReservedSize: 256Gi
+
+# Model and data
+basemodelId: Wan-AI/Wan2.2-TI2V-5B
+datasetId: Disney-VideoGeneration-Dataset
+
+# Bucket storage inputs
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+# Bucket credentials from a secret
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Bucket locations for the model and training data
+bucketBasemodelPath: default-bucket/models/
+bucketDatasetPath: default-bucket/datasets/
+bucketCheckpointPath: default-bucket/checkpoints/
+
+# Interactive mode (if true,  the pod will wait for manual user input instead of starting the finetuning)
+interactive: true

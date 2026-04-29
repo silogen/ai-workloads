@@ -1,0 +1,13 @@
+metadata:
+  labels:
+    pipeline_tag: "image-text-to-text"
+    chat: "true"
+
+model: "google/gemma-3-27b-it"
+served_model_name: "google/gemma-3-27b-it"
+
+env_vars:
+  HF_TOKEN:
+    key: hf-token
+    name: hf-token
+  VLLM_USE_V1: "1"

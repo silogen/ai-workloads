@@ -1,0 +1,103 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-job"
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+      - name: hf-to-bucket
+        image: {{ .Values.image }}
+        imagePullPolicy: Always
+        workingDir: /app
+        command:
+        - sh
+        - -e
+        - -u
+        - -c
+        args:
+        - |
+          ###################################
+          echo 'Setting up minio'
+          mc alias set minio-host ${BUCKET_STORAGE_HOST} ${BUCKET_STORAGE_ACCESS_KEY} ${BUCKET_STORAGE_SECRET_KEY}
+          ###################################
+          echo 'Downloading the artifact from wandb to the container'
+          {{- $safeArtifactPath := printf "'%s'" (.Values.artifactPath | replace  "'" "'\\''") }}
+          wandb artifact get --type {{ .Values.artifactType }} {{ $safeArtifactPath }} --root local_artifact
+          ###################################
+          echo 'Uploading the model to the bucket, to {{ .Values.bucketPath | trimSuffix "/" | replace  "'" "'\\''" }}'
+          {{- $remotePath := printf "minio-host/'%s'/" (.Values.bucketPath | trimSuffix "/" | replace  "'" "'\\''") }}
+          mc mirror \
+            {{- if .Values.allowOverwrite }}
+            --overwrite \
+            {{- end }}
+            local_artifact/ {{ $remotePath }}
+        env:
+          - name: WANDB_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.wandbTokenSecret.name }}
+                key: {{ .Values.wandbTokenSecret.key }}
+          - name: BUCKET_STORAGE_HOST
+            value: {{ .Values.bucketStorageHost }}
+          - name: BUCKET_STORAGE_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.bucketCredentialsSecret.name }}
+                key: {{ .Values.bucketCredentialsSecret.accessKeyKey }}
+          - name: BUCKET_STORAGE_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.bucketCredentialsSecret.name }}
+                key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 1
+          limits:
+            memory: 1Gi
+            cpu: 1
+        volumeMounts:
+          - mountPath: /app
+            name: {{ .Release.Name }}-volume
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+          capabilities:
+            drop: ["ALL"]
+      securityContext:
+        fsGroup: 1000
+      volumes:
+        - name: {{ .Release.Name }}-volume
+        {{- if .Values.storageClass }}
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ "ReadWriteOnce" ]
+                storageClassName: {{ .Values.storageClass }}
+                resources:
+                  requests:
+                    storage: "{{ .Values.storageQuantity }}"
+        {{- else }}
+          emptyDir:
+            sizeLimit: "{{ .Values.storageQuantity }}"
+        {{- end }}

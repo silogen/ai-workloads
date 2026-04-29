@@ -1,0 +1,23 @@
+image: rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0
+gpus: 1
+memory_per_gpu: 64 # Gi
+cpu_per_gpu: 4
+metadata:
+  project_id: ""
+  workload_id: ""
+  user_id: ""
+
+pvc_annotations:
+  pvc.silogen.ai/user-pvc-size: "100Gi"
+
+http_route:
+  enabled: true
+
+ingress:
+  enabled: true
+
+kaiwo:
+  enabled: true
+
+persistent_storage:
+  enabled: true

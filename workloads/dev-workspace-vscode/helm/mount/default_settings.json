@@ -1,0 +1,5 @@
+{
+    "workbench.colorTheme": "Default Dark Modern",
+    "chat.disableAIFeatures": true,
+    "python.defaultInterpreterPath": "__PYTHON_PATH__"
+}

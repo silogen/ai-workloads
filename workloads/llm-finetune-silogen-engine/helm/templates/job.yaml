@@ -1,0 +1,219 @@
+{{- define "job" -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-job"
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: 86400  #24h
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      {{- if .Values.aimManifest.enabled }}
+      serviceAccountName: {{ .Values.aimManifest.serviceAccountName | default (printf "%s-sa" .Release.Name) | quote }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: finetuning
+          image: "{{ .Values.finetuningImage }}"
+          imagePullPolicy: Always
+          env:
+            # download
+            {{- if .Values.hfTokenSecret }}
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hfTokenSecret.name }}
+                  key: {{ .Values.hfTokenSecret.key }}
+            {{- end }}
+            - name: BUCKET_STORAGE_HOST
+              value: {{ .Values.bucketStorageHost }}
+            - name: BUCKET_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.accessKeyKey }}
+            - name: BUCKET_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
+            # finetuning logging
+            - name: ACCELERATE_LOG_LEVEL
+              value: info
+            - name: TRANSFORMERS_VERBOSITY
+              value: info
+          command:
+            - /bin/bash
+            - -l
+            - -e
+            - -u
+            - -c
+          args:
+            - |
+              echo '===== Download ====='
+              {{- include "downloadEntrypoint" . | nindent 14 }}
+              echo '===== Finetuning and Checkpoint Upload ====='
+              {{- include "finetuningAndUploadEntrypoint" . | nindent 14 }}
+          resources:
+            limits:
+              memory: "{{ mul .Values.finetuningGpus .Values.memoryPerGpu }}Gi"
+              cpu: "{{ mul .Values.finetuningGpus .Values.cpusPerGpu }}"
+              amd.com/gpu: "{{ .Values.finetuningGpus }}"
+            requests:
+              memory: "{{ mul .Values.finetuningGpus .Values.memoryPerGpu }}Gi"
+              cpu: "{{ mul .Values.finetuningGpus .Values.cpusPerGpu }}"
+              amd.com/gpu: "{{ .Values.finetuningGpus }}"
+          volumeMounts:
+            - name: dshm # Increase SHM size for the container by mounting /dev/shm, for Pytorch parallel processing
+              mountPath: /dev/shm
+            - name: downloads
+              mountPath: /local_resources
+              readOnly: false
+            - name: checkpoints
+              mountPath: /workdir/checkpoints
+              readOnly: false
+            - name: semaphores
+              mountPath: /semaphores
+              readOnly: false
+            - name: configs
+              mountPath: /configs
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+        {{- if and .Values.aimManifest.enabled .Values.aimManifest.autoApply }}
+        - name: aimmodel-applier
+          image: {{ .Values.aimManifest.manifestApplierImage | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+          args:
+            - |
+              set -e
+              echo "Waiting for training container to complete..."
+
+              # Poll for container completion
+              MAX_WAIT={{ .Values.aimManifest.maxWait }}
+              ELAPSED=0
+              INTERVAL=10
+
+              while [ $ELAPSED -lt $MAX_WAIT ]; do
+                # Get container state
+                STATE=$(kubectl get pod $HOSTNAME -o jsonpath='{.status.containerStatuses[?(@.name=="finetuning")].state}' || echo "{}")
+
+                # Check if container is terminated
+                if echo "$STATE" | grep -q "terminated"; then
+                  EXIT_CODE=$(kubectl get pod $HOSTNAME \
+                    -o jsonpath='{.status.containerStatuses[?(@.name=="finetuning")].state.terminated.exitCode}' || echo "")
+
+                  if [ "$EXIT_CODE" = "0" ]; then
+                    echo "Training completed successfully, applying AIMModel manifest..."
+                    kubectl apply -f /configs/aim-model-manifest.yaml
+                    exit 0
+                  else
+                    echo "Training container failed with exit code $EXIT_CODE, skipping AIMModel creation"
+                    exit 1
+                  fi
+                fi
+
+                sleep $INTERVAL
+                ELAPSED=$((ELAPSED + INTERVAL))
+              done
+
+              echo "Timeout waiting for training to complete after 48 hours"
+              exit 1
+          volumeMounts:
+            - name: configs
+              mountPath: /configs
+              readOnly: true
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+        {{- end }}
+      securityContext:
+        fsGroup: 1000
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory # equivalent to `docker run --shm-size=(total_memory/2)`
+        {{- if .Values.storageClass }}
+        - name: downloads
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ "ReadWriteOnce" ]
+                storageClassName: {{ .Values.storageClass }}
+                resources:
+                  requests:
+                    storage: "{{ .Values.downloadsReservedSize }}"
+        - name: checkpoints
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ "ReadWriteOnce" ]
+                storageClassName: {{ .Values.storageClass }}
+                resources:
+                  requests:
+                    storage: "{{ .Values.checkpointsReservedSize }}"
+        {{- else }}
+        - name: downloads
+          emptyDir:
+            sizeLimit: "{{ .Values.downloadsReservedSize }}"
+        - name: checkpoints
+          emptyDir:
+            sizeLimit: "{{ .Values.checkpointsReservedSize }}"
+        {{- end }}
+        - name: semaphores
+          emptyDir:
+            medium: Memory
+            sizeLimit: "10Mi"
+        - name: configs
+          configMap:
+            name: "{{ .Release.Name }}-configs"
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: "{{ .Release.Name }}-job"
+spec:
+  job:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

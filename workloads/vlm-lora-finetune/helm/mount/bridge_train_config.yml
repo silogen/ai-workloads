@@ -1,0 +1,42 @@
+# OpenCLIP base model name
+model_name: "ViT-L-14"
+# Use these pretrained weights, provided by OpenCLIP
+pretrained: "datacomp_xl_s13b_b90k"
+compile: False
+seed: 1337
+
+device: "cuda"
+# Output directory for finetuned lora weights and config. Will contain checkpoint folders with
+# lora weights and config
+output_dir: "/workload/bridge_output"
+
+wandb: False
+wandb_project: test-clipora
+
+# Custom CSV dataset
+train_dataset: "/workload/bridge_data/train.csv"
+eval_dataset: "/workload/bridge_data/eval.csv"
+datatype: "csv"
+csv_separator: ","
+image_col: "image_path"
+text_col: "language_instruction"
+shuffle: True
+# How many workers to use in dataloader. Recommend using more than 1
+workers: 8
+
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.0
+
+batch_size: 32
+gradient_accumulation_steps: 1
+gradient_checkpointing: False
+
+use_8bit_adam: False
+
+learning_rate: 1e-4
+epochs: 3
+warmup: 0.01
+save_interval: 500
+eval_interval: 30
+eval_steps: 10

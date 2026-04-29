@@ -1,0 +1,17 @@
+# Overrides file for running metrics evaluation, evaluating Llama-3.1-3B on the BillSum summarization dataset
+general:
+  job_name: evaluation-metrics-llama-3-1-8b-billsum
+model_inference_container:
+  gpu_count: 1
+  model: llama-3.1-8B
+  model_path: hf://meta-llama/Llama-3.1-8B
+evaluation_container:
+  image: ghcr.io/silogen/evaluation-workloads-metrics:v0.1
+  dataset_path: FiscalNote/billsum
+  dataset_version: default
+  dataset_split: test
+  dataset_info:
+    context_column_name: text
+    gold_standard_column_name: summary
+    id_column_name:
+  use_data_subset: 0 # Edit this for quick testing. Defines the number of documents used for evaluation. 0 means using the whole dataset

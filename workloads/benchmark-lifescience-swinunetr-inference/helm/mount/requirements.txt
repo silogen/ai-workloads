@@ -1,0 +1,11 @@
+connected-components-3d==3.24.0
+einops==0.4.1
+fastapi==0.115.13
+monai[nibabel,pillow,ignite,tqdm,pydicom]==1.5.0
+numpy==1.26.4
+python-multipart==0.0.20
+scipy
+tensorboard==2.13.0
+tensorboardX==2.1
+transformers==4.54.1
+uvicorn==0.34.3

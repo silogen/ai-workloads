@@ -1,0 +1,25 @@
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
+model: "meta-llama/Llama-3.1-405B-Instruct"
+served_model_name: "meta-llama/Llama-3.1-405B-Instruct"
+gpus: 8
+memory_per_gpu: 64 # Gi
+cpu_per_gpu: 4
+
+vllm_engine_args:
+  gpu-memory-utilization: "0.95"
+
+env_vars:
+  HF_TOKEN:
+    key: hf-token
+    name: hf-token
+
+storage:
+  ephemeral:
+    quantity: 1024Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce

@@ -1,0 +1,16 @@
+accelerate==0.32.0
+datasets[vision]==4.1.0
+# For API
+fastapi[all]==0.116.2
+huggingface-hub==0.35.0
+open_clip_torch==2.24.0
+peft==0.17.1
+pillow==11.0.0
+python-multipart==0.0.20
+scipy==1.14.1
+# Used for creating example dataset
+tensorflow==2.20.0
+# torch==2.1.0 - torch is preinstalled in the image with rocm support
+# bitsandbytes - some issues?
+# wandb - issue with python 3.12?
+tqdm==4.67.1

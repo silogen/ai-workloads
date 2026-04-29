@@ -1,0 +1,20 @@
+# Override configuration for MinIO S3-compatible storage
+# Usage: helm template mlflow-server . -f overrides/backends/minio_example.yaml | kubectl apply -f -
+
+env_vars:
+  # S3-compatible bucket for MLflow artifacts
+  MLFLOW_ARTIFACTS_DESTINATION: "s3://default-bucket/mlflow/artifacts"
+
+  # MinIO endpoint URL - adjust for your MinIO deployment
+  MLFLOW_S3_ENDPOINT_URL: http://minio.minio-tenant-default.svc.cluster.local:80
+
+  # Uncomment if using HTTP or self-signed certificates
+  # MLFLOW_S3_IGNORE_TLS: "true"
+
+  # MinIO credentials from Kubernetes secret
+  AWS_ACCESS_KEY_ID:
+    name: minio-credentials
+    key: minio-access-key
+  AWS_SECRET_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-secret-key
