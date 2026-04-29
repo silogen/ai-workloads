@@ -21,7 +21,7 @@ model: "mistralai/Mixtral-8x7B-Instruct-v0.1"
 # Resources:
 downloadsReservedSize: 256Gi
 checkpointsReservedSize: 512Gi
-finetuningGpus: 8
+finetuningGpus: 1
 memoryPerGpu: 192
 cpuPerGpu: 8
 
@@ -55,9 +55,9 @@ finetuning_config:
     report_to:
     - none
     push_to_hub: false
-    gradient_checkpointing: true
-    gradient_checkpointing_kwargs:
-      use_reentrant: true
+    gradient_checkpointing: false
+    #gradient_checkpointing_kwargs:
+    #  use_reentrant: true
     eval_steps: 0.2
     eval_strategy: "steps"
     metric_for_best_model: "loss"
@@ -66,7 +66,23 @@ finetuning_config:
   batchsize_conf:
     max_per_device_train_batch_size: 1
   peft_conf:
-    peft_type: "NO_PEFT"
+    peft_type: "LORA"
+    task_type: "CAUSAL_LM"
+    peft_kwargs:
+      bias: "none"
+      fan_in_fan_out: false
+      lora_alpha: 16
+      lora_dropout: 0.05
+      r: 16
+      target_modules:
+        - "o_proj"
+        - "v_proj"
+        - "k_proj"
+        - "q_proj"
+        - "w1"
+        - "gate"
+        - "w3"
+        - "w2"
   run_conf:
     model_args:
       torch_dtype: bfloat16
@@ -74,7 +90,7 @@ finetuning_config:
       attn_implementation: "flash_attention_2"
     resume_from_checkpoint: auto
   sft_args:
-    max_seq_length: 8192
+    max_seq_length: 4096
 
 basemodel: hf://mistralai/Mixtral-8x7B-Instruct-v0.1
 aimManifest:

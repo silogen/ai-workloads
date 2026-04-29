@@ -151,6 +151,19 @@ data:
       modelSources:
         - modelId: {{ required "aimManifest.modelId is required when aimManifest.enabled is true!" .Values.aimManifest.modelId | quote }}
           sourceUri: "s3://{{ .Values.checkpointsRemote }}/checkpoint-final"
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name | quote }}
+                  key: {{ .Values.bucketCredentialsSecret.accessKeyKey | quote }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name | quote }}
+                  key: {{ .Values.bucketCredentialsSecret.secretKeyKey | quote }}
+            - name: AWS_ENDPOINT_URL
+              value: {{ .Values.bucketStorageHost | quote }}
       {{- if .Values.aimManifest.customTemplates }}
       customTemplates:
         {{- toYaml .Values.aimManifest.customTemplates | nindent 8 }}
@@ -159,6 +172,7 @@ data:
       custom:
         {{- toYaml .Values.aimManifest.custom | nindent 8 }}
       {{- end }}
+      {{- if .Values.aimManifest.extraEnv }}
       env:
         {{- range .Values.aimManifest.extraEnv }}
         - name: {{ .name | quote }}
@@ -170,17 +184,6 @@ data:
           {{- else }}
           value: {{ .value | quote }}
           {{- end }}
-        {{ end }}
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.bucketCredentialsSecret.name | quote }}
-              key: {{ .Values.bucketCredentialsSecret.accessKeyKey | quote }}
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.bucketCredentialsSecret.name | quote }}
-              key: {{ .Values.bucketCredentialsSecret.secretKeyKey | quote }}
-        - name: AWS_ENDPOINT_URL
-          value: {{ .Values.bucketStorageHost | quote }}
+        {{- end }}
+      {{- end }}
   {{- end }}

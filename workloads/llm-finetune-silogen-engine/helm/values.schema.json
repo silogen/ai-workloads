@@ -762,30 +762,35 @@
         "type": "string"
       },
       "ModelArguments": {
-        "additionalProperties": false,
+        "additionalProperties": true,
         "description": "These are passed to AutoModelForCausalLM.from_pretrained\n\nSee parameter docstrings and help at:\nhttps://huggingface.co/docs/transformers/main/en/main_classes/model#transformers.PreTrainedModel.from_pretrained\nSee below in \"Parameters for big model inference\" too, it affects training too. Also note that this link takes you\nto the transformers main branch version - be sure to compare with the installed version of transformers (that keeps\nchanging over time, and it is difficult to keep this docstring up to date, so we wanted to link to the latest here).\n\nSome important parameters to consider are:\n\n- device_map :\n    A map that specifies where each submodule should go. It doesn\u2019t need to be refined to each parameter/buffer\n    name, once a given module name is inside, every submodule of it will be sent to the same device. If we only pass\n    the device (e.g., \"cpu\", \"cuda:1\", \"mps\", or a GPU ordinal rank like 1) on which the model will be allocated,\n    the device map will map the entire model to this device. Passing device_map = 0 means put the whole model on GPU\n    0.\n- attn_implementation :\n    The attention implementation to use in the model (if relevant). Can be any of \"eager\" (manual implementation of\n    the attention), \"sdpa\" (using F.scaled_dot_product_attention), or \"flash_attention_2\" (using\n    Dao-AILab/flash-attention). By default, if available, SDPA will be used for torch>=2.1.1. The default is\n    otherwise the manual \"eager\" implementation.\n\nNOTE:\n    This does not include quantization_config. Quantization config is specified separately.",
         "properties": {
-          "torch_dtype": {
+          "silogen_extra_args": {
+            "additionalProperties": true,
+            "description": "Don't specify directly - this gathers additional args passed to the model",
+            "title": "Silogen Extra Args",
+            "type": "object"
+          },
+          "dtype": {
+            "anyOf": [
+              {
+                "const": "auto",
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
             "default": "auto",
-            "title": "Torch Dtype",
-            "type": "string"
+            "title": "Dtype"
           },
-          "device_map": {
+          "pretrained_model_name_or_path": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "type": "object"
+                "type": "string"
               },
               {
+                "format": "path",
                 "type": "string"
               },
               {
@@ -793,32 +798,16 @@
               }
             ],
             "default": null,
-            "description": "Custom device map so that you can manually override the choices that HuggingFace would make. This can also be a string to specify \"auto\", \"balanced_low_0\", or \"sequential\".",
-            "title": "Device Map"
+            "description": "Can be either:\n- A string, the *model id* of a pretrained model hosted inside a model repo on huggingface.co.\n- A path to a *directory* containing model weights saved using `~PreTrainedModel.save_pretrained`.\n- A path or url to a *tensorflow index checkpoint file*.\n- A path or url to a model folder containing a *flax checkpoint file* in *.msgpack* format.\n- `None` if you are both providing the configuration and state dictionary.",
+            "title": "Pretrained Model Name Or Path"
           },
-          "max_memory": {
+          "config": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "type": "string"
               },
               {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Max Memory"
-          },
-          "low_cpu_mem_usage": {
-            "default": false,
-            "title": "Low Cpu Mem Usage",
-            "type": "boolean"
-          },
-          "attn_implementation": {
-            "anyOf": [
-              {
+                "format": "path",
                 "type": "string"
               },
               {
@@ -826,51 +815,8 @@
               }
             ],
             "default": null,
-            "description": "Note: this can be set to \"sdpa\", \"flash_attention_2\", \"eager\".",
-            "title": "Attn Implementation"
-          },
-          "offload_folder": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Offload Folder"
-          },
-          "offload_state_dict": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "description": "Default is True if offloading (otherwise no effect)",
-            "title": "Offload State Dict"
-          },
-          "offload_buffers": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Offload Buffers"
-          },
-          "use_cache": {
-            "default": true,
-            "description": "Saves generated hidden states to speed up generation, see: https://discuss.huggingface.co/t/what-is-the-purpose-of-use-cache-in-decoder/958 This is mutually exclusive with gradient_checkpointing.",
-            "title": "Use Cache",
-            "type": "boolean"
+            "description": "Configuration for the model to use instead of an automatically loaded configuration.\nCan be either an instance of a class derived from `PretrainedConfig`, or a string/path valid as input to `PretrainedConfig.from_pretrained`.",
+            "title": "Config"
           },
           "cache_dir": {
             "anyOf": [
@@ -878,20 +824,39 @@
                 "type": "string"
               },
               {
+                "format": "path",
+                "type": "string"
+              },
+              {
                 "type": "null"
               }
             ],
             "default": null,
+            "description": "Path to a directory in which a downloaded pretrained model configuration should be cached.",
             "title": "Cache Dir"
+          },
+          "from_tf": {
+            "default": false,
+            "description": "Load the model weights from a TensorFlow checkpoint save file.",
+            "title": "From Tf",
+            "type": "boolean"
+          },
+          "from_flax": {
+            "default": false,
+            "description": "Load the model weights from a Flax checkpoint save file.",
+            "title": "From Flax",
+            "type": "boolean"
+          },
+          "ignore_mismatched_sizes": {
+            "default": false,
+            "description": "Whether or not to raise an error if some of the weights from the checkpoint do not have the same size as the weights of the model.",
+            "title": "Ignore Mismatched Sizes",
+            "type": "boolean"
           },
           "force_download": {
             "default": false,
+            "description": "Whether or not to force the (re-)download of the model weights and configuration files.",
             "title": "Force Download",
-            "type": "boolean"
-          },
-          "local_files_only": {
-            "default": false,
-            "title": "Local Files Only",
             "type": "boolean"
           },
           "proxies": {
@@ -907,49 +872,26 @@
               }
             ],
             "default": null,
+            "description": "A dictionary of proxy servers to use by protocol or endpoint.",
             "title": "Proxies"
           },
-          "resume_download": {
+          "output_loading_info": {
             "default": false,
-            "title": "Resume Download",
+            "description": "Whether or not to also return a dictionary containing missing keys, unexpected keys and error messages.",
+            "title": "Output Loading Info",
             "type": "boolean"
           },
-          "revision": {
-            "default": "main",
-            "title": "Revision",
-            "type": "string"
-          },
-          "code_revision": {
-            "default": "main",
-            "title": "Code Revision",
-            "type": "string"
-          },
-          "subfolder": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Subfolder"
+          "local_files_only": {
+            "default": false,
+            "description": "Whether or not to only look at local files (i.e., do not try to download the model).",
+            "title": "Local Files Only",
+            "type": "boolean"
           },
           "token": {
             "anyOf": [
               {
                 "type": "string"
               },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Token"
-          },
-          "use_safetensors": {
-            "anyOf": [
               {
                 "type": "boolean"
               },
@@ -958,7 +900,125 @@
               }
             ],
             "default": null,
-            "title": "Use Safetensors"
+            "description": "The token to use as HTTP bearer authorization for remote files.",
+            "title": "Token"
+          },
+          "revision": {
+            "default": "main",
+            "description": "The specific model version to use. It can be a branch name, a tag name, or a commit id.",
+            "title": "Revision",
+            "type": "string"
+          },
+          "attn_implementation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The attention implementation to use in the model. Can be any of 'eager', 'sdpa', 'flash_attention_2', or 'flash_attention_3'.\nAccepts HF kernel references in the form: <namespace>/<repo_name>[@<revision>][:<kernel_name>]",
+            "title": "Attn Implementation"
+          },
+          "device_map": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "A map that specifies where each submodule should go.",
+            "title": "Device Map"
+          },
+          "max_memory": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "A dictionary device identifier to maximum memory if using `device_map`.",
+            "title": "Max Memory"
+          },
+          "tp_plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "A torch tensor parallel plan. Currently only accepts 'auto'.",
+            "title": "Tp Plan"
+          },
+          "tp_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "A torch tensor parallel degree. If not provided would default to world size.",
+            "title": "Tp Size"
+          },
+          "offload_folder": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "format": "path",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "If the `device_map` contains any value 'disk', the folder where we will offload weights.",
+            "title": "Offload Folder"
+          },
+          "offload_buffers": {
+            "default": false,
+            "description": "Whether or not to offload the buffers with the model parameters.",
+            "title": "Offload Buffers",
+            "type": "boolean"
+          },
+          "subfolder": {
+            "default": "",
+            "description": "In case the relevant files are located inside a subfolder of the model repo on huggingface.co.",
+            "title": "Subfolder",
+            "type": "string"
           },
           "variant": {
             "anyOf": [
@@ -970,13 +1030,43 @@
               }
             ],
             "default": null,
+            "description": "If specified load weights from `variant` filename, e.g. pytorch_model.<variant>.bin.",
             "title": "Variant"
           },
-          "trust_remote_code": {
-            "default": false,
-            "description": "Warning: if set to True, allows execution of downloaded remote code.",
-            "title": "Trust Remote Code",
+          "use_safetensors": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Whether or not to use `safetensors` checkpoints.",
+            "title": "Use Safetensors"
+          },
+          "weights_only": {
+            "default": true,
+            "description": "Indicates whether unpickler should be restricted to loading only tensors and primitive types.",
+            "title": "Weights Only",
             "type": "boolean"
+          },
+          "key_mapping": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "A potential mapping of the weight names if using a model on the Hub which is compatible to a Transformers architecture, but was not converted accordingly.",
+            "title": "Key Mapping"
           }
         },
         "title": "ModelArguments",
@@ -1174,27 +1264,31 @@
           "model_args": {
             "$ref": "#/$defs/ModelArguments",
             "default": {
-              "torch_dtype": "auto",
+              "dtype": "auto",
+              "pretrained_model_name_or_path": null,
+              "config": null,
+              "cache_dir": null,
+              "from_tf": false,
+              "from_flax": false,
+              "ignore_mismatched_sizes": false,
+              "force_download": false,
+              "proxies": null,
+              "output_loading_info": false,
+              "local_files_only": false,
+              "token": null,
+              "revision": "main",
+              "attn_implementation": null,
               "device_map": "auto",
               "max_memory": null,
-              "low_cpu_mem_usage": false,
-              "attn_implementation": null,
+              "tp_plan": null,
+              "tp_size": null,
               "offload_folder": null,
-              "offload_state_dict": null,
-              "offload_buffers": null,
-              "use_cache": true,
-              "cache_dir": null,
-              "force_download": false,
-              "local_files_only": false,
-              "proxies": null,
-              "resume_download": false,
-              "revision": "main",
-              "code_revision": "main",
-              "subfolder": null,
-              "token": null,
-              "use_safetensors": null,
+              "offload_buffers": false,
+              "subfolder": "",
               "variant": null,
-              "trust_remote_code": false
+              "use_safetensors": null,
+              "weights_only": true,
+              "key_mapping": null
             }
           },
           "tokenizer": {
@@ -1256,9 +1350,19 @@
         "properties": {
           "max_seq_length": {
             "default": 2048,
-            "description": "Maximum length input sequence length. Longer sequences will be filtered out.",
+            "description": "Maximum length input sequence length. Longer sequences will be filtered or truncated.",
             "title": "Max Seq Length",
             "type": "integer"
+          },
+          "length_handling": {
+            "default": "filter",
+            "description": "How to handle examples that are longer than max_seq_length.             'filter': Filter out these examples from the training set.             'truncate': Truncate these examples to max_seq_length. Note that this might lead to loss of information and worse performance, especially if the important information is at the end of the sequence.",
+            "enum": [
+              "filter",
+              "truncate"
+            ],
+            "title": "Length Handling",
+            "type": "string"
           },
           "save_name_if_new_basemodel": {
             "default": "checkpoint-new-basemodel",
@@ -2042,7 +2146,7 @@
                 "type": "string"
               }
             ],
-            "default": "adamw_torch",
+            "default": "adamw_torch_fused",
             "title": "Optim"
           },
           "optim_args": {
@@ -3386,7 +3490,7 @@
                 "type": "string"
               }
             ],
-            "default": "adamw_torch",
+            "default": "adamw_torch_fused",
             "title": "Optim"
           },
           "optim_args": {
