@@ -1,4 +1,5 @@
 {{- define "job" -}}
+{{- $nonroot := (ne (int64 .Values.runAs) 0) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -90,14 +91,16 @@ spec:
             - name: configs
               mountPath: /configs
               readOnly: true
+        {{- if $nonroot }}
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
-            runAsUser: 1000
+            runAsUser: {{ .Values.runAs }}
             seccompProfile:
               type: RuntimeDefault
             capabilities:
               drop: ["ALL"]
+        {{- end }}
         {{- if and .Values.aimManifest.enabled .Values.aimManifest.autoApply }}
         - name: aimmodel-applier
           image: {{ .Values.aimManifest.manifestApplierImage | quote }}
@@ -151,17 +154,21 @@ spec:
             requests:
               memory: "64Mi"
               cpu: "50m"
+        {{- if $nonroot }}
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
-            runAsUser: 1000
+            runAsUser: {{ .Values.runAs }}
             seccompProfile:
               type: RuntimeDefault
             capabilities:
               drop: ["ALL"]
         {{- end }}
+        {{- end }}
+      {{- if $nonroot }}
       securityContext:
-        fsGroup: 1000
+        fsGroup: {{ .Values.runAs }}
+      {{- end }}
       volumes:
         - name: dshm
           emptyDir:
