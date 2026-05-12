@@ -1,5 +1,6 @@
 metadata:
   compatibleAccelerators:
+  # Currently, no matching profiles are available. The recipe runs on the following accelerators, however:
     # MI300X:
   - 74a1
   - 74a9
