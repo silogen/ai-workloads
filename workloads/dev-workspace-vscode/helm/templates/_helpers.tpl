@@ -27,15 +27,22 @@
 
 # Container resources helper
 {{- define "container.resources" -}}
+{{- /*
+  When gpus=0 (CPU-only workspace), multiplying by gpus would produce 0, causing
+  the max() floor to always win and ignoring the configured per-gpu values.
+  Instead, use the per-gpu values directly as the flat allocation for CPU-only workloads.
+*/ -}}
+{{- $memory := ternary .Values.memory_per_gpu (mul .Values.gpus .Values.memory_per_gpu) (eq (int .Values.gpus) 0) -}}
+{{- $cpu := ternary .Values.cpu_per_gpu (mul .Values.gpus .Values.cpu_per_gpu) (eq (int .Values.gpus) 0) -}}
 requests:
-  memory: "{{ max (mul .Values.gpus .Values.memory_per_gpu) 4 }}Gi"
-  cpu: "{{ max (mul .Values.gpus .Values.cpu_per_gpu) 1 }}"
+  memory: "{{ max $memory 4 }}Gi"
+  cpu: "{{ max $cpu 1 }}"
   {{- if .Values.gpus }}
   amd.com/gpu: "{{ .Values.gpus }}"
   {{- end }}
 limits:
-  memory: "{{ max (mul .Values.gpus .Values.memory_per_gpu) 4 }}Gi"
-  cpu: "{{ max (mul .Values.gpus .Values.cpu_per_gpu) 1 }}"
+  memory: "{{ max $memory 4 }}Gi"
+  cpu: "{{ max $cpu 1 }}"
   {{- if .Values.gpus }}
   amd.com/gpu: "{{ .Values.gpus }}"
   {{- end }}
