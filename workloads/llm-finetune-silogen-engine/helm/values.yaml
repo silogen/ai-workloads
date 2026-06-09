@@ -39,6 +39,8 @@ checkpointsRemote:  # Path where to sync checkpoints in bucket storage, format: 
 basemodel:  # Path to basemodel directory in the bucket storage
 # Auxiliary model download args:
 model: "" # Canonical model name, e.g. "meta-llama/llama-3.1-8b-instruct" or "OdiaGenAI-LLM/qwen_1.5_odia_7b"
+metadata:
+  hfTokenRequired: false # Whether the Hugging Face model download requires authentication. If true, also set hfTokenSecret.
 hfDownloadExcludeGlob: ""
 hfTokenSecret:
 # Example:

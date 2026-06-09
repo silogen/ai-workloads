@@ -89,6 +89,18 @@
         "description": "Path in bucket storage where the basemodel is stored.",
         "default": ""
       },
+      "metadata": {
+        "type": "object",
+        "description": "Model metadata values used by model override files.",
+        "properties": {
+          "hfTokenRequired": {
+            "type": "boolean",
+            "description": "Whether downloading the configured Hugging Face model requires an HF token.",
+            "default": false
+          }
+        },
+        "additionalProperties": true
+      },
       "hfDownloadExcludeGlob": {
         "type": "string",
         "description": "Glob pattern to exclude files when downloading from Hugging Face Hub. Used to avoid downloading unnecessary large files like duplicate weight files.",

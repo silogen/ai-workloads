@@ -1,4 +1,5 @@
 metadata:
+  hfTokenRequired: false
   compatibleAccelerators:
     # MI300X:
   - "74a1"
