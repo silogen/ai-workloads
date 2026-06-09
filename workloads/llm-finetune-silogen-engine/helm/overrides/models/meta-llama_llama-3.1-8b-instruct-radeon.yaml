@@ -1,4 +1,5 @@
 metadata:
+  hfTokenRequired: true
   compatibleAccelerators:
     # AMD Radeon Pro series
     - "7551"  # AI PRO R9700 / R9700S / R9600D
