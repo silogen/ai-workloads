@@ -12,6 +12,14 @@ pvc_annotations:
 
 http_route:
   enabled: true
+  # Intentional dual-gateway attachment for migration period support.
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      name: https
+      namespace: envoy-gateway-system
+    - group: gateway.networking.k8s.io
+      name: https
+      namespace: kgateway-system
 
 ingress:
   enabled: true
