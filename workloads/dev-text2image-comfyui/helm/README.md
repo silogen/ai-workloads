@@ -140,7 +140,24 @@ To access the workload through a URL, you can enable either an Ingress or HTTPRo
 | Parameter              | Description                                                                 | Default                                                                 |
 |------------------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | `ingress.enabled`      | Enable Ingress resource                                                     | `false`                                                                 |
-| `httproute.enabled`    | Enable HTTPRoute resource                                                   | `false`                                                                 |
+| `http_route.enabled`   | Enable HTTPRoute resource                                                   | `false`                                                                 |
+| `http_route.parentRefs`| List of gateway parent references (`group`, `name`, `namespace`), takes precedence over gateway namespace keys | `[]` |
+| `http_route.gatewayNamespace` | Single-gateway fallback used when `parentRefs` is empty | `envoy-gateway-system` |
+| `http_route.gateway_namespace` | Deprecated alias for `gatewayNamespace` | `""` |
+
+Example dual-gateway configuration:
+
+```yaml
+http_route:
+  enabled: true
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      name: https
+      namespace: envoy-gateway-system
+    - group: gateway.networking.k8s.io
+      name: https
+      namespace: kgateway-system
+```
 
 See the corresponding template files in the `templates/` directory. For more details on configuring Ingress or HTTPRoute, refer to the [Ingress documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/) and [HTTPRoute documentation](https://kubernetes-sigs.github.io/gateway-api/v0.5.0/httproute/), or documentation of the particular gateway implementation you may use, like [KGateway](https://kgateway.dev/). Check with your cluster administrator for the correct configuration for your environment.
 

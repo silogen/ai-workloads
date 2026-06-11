@@ -233,6 +233,30 @@ with mlflow.start_run():
 
 To access the workload through a URL, you can enable either an Ingress or HTTPRoute in the `values.yaml` file by setting `ingress.enabled: true` or `http_route.enabled: true`.
 
+### URL Configuration Parameters
+
+| Parameter              | Description                                                                 | Default                                                                 |
+|------------------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| `ingress.enabled`      | Enable Ingress resource                                                     | `false`                                                                 |
+| `http_route.enabled`   | Enable HTTPRoute resource                                                   | `false`                                                                 |
+| `http_route.parentRefs`| List of gateway parent references (`group`, `name`, `namespace`), takes precedence over gateway namespace keys | `[]` |
+| `http_route.gatewayNamespace` | Single-gateway fallback used when `parentRefs` is empty | `envoy-gateway-system` |
+| `http_route.gateway_namespace` | Deprecated alias for `gatewayNamespace` | `""` |
+
+Example dual-gateway configuration:
+
+```yaml
+http_route:
+  enabled: true
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      name: https
+      namespace: envoy-gateway-system
+    - group: gateway.networking.k8s.io
+      name: https
+      namespace: kgateway-system
+```
+
 ### Access URLs
 
 The MLflow tracking server can be accessed via different methods depending on your deployment (assuming the release name as "mlflow-server-service"):
