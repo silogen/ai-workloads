@@ -83,6 +83,13 @@ kaiwo:
 
 http_route:
   enabled: false
+  # Preferred configuration for multi-gateway attachment.
+  # Keep empty by default to preserve backward compatibility with gatewayNamespace.
+  parentRefs: []
+  # Preferred single-gateway fallback used when parentRefs is empty.
+  gatewayNamespace: envoy-gateway-system
+  # Deprecated alias for gatewayNamespace. Remove in a future major release.
+  gateway_namespace: ""
 
 ingress:
   enabled: false
