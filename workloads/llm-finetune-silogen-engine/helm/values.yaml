@@ -113,8 +113,9 @@ aimManifest:
   modelId: null
   modelName: null
   image: null
-  custom:
-    versionPolicy: latest
-  customTemplates: null
-  extraEnv: []
+  # Base-image AIMModel the fine-tuned model derives its profiles from. Must
+  # exist in the same namespace the fine-tuned AIMModel is created in.
+  baseModel:
+    name: aim-base
+    scope: Namespace
   labels: {}

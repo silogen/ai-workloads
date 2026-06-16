@@ -126,7 +126,7 @@ data:
     {{- fail "aimManifest.enabled requires either a full parameter finetune (peft_type: NO_PEFT) or adapter merging enabled (mergeAdapter: true). Currently using PEFT without merging, which produces only an adapter, not a complete model." }}
   {{- end }}
   aim-model-manifest.yaml: |
-    apiVersion: aim.eai.amd.com/v1alpha1
+    apiVersion: aim.eai.amd.com/v1alpha2
     kind: AIMModel
     metadata:
       name: {{ required "aimManifest.modelName is required when aimManifest.enabled is true!" .Values.aimManifest.modelName | quote }}
@@ -138,52 +138,41 @@ data:
         {{- end }}
       {{- end }}
     spec:
-      {{- if .Values.aimManifest.aimId }}
-      aimId: {{ .Values.aimManifest.aimId | quote }}
-      {{- end }}
-      {{- if .Values.aimManifest.image }}
-      image: {{ .Values.aimManifest.image | quote }}
-      {{- else }}
-      {{- if not .Values.aimManifest.aimId }}
-      {{- fail "When aimManifest.enabled is true, either aimManifest.image or aimManifest.aimId must be set!" }}
-      {{- end }}
-      {{- end }}
-      modelSources:
-        - modelId: {{ required "aimManifest.modelId is required when aimManifest.enabled is true!" .Values.aimManifest.modelId | quote }}
-          sourceUri: "s3://{{ .Values.checkpointsRemote }}/checkpoint-final"
-          env:
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.bucketCredentialsSecret.name | quote }}
-                  key: {{ .Values.bucketCredentialsSecret.accessKeyKey | quote }}
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.bucketCredentialsSecret.name | quote }}
-                  key: {{ .Values.bucketCredentialsSecret.secretKeyKey | quote }}
-            - name: AWS_ENDPOINT_URL
-              value: {{ .Values.bucketStorageHost | quote }}
-      {{- if .Values.aimManifest.customTemplates }}
-      customTemplates:
-        {{- toYaml .Values.aimManifest.customTemplates | nindent 8 }}
-      {{- end }}
-      {{- if .Values.aimManifest.custom }}
-      custom:
-        {{- toYaml .Values.aimManifest.custom | nindent 8 }}
-      {{- end }}
-      {{- if .Values.aimManifest.extraEnv }}
-      env:
-        {{- range .Values.aimManifest.extraEnv }}
-        - name: {{ .name | quote }}
-          {{- if and .value (kindIs "map" .value) .value.name .value.key }}
-          valueFrom:
-            secretKeyRef:
-              name: {{ .value.name | quote }}
-              key: {{ .value.key | quote }}
-          {{- else }}
-          value: {{ .value | quote }}
+      # Profiles are derived from a base-image AIMModel in the same namespace: the
+      # AIM controller copies that model's discovered profiles and overlays this
+      # model's identity and fine-tuned weights. A base derivation requires aimId
+      # and modelId in overrides because the base profiles carry no identity.
+      profiles:
+        derivedFrom:
+          selector:
+            role: base
+            modelRef:
+              name: {{ .Values.aimManifest.baseModel.name | quote }}
+              scope: {{ .Values.aimManifest.baseModel.scope | quote }}
+        versionPolicy: all
+        overrides:
+          {{- if not .Values.aimManifest.aimId }}
+          {{- fail "aimManifest.aimId is required when aimManifest.enabled is true (v1alpha2 base derivation stamps identity via overrides)!" }}
           {{- end }}
-        {{- end }}
-      {{- end }}
+          aimId: {{ .Values.aimManifest.aimId | quote }}
+          modelId: {{ required "aimManifest.modelId is required when aimManifest.enabled is true!" .Values.aimManifest.modelId | quote }}
+          {{- if .Values.aimManifest.image }}
+          image: {{ .Values.aimManifest.image | quote }}
+          {{- end }}
+          modelSources:
+            - modelId: {{ .Values.aimManifest.modelId | quote }}
+              sourceUri: "s3://{{ .Values.checkpointsRemote }}/checkpoint-final"
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.bucketCredentialsSecret.name | quote }}
+                      key: {{ .Values.bucketCredentialsSecret.accessKeyKey | quote }}
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.bucketCredentialsSecret.name | quote }}
+                      key: {{ .Values.bucketCredentialsSecret.secretKeyKey | quote }}
+                - name: AWS_ENDPOINT_URL
+                  value: {{ .Values.bucketStorageHost | quote }}
   {{- end }}
