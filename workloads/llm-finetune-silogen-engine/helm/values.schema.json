@@ -212,70 +212,27 @@
             "description": "AIM ID for the AIMModel resource",
             "default": null
           },
-          "custom": {
-            "type": ["object", "null"],
-            "description": "Custom fields for the AIMModel spec",
+          "baseModel": {
+            "type": "object",
+            "description": "Base-image AIMModel the fine-tuned model derives its profiles from. Must exist in the same namespace the fine-tuned AIMModel is created in",
             "properties": {
-              "versionPolicy": {
+              "name": {
                 "type": "string",
-                "default": "latest"
+                "description": "Name of the base AIMModel to derive profiles from",
+                "default": "aim-base"
+              },
+              "scope": {
+                "type": "string",
+                "description": "Scope of the base AIMModel reference",
+                "enum": ["Namespace", "Cluster"],
+                "default": "Namespace"
               }
-            },
-            "additionalProperties": true
+            }
           },
           "labels": {
             "type": "object",
             "description": "Labels to add to the AIMModel resource",
             "additionalProperties": true
-          },
-          "customTemplates": {
-            "type": ["array", "null"],
-            "description": "Custom templates for the AIMModel spec",
-            "items": {
-              "type": "object"
-            },
-            "default": [
-              {
-                "hardware": {
-                  "gpu": {
-                    "requests": 1
-                  }
-                }
-              }
-            ]
-          },
-          "extraEnv": {
-            "type": "array",
-            "description": "Additional environment variables for the AIMModel",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "value": {
-                  "oneOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "key": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["name", "key"]
-                    }
-                  ]
-                }
-              },
-              "required": ["name", "value"]
-            },
-            "default": []
           }
         }
       },
