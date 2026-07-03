@@ -118,4 +118,5 @@ aimManifest:
   baseModel:
     name: aim-base
     scope: Namespace
+  profilesRole: deployable
   labels: {}

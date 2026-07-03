@@ -229,6 +229,12 @@
               }
             }
           },
+          "profilesRole": {
+            "type": "string",
+            "description": "Role label to use for the profiles determining whether model-optimized or aim-base image is used for deriving profiles",
+            "enum": ["deployable", "base"],
+            "default": "deployable"
+          },
           "labels": {
             "type": "object",
             "description": "Labels to add to the AIMModel resource",

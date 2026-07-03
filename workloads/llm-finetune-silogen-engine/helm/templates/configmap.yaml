@@ -145,7 +145,7 @@ data:
       profiles:
         derivedFrom:
           selector:
-            role: base
+            role: {{ .Values.aimManifest.profilesRole | quote }}
             modelRef:
               name: {{ .Values.aimManifest.baseModel.name | quote }}
               scope: {{ .Values.aimManifest.baseModel.scope | quote }}
