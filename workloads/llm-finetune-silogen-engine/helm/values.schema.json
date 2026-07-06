@@ -224,7 +224,7 @@
               "scope": {
                 "type": "string",
                 "description": "Scope of the base AIMModel reference",
-                "enum": ["Namespace", "Cluster"],
+                "enum": ["Auto", "Namespace", "Cluster"],
                 "default": "Namespace"
               }
             }
