@@ -224,10 +224,16 @@
               "scope": {
                 "type": "string",
                 "description": "Scope of the base AIMModel reference",
-                "enum": ["Namespace", "Cluster"],
+                "enum": ["Auto", "Namespace", "Cluster"],
                 "default": "Namespace"
               }
             }
+          },
+          "profilesRole": {
+            "type": "string",
+            "description": "Role label to use for the profiles determining whether model-optimized or aim-base image is used for deriving profiles",
+            "enum": ["deployable", "base"],
+            "default": "deployable"
           },
           "labels": {
             "type": "object",
