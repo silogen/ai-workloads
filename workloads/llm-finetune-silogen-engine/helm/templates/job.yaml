@@ -55,6 +55,19 @@ spec:
               value: info
             - name: TRANSFORMERS_VERBOSITY
               value: info
+            {{- if .Values.env }}
+            {{- range $mapping := .Values.env }}
+            - name: {{ $mapping.name }}
+              {{- if (hasKey $mapping "valueFrom") }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $mapping.valueFrom.secretKeyRef.name }}
+                  key: {{ $mapping.valueFrom.secretKeyRef.key }}
+              {{- else }}
+              value: {{ $mapping.value | quote }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
           command:
             - /bin/bash
             - -l
