@@ -29,6 +29,7 @@ spec:
         - name: finetuning
           image: "{{ .Values.finetuningImage }}"
           imagePullPolicy: Always
+          workingDir: "/workdir"
           env:
             # download
             {{- if .Values.hfTokenSecret }}
