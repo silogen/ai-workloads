@@ -86,7 +86,7 @@ echo "Starting training process"
 accelerate launch \
   --config_file /configs/accelerate_config.yaml \
   --no-python \
-  finetuning --num-preprocess-workers 4 {{ .Values.finetuning_config.method }} /configs/finetuning_config.yaml
+  {{ .Values.mainBinaryName }} --num-preprocess-workers 4 {{ .Values.finetuning_config.method }} /configs/finetuning_config.yaml
 {{- if not .Values.debug.skip_checkpoint_upload }}
 echo "Training done, stop the upload process"
 kill $uploadPID
