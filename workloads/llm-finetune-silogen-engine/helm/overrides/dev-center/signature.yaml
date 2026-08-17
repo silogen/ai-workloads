@@ -1,6 +1,6 @@
 # Config
 kaiwo:
-  enabled: true
+  enabled: false
 runTensorboard: false
 
 ### Required inputs, provided by developer console:
