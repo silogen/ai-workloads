@@ -1,0 +1,66 @@
+diff --git a/src/ai_models/__main__.py b/src/ai_models/__main__.py
+index 37b8ec4..2b72a7b 100644
+--- a/src/ai_models/__main__.py
++++ b/src/ai_models/__main__.py
+@@ -221,6 +221,18 @@ def _main(argv):
+         action="store_true",
+     )
+
++    parser.add_argument(
++        "--jax-profiler",
++        help="Currently needed only for GenCast",
++        action="store_true",
++    )
++
++    parser.add_argument(
++        "--trace-dir",
++        default="traces",
++        help="Where to output the profiling results",
++    )
++
+     # TODO: deprecate that option
+     parser.add_argument(
+         "--model-version",
+@@ -332,6 +344,10 @@ def run(cfg: dict, model_args: list):
+         sys.exit(0)
+
+     try:
++        profiling_gencast =  ('gencast' in cfg['model']) and cfg['jax_profiler']
++        if profiling_gencast:
++            import jax
++            jax.profiler.start_trace(cfg['trace_dir'])
+         model.run()
+     except FileNotFoundError as e:
+         LOG.exception(e)
+@@ -347,6 +363,8 @@ def run(cfg: dict, model_args: list):
+         sys.exit(1)
+
+     model.finalise()
++    if profiling_gencast:
++        jax.profiler.stop_trace()
+
+     if cfg["dump_provenance"]:
+         with Timer("Collect provenance information"):
+diff --git a/src/ai_models/model.py b/src/ai_models/model.py
+index c15ac10..1cc5ea9 100644
+--- a/src/ai_models/model.py
++++ b/src/ai_models/model.py
+@@ -220,7 +220,7 @@ class Model:
+
+         available_providers = ort.get_available_providers()
+         providers = []
+-        for n in ["CUDAExecutionProvider", "CPUExecutionProvider"]:
++        for n in [ "ROCMExecutionProvider", "CPUExecutionProvider"]:
+             if n in available_providers:
+                 providers.append(n)
+
+@@ -234,7 +234,7 @@ class Model:
+             if ort.get_device() == "CPU":
+                 raise RuntimeError("GPU is not available")
+
+-            providers = ["CUDAExecutionProvider"]
++            providers = ["ROCMExecutionProvider"]
+
+         LOG.info("ONNXRuntime providers: %s", providers)
+
++

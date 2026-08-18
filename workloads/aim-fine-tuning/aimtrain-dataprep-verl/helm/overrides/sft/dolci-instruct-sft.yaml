@@ -1,0 +1,33 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+outputRemotePath: default-bucket/datasets/sft-verl/dolci-instruct-sft-split
+preprocess:
+  mode: hfScript
+  outputDir: /workdir/output
+  hfScriptArgs:
+    dataset: allenai/Dolci-Instruct-SFT
+    splitRatios:
+      train: 0.8
+      test: 0.2
+    splitSource: "train"
+
+    conversationField: messages
+    systemPrompt: ""
+    dataSource: dolci-instruct-sft
+    previewRows: 5
+    numProc: 1
+    maxRows: 50000
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+resources:
+  requests:
+    cpu: "16"
+    memory: 128Gi
+  limits:
+    cpu: "32"
+    memory: 128Gi

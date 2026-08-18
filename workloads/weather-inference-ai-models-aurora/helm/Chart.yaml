@@ -1,0 +1,4 @@
+apiVersion: v2
+name: ai-models-job
+description: A Helm chart for inference of aurora with ai-models
+version: 0.0.1

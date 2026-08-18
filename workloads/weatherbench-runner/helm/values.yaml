@@ -1,0 +1,42 @@
+# Use to add labels to the metadata of the resources created by this workload.
+labels: {}
+
+# Image configuration.
+image: ghcr.io/silogen/weatherbench-runner.dockerfile:latest
+
+# Container resources.
+resources:
+  cpu: 1
+  memory: "128Gi"
+  ephemeral_storage:
+    request: "200Gi"
+    limit: "300Gi"
+
+# Container command and entrypoint.
+settings:
+  # The following will be passed to the downloader script.
+  minio_bucket: "default-bucket" # Minio bucket name.
+  minio_prefix: "weatherbench-ecmwf/" # Minio bucket prefix.
+  start_date: "2023-01-01" # Computation starting date (inclusive).
+  end_date: "2023-01-03" # Computation ending date (exclusive).
+  forecast_period: "12h" # Lead time step size.
+  forecast_steps: "4" # Number of lead times to compute the metrics for.
+  cds_file: "ecmwf_data/reference.nc" # Location of the preprocessed ECMWF reference data.
+  models: [ gencast, model_data/gencast.nc ] # Model data as name file pairs.
+  wb_metrics: [ rmse, mae ] # Metrics to run.
+  wb_variables: [ geopotential, temperature ] # Variables to run the metrics over.
+
+# Environment variable setup.
+env_vars:
+  MINIO_ENDPOINT: "minio.minio-tenant-default.svc.cluster.local:80"
+
+# Setup secrets given through environment variables.
+env_secrets:
+  MINIO_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  MINIO_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  # NOTE: User needs to provide if defined, otherwise needs to be left undefined!
+  #SSL_CERT_FILE: your-cert-file

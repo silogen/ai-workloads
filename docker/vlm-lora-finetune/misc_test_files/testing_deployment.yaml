@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: clipora-testing-deployment
+  labels:
+    app: clipora-testing-deployment
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    app: clipora-testing-deployment
+---
+# Source: dev-workspace-vscode/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clipora-testing-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clipora-testing-deployment
+  template:
+    metadata:
+      labels:
+        app: clipora-testing-deployment
+    spec:
+      containers:
+        - name: clipora-api-testing
+          args:
+          - |
+            rm -rf /workload/clipora
+            git clone --single-branch --branch dev-fastapi https://github.com/tkarkkai-amd/clipora /workload/clipora
+            cd /workload/clipora
+            pip install -r amd_requirements.txt
+            uvicorn api_main:app --host 0.0.0.0 --port 8080 --reload
+          command: ["sh", "-c"]
+          image: "rocm/pytorch:rocm6.4.1_ubuntu24.04_py3.12_pytorch_release_2.7.1"
+          imagePullPolicy: "Always"
+          env:
+            - name: TRAIN_JOB_OUTPUT_DIR
+              value: /workload/clipora/tests/fixtures/test_lora_models/
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              memory: "128Gi"
+              cpu: "8"
+              amd.com/gpu: "1"
+            limits:
+              memory: "128Gi"
+              cpu: "8"
+              amd.com/gpu: "1"
+          volumeMounts:
+            - mountPath: /workload
+              name: ephemeral-storage
+            - mountPath: /dev/shm
+              name: dshm
+      volumes:
+        - ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ReadWriteMany]
+                resources:
+                  requests:
+                    storage: 128Gi
+                storageClassName: mlstorage
+          name: ephemeral-storage
+        - emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+          name: dshm

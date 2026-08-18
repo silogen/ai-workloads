@@ -1,0 +1,120 @@
+{{- define "job" -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-job
+  namespace: {{ .Release.Namespace }}
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+      {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: finetune-wan
+          image: {{ .Values.image }}
+          imagePullPolicy: Always
+          workingDir: /workspace
+          command:
+            - /bin/bash
+            - -l
+            - -e
+            - -u
+            - -c
+          args:
+            - |
+            {{- if .Values.interactive }}
+              {{- include "interactiveEntrypoint" . | nindent 14 }}
+            {{- else }}
+              echo '===== Install ====='
+              {{- include "installEntrypoint" . | nindent 14 }}
+              echo '===== Download ====='
+              {{- include "downloadEntrypoint" . | nindent 14 }}
+              echo '===== Finetune ====='
+              {{- include "finetuneEntrypoint" . | nindent 14 }}
+              echo '===== Upload ====='
+              {{- include "uploadEntrypoint" . | nindent 14 }}
+            {{- end }}
+          resources:
+            {{- include "container.resources" . | trim | nindent 12 }}
+          env:
+            - name: BUCKET_STORAGE_HOST
+              value: {{ .Values.bucketStorageHost }}
+            - name: BUCKET_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.accessKeyKey }}
+            - name: BUCKET_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
+          volumeMounts:
+            - name: dshm # Increase SHM size for the container by mounting /dev/shm, for Pytorch parallel processing
+              mountPath: /dev/shm
+            - name: workspace
+              mountPath: /workspace
+              readOnly: false
+            - name: downloads
+              mountPath: /workspace/local_resources
+              readOnly: false
+            - name: checkpoints
+              mountPath: /workspace/checkpoints
+              readOnly: false
+            - name: configs
+              mountPath: /workspace/configs
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory # equivalent to `docker run --shm-size=(total_memory/2)`
+        - name: workspace
+          emptyDir:
+            sizeLimit: "{{ .Values.workspaceReservedSize }}"
+        - name: downloads
+          emptyDir:
+            sizeLimit: "{{ .Values.downloadsReservedSize }}"
+        - name: checkpoints
+          emptyDir:
+            sizeLimit: "{{ .Values.checkpointsReservedSize }}"
+        - name: configs
+          configMap:
+            name: "{{ .Release.Name }}-configs"
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: "{{ .Release.Name }}-job"
+spec:
+  job:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

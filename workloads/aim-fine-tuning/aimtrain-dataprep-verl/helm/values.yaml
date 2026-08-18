@@ -1,0 +1,93 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+### Container image ###
+image: rocm/verl:verl-0.6.0.amd0_rocm7.0_vllm0.11.0.dev
+
+### Input/Output paths ###
+# datasetRemote: bucketName/path/to/raw/data to download before preprocessing
+datasetRemote: ""
+# outputRemotePath: bucketName/path/where Parquet shards will be uploaded
+outputRemotePath: ""
+
+preprocess:
+  # Select which runner to invoke: "builtinScript", "customScript", or "hfScript"
+  mode: builtinScript
+  # Provide a VeRL script path (used when mode=builtinScript)
+  builtinScript: ""
+  # Root directory for VeRL within the container; relative builtinScript
+  # paths will be resolved against this directory.
+  verlRootDir: "/workspace/verl"
+  # Extra CLI args appended to the script invocation (space separated)
+  extraArgs: []
+  # Local directory inside the container for intermediate Parquet output
+  outputDir: /workdir/output
+  # If the raw dataset already lives inside the container, point to it here
+  localDatasetPath: ""
+  hfScriptArgs:
+    dataset: ""
+    config: ""
+    # Explicit split exports (ignored when splitRatios is set)
+    splits: []
+    splitRatios: {}
+    splitSource: ""
+    splitSeed: ""
+    promptField: ""
+    responseField: response
+    promptAlias: []
+    responseAlias: []
+    conversationField: ""
+    systemPrompt: ""
+    systemPromptField: ""
+    systemPromptAlias: []
+    systemPromptTemplate: ""
+    promptTemplate: ""
+    dataSource: ""
+    userRole: user
+    assistantRole: assistant
+    systemRole: system
+    userRoleAlias: []
+    assistantRoleAlias: []
+    systemRoleAlias: []
+    preserveFields: []
+    maxRows: ""
+    previewRows: ""
+    numProc: ""
+  customScript: ""
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
+
+# Use to add labels to the metadata of the resources created by this workload.
+labels: {}
+
+# Extra annotations such as an imagePullSecrets
+imagePullSecrets: []
+  # Example:
+  # imagePullSecrets:
+  #   - "regcred"
+
+# Configure these to match the credentials in your cluster:
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Resources:
+resources:
+  requests:
+    cpu: "8"
+    memory: 64Gi
+  limits:
+    cpu: "8"
+    memory: 64Gi
+
+hfTokenSecret: {}
+
+# Example:
+# hfTokenSecret:
+#   name: hf-token
+#   key: hf-token

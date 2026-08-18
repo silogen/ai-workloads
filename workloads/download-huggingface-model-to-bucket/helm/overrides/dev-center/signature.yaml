@@ -1,0 +1,20 @@
+# Which model to download
+modelId: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+
+# Where the resources should be stored:
+bucketPath: default-bucket/models/TinyLlama/TinyLlama-1.1B-Chat-v1.0
+
+# How much space needs to be allocated to store the model in the container (before pushing to bucket storage).
+storageQuantity: 20Gi
+
+# Whether to allow to overwrite the model weights in case it already exists
+allowOverwrite: true
+
+# Enable kaiwo
+kaiwo:
+  enabled: true
+
+# Use HuggingFace token to download models that are gated.
+hfTokenSecret:
+  name: hf-token
+  key: hf-token

@@ -1,0 +1,91 @@
+{{- define "job" -}}
+{{- if eq (int $.Values.nodes) 1 }}
+apiVersion: batch/v1
+kind: Job
+{{- else }}
+apiVersion: ray.io/v1
+kind: RayJob
+{{- end }}
+metadata:
+  name: "{{- .Release.Name -}}-job"
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  {{- if ne (int $.Values.nodes) 1 }}
+  finalizers:
+  - ray.io/rayjob-finalizer
+  {{- end }}
+spec:
+  backoffLimit: 0
+{{- if eq (int $.Values.nodes) 1 }}
+  ttlSecondsAfterFinished: 3600
+  template:
+    {{- include "podspec" (dict
+      "Values" .Values
+      "Release" .Release
+      "Name" "finetuning"
+      "Cpu" .Values.cpusPerNode
+      "Memory" .Values.memoryPerNode
+      "Gpu" .Values.gpusPerNode
+      "Command" (list "/configs/entrypoint.sh")
+      ) | nindent 4
+    }}
+{{- else }}
+  ttlSecondsAfterFinished: 0
+  entrypoint: /configs/entrypoint.sh
+  rayClusterSpec:
+    enableInTreeAutoscaling: false
+    headGroupSpec:
+      rayStartParams:
+        dashboard-host: 0.0.0.0
+      template:
+        {{- include "podspec" (dict
+          "Values" .Values
+          "Release" .Release
+          "Name" "ray-head"
+          "Cpu" .Values.cpusHeadNode
+          "Memory" .Values.memoryHeadNode
+          "Gpu" .Values.gpusHeadNode
+          ) | nindent 8
+        }}
+    workerGroupSpecs:
+    - groupName: default-worker-group
+      maxReplicas: {{ .Values.nodes }}
+      minReplicas: {{ .Values.nodes }}
+      numOfHosts: 1
+      rayStartParams: {}
+      replicas: {{ .Values.nodes }}
+      scaleStrategy: {}
+      template:
+        {{- include "podspec" (dict
+          "Values" .Values
+          "Release" .Release
+          "Name" "ray-worker"
+          "Cpu" .Values.cpusPerNode
+          "Memory" .Values.memoryPerNode
+          "Gpu" .Values.gpusPerNode
+          ) | nindent 8
+        }}
+  shutdownAfterJobFinishes: true
+  submissionMode: K8sJobMode
+{{- end -}}
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: "{{ .Release.Name }}-job"
+spec:
+  job:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

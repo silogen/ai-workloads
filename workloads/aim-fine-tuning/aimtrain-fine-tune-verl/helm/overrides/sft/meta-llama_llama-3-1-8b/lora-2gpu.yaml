@@ -1,0 +1,129 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+trainingMode: sft
+
+### Model ###
+modelName: "meta-llama/Llama-3.1-8B"
+gpus: 2
+memoryPerGpu: 64
+cpusPerGpu: 8
+
+checkpointsReservedSize: 128Gi
+storageClass: mlstorage
+
+hfTokenSecret:
+  name: hf-token
+  key: hf-token
+
+tokenizerOverrides:
+  eos_token: "<|eot_id|>"
+  pad_token: "<|finetune_right_pad_id|>"
+
+checkpointsRemote: "default-bucket/experiments/llama31-8b-mi300-lora"
+datasetRemote: "default-bucket/verl-sft/dolci-instruct-sft"
+
+verlConfig:
+
+  # =======================
+  # DATA
+  # =======================
+  data:
+    train_max_samples: 20480
+    val_max_samples: 2048
+
+    multiturn:
+      enable: true
+      messages_key: messages
+
+    max_length: 2048
+    truncation: right
+
+    apply_chat_template_kwargs:
+      chat_template: |
+        {{- bos_token }}
+
+        {#- Extract the system message so it can be rendered first #}
+        {%- if messages[0]['role'] == 'system' %}
+          {%- set system_message = messages[0]['content'] | trim %}
+          {%- set messages = messages[1:] %}
+        {%- else %}
+          {%- set system_message = "" %}
+        {%- endif %}
+
+        {%- if system_message %}
+        {{- "<|start_header_id|>system<|end_header_id|>\n\n" }}
+        {{- system_message }}
+        {{- "<|eot_id|>" }}
+        {%- endif %}
+
+        {%- for message in messages %}
+          {{- '<|start_header_id|>' + message['role'] + '<|end_header_id|>\n\n' + message['content'] | trim + '<|eot_id|>' }}
+        {%- endfor %}
+
+        {%- if add_generation_prompt %}
+          {{- '<|start_header_id|>assistant<|end_header_id|>\n\n' }}
+        {%- endif %}
+
+    micro_batch_size_per_gpu: 8
+    train_batch_size: 16
+
+  # =======================
+  # MODEL
+  # =======================
+  model:
+    partial_pretrain: "meta-llama/Llama-3.1-8B"
+    tokenizer_path: /workdir/tokenizer
+    trust_remote_code: false
+
+    strategy: fsdp2
+    fsdp_config:
+      model_dtype: bfloat16
+      forward_prefetch: true
+
+    enable_gradient_checkpointing: false
+
+    use_remove_padding: false
+
+    use_liger: true
+
+    # =======================
+    # LoRA CONFIG
+    # =======================
+    lora_rank: 32
+    lora_alpha: 64
+    lora_dropout: 0.0
+
+    target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+    - lm_head
+    - embed_tokens
+
+  # =======================
+  # OPTIM
+  # =======================
+
+  optim:
+    lr: 2e-4
+    betas: [ 0.9, 0.95 ]
+    weight_decay: 0.01
+    lr_warmup_steps_ratio: 0.03
+    lr_scheduler: cosine
+    clip_grad: 1.0
+
+  # =======================
+  # TRAINER
+  # =======================
+  trainer:
+    project_name: llama-31-8b-lora
+    experiment_name: dolci-instruct-sft-01
+    total_epochs: 1
+    test_freq: 100
+    logger: [ "console" ]

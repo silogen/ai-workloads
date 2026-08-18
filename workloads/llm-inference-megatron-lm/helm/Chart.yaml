@@ -1,0 +1,4 @@
+apiVersion: v2
+name: llm-inference-megatron-lm
+description: A Helm chart for Megatron inference
+version: 0.0.1

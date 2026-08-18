@@ -1,0 +1,76 @@
+{{- define "job" -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "release.fullname" . }}
+  labels:
+    app: {{ include "release.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  {{- with .Values.job.backoffLimit }}
+  backoffLimit: {{ . }}
+  {{- end }}
+  {{- with .Values.job.completions }}
+  completions: {{ . }}
+  {{- end }}
+  {{- with .Values.job.parallelism }}
+  parallelism: {{ . }}
+  {{- end }}
+  {{- with .Values.job.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ . }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "release.fullname" . }}
+    spec:
+      restartPolicy: {{ .Values.job.restartPolicy | default "OnFailure" }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- .Values.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- if .Values.entrypoint }}
+          command: ["sh", "-c"]
+          args:
+          - |
+            {{- .Values.entrypoint | nindent 12 }}
+          {{- end }}
+          {{- if .Values.env_vars }}
+          env:
+            {{- include "container.env" . | nindent 12 }}
+          {{- end }}
+          image: {{ .Values.image | quote}}
+          imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
+          resources:
+            {{- include "container.resources" . | nindent 12 }}
+          volumeMounts:
+            {{- include "container.volumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "container.volumes" . | nindent 8 }}
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: "{{ .Release.Name }}-job"
+spec:
+  job:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training Submission</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-3xl w-full mx-auto my-10">
+        <!-- Form Card -->
+        <div class="bg-white p-8 rounded-xl shadow-lg mb-10">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800">Submit Training Job</h1>
+                <p class="text-gray-500">Provide a YAML configuration and a ZIP file containing the dataset.</p>
+            </div>
+            <form id="trainingForm" class="space-y-6">
+                <!-- YAML Configuration Text Area -->
+                <div>
+                    <label for="config_str" class="block text-sm font-medium text-gray-700 mb-1">
+                        YAML Configuration
+                    </label>
+                    <textarea id="config_str" name="config_str" rows="8" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Paste your YAML configuration here..." required></textarea>
+                </div>
+                <!-- File Upload Input -->
+                <div>
+                    <label for="file" class="block text-sm font-medium text-gray-700 mb-1">
+                        Dataset ZIP File
+                    </label>
+                    <input id="file" name="file" type="file" accept=".zip" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
+                </div>
+                <!-- Submission Button -->
+                <div>
+                    <button type="submit" id="submitButton" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        Send
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Jobs Container -->
+        <div id="jobsSection" class="bg-white p-8 rounded-xl shadow-lg" style="display: none;">
+             <h2 class="text-xl font-bold text-gray-800 mb-4">Tracked Jobs</h2>
+             <div id="jobsContainer" class="space-y-4">
+                <!-- Job rows will be inserted here -->
+             </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('trainingForm');
+        const submitButton = document.getElementById('submitButton');
+        const jobsSection = document.getElementById('jobsSection');
+        const jobsContainer = document.getElementById('jobsContainer');
+
+        const jobIntervals = new Map();
+
+        /**
+         * Handles form submission to start a new training job.
+         */
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('http://localhost:8080/train', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! Status: ${response.status} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                addJobRow(result.job_id, result.status_url);
+                form.reset(); // Clear the form for the next submission
+
+            } catch (error) {
+                console.error('Submission failed:', error);
+                alert(`Submission failed: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Send';
+            }
+        });
+
+        /**
+         * Creates and appends a new job row to the UI and starts polling for its status.
+         */
+        function addJobRow(jobId, statusUrl) {
+            if (jobsSection.style.display === 'none') {
+                jobsSection.style.display = 'block';
+            }
+
+            const jobRow = document.createElement('div');
+            jobRow.id = `job-${jobId}`;
+            jobRow.className = 'p-4 border rounded-lg bg-gray-50';
+            jobRow.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-sm font-medium text-gray-800">Job ID: <span class="font-mono bg-gray-200 px-2 py-1 rounded">${jobId}</span></p>
+                    <p class="status-text text-sm font-semibold text-gray-500">Initializing...</p>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="progress-bar-inner bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p class="detail-text text-xs text-gray-500 mt-1 h-4"></p>
+            `;
+            jobsContainer.prepend(jobRow);
+
+            const fullStatusUrl = `http://localhost:8080${statusUrl}`;
+            const intervalId = setInterval(() => checkStatus(fullStatusUrl, jobId), 2000);
+            jobIntervals.set(jobId, intervalId);
+        }
+
+        /**
+         * Parses progress percentage from a detail string.
+         * Looks for a number followed by a '%' sign.
+         */
+        function parseProgress(detail) {
+            if (!detail) return 0;
+            const match = detail.match(/(\d{1,3})\s*%/);
+            return match ? parseInt(match[1], 10) : 0;
+        }
+
+        /**
+         * Polls the status endpoint for a specific job and updates its UI row.
+         */
+        async function checkStatus(url, jobId) {
+            const jobRow = document.getElementById(`job-${jobId}`);
+            if (!jobRow) return;
+
+            const progressBar = jobRow.querySelector('.progress-bar-inner');
+            const statusText = jobRow.querySelector('.status-text');
+            const detailText = jobRow.querySelector('.detail-text');
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Status check failed! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update UI elements
+                statusText.textContent = data.status;
+                detailText.textContent = data.detail || '';
+                const progress = parseProgress(data.detail);
+                progressBar.style.width = `${progress}%`;
+
+                // Handle terminal states
+                const isFinished = data.status.toLowerCase() === 'completed' || data.status.toLowerCase() === 'failed';
+                if (isFinished) {
+                    clearInterval(jobIntervals.get(jobId));
+                    jobIntervals.delete(jobId);
+
+                    progressBar.style.width = '100%'; // Fill bar on completion
+                    if (data.status.toLowerCase() === 'completed') {
+                        statusText.classList.add('text-green-600');
+                        progressBar.classList.replace('bg-indigo-600', 'bg-green-500');
+                    } else {
+                        statusText.classList.add('text-red-600');
+                        progressBar.classList.replace('bg-indigo-600', 'bg-red-500');
+                    }
+                }
+            } catch (error) {
+                console.error(`Error checking status for job ${jobId}:`, error);
+                statusText.textContent = 'Error';
+                statusText.classList.add('text-red-600');
+                clearInterval(jobIntervals.get(jobId));
+                jobIntervals.delete(jobId);
+            }
+        }
+    </script>
+</body>
+</html>

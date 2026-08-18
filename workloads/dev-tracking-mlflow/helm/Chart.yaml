@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dev-tracking-mlflow
+description: A Helm chart for deploying MLflow tracking server
+version: 0.0.1

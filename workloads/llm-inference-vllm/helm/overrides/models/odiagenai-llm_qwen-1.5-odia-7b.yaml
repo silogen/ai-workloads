@@ -1,0 +1,12 @@
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
+model: "OdiaGenAI-LLM/qwen_1.5_odia_7b"
+served_model_name: "OdiaGenAI-LLM/qwen_1.5_odia_7b"
+
+env_vars:
+  HF_TOKEN:
+    key: hf-token
+    name: hf-token

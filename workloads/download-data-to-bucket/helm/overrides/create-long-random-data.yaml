@@ -1,0 +1,40 @@
+
+# Data download and preprocess script:
+dataScript: |
+  #!/usr/bin/env python3
+  """Custom preprocessing script for generating random long sequences for speed tests."""
+  import random
+  import string
+  import os
+  import datasets
+
+  def generate_random_string(length):
+      return ''.join(random.choices(string.ascii_letters + string.digits + " ", k=length))
+
+  rows = [
+    {
+      "messages": [
+        {"role": "system", "content": "This is random content for speed testing and max sequence length (with truncation) validation."},
+        {"role": "user", "content": generate_random_string(8192)},
+        {"role": "assistant", "content": generate_random_string(8192)},
+      ],
+      "data_source": "random_generated",
+      "extra_info": {"split": "test", "index": i, "skip_reason": ""},
+    } for i in range(2048)
+  ]
+  dataset = datasets.Dataset.from_list(rows)
+  dataset.to_json("/downloads/datasets/long-random-data.jsonl") # Need to save any data files in this specific directory to be uploaded.
+
+# Where the resources should be stored:
+bucketDataDir: default-bucket/datasets/
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+# Bucket credentials from a secret:
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Storage configuration:
+storageClass: mlstorage
+storageQuantity: "128Mi"

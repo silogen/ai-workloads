@@ -1,0 +1,15 @@
+name: "Hugging Face Model Downloader"
+slug: "hf-model-downloader"
+shortDescription: "Download models from Hugging Face to bucket storage"
+longDescription: 'This service downloads models from the Hugging Face Hub and stores them in your bucket storage for later use. It handles authentication, downloading, and safely storing the model files in the appropriate format.\n\nOnce the model is downloaded, it will be available for other workloads to use without requiring additional downloads or authentication.'
+category: UTILITY
+tags: ["Model", "Download", "Hugging Face", "Storage"]
+featuredImage: "https://huggingface.co/front/assets/huggingface_logo-noborder.svg"
+requiredResources:
+  gpuCount: 0
+  gpuMemory: 0
+  cpuCoreCount: 2
+  systemMemory: 8
+type: "MODEL_DOWNLOAD"
+id: "download-huggingface-model-to-bucket"
+externalUrl: "https://huggingface.co/docs/hub/models-downloading"

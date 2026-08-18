@@ -1,0 +1,137 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+{{- define "job" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "release.fullname" . }}-job"
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: finetuning
+          image: "{{ .Values.image }}"
+          imagePullPolicy: Always
+          env:
+            {{- if .Values.mlflowTrackingUri }}
+            - name: MLFLOW_TRACKING_URI
+              value: "{{ .Values.mlflowTrackingUri }}"
+            {{- end }}
+            {{- if .Values.hfTokenSecret }}
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hfTokenSecret.name }}
+                  key: {{ .Values.hfTokenSecret.key }}
+            {{- end }}
+            - name: TRANSFORMERS_PATCH_CONFIG
+              value: {{ .Values.transformersPatches | default dict | toJson | quote }}
+            # storage
+            - name: BUCKET_STORAGE_HOST
+              value: {{ .Values.bucketStorageHost }}
+            - name: BUCKET_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.accessKeyKey }}
+            - name: BUCKET_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bucketCredentialsSecret.name }}
+                  key: {{ .Values.bucketCredentialsSecret.secretKeyKey }}
+          command:
+            - /configs/entrypoint.sh
+          resources:
+            limits:
+              memory: "{{ mul .Values.gpus .Values.memoryPerGpu }}Gi"
+              cpu: "{{ mul .Values.gpus .Values.cpusPerGpu }}"
+              amd.com/gpu: "{{ .Values.gpus }}"
+            requests:
+              memory: "{{ mul .Values.gpus .Values.memoryPerGpu }}Gi"
+              cpu: "{{ mul .Values.gpus .Values.cpusPerGpu }}"
+              amd.com/gpu: "{{ .Values.gpus }}"
+          volumeMounts:
+            - name: dshm # Increase SHM size for the container by mounting /dev/shm, for Pytorch parallel processing
+              mountPath: /dev/shm
+            - name: checkpoints
+              mountPath: /workdir/checkpoints
+              readOnly: false
+            - name: configs
+              mountPath: /configs
+              readOnly: true
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory # equivalent to `docker run --shm-size=(total_memory/2)`
+            sizeLimit: "{{ .Values.shmSize }}"
+        {{- if .Values.storageClass }}
+        - name: checkpoints
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ "ReadWriteOnce" ]
+                storageClassName: {{ .Values.storageClass }}
+                resources:
+                  requests:
+                    storage: "{{ .Values.checkpointsReservedSize }}"
+        {{- else }}
+        - name: checkpoints
+          emptyDir:
+            sizeLimit: "{{ .Values.checkpointsReservedSize }}"
+        {{- end }}
+        - name: configs
+          configMap:
+            name: "{{ include "release.fullname" . }}-configs"
+            items:
+            - key: entrypoint.sh
+              path: entrypoint.sh
+              mode: 0777
+            - key: sitecustomize.py
+              path: sitecustomize.py
+            - key: transformers_patches.py
+              path: transformers_patches.py
+            - key: verl_config.yaml
+              path: verl_config.yaml
+            - key: merge_adapter.py
+              path: merge_adapter.py
+            - key: save_processor.py
+              path: save_processor.py
+            - key: aim-model-manifest.yaml
+              path: aim-model-manifest.yaml
+            - key: verl_adapter_fix.py
+              path: verl_adapter_fix.py
+
+{{- end -}}
+
+{{- define "job_wrapped_with_kaiwojob" }}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoJob
+metadata:
+  name: "{{ include "release.fullname" . }}-job"
+spec:
+  job:
+    {{- include "job" . | nindent 4 }}
+{{- end -}}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwojob" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

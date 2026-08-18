@@ -1,0 +1,4 @@
+apiVersion: v2
+name: xlstm-inference-torchserve
+description: A Helm chart for XLSTM inference using TorchServe
+version: 0.0.1
