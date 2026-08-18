@@ -97,6 +97,12 @@
             "type": "boolean",
             "description": "Whether downloading the configured Hugging Face model requires an HF token.",
             "default": false
+          },
+          "trainingType": {
+            "type": "string",
+            "enum": ["full", "lora"],
+            "description": "The type of finetuning the model override is configured for.",
+            "default": "full"
           }
         },
         "additionalProperties": true
@@ -165,80 +171,137 @@
       },
       "aimManifest": {
         "type": "object",
-        "description": "Configuration for creating an AIMModel manifest after successful training",
+        "description": "Configuration for creating AIMModel/AIMArtifact manifests after successful training",
         "properties": {
-          "enabled": {
-            "type": "boolean",
-            "description": "If true, create and apply an AIMModel manifest after successful training. Requires either full parameter finetune (peft_type: NO_PEFT) or adapter merging (mergeAdapter: true)",
-            "default": false
-          },
           "serviceAccountName": {
             "type": ["string", "null"],
             "description": "Optional: use an existing ServiceAccount instead of creating one. The ServiceAccount must have permissions to create AIMModel resources and read Pod status",
             "default": null
-          },
-          "modelName": {
-            "type": ["string", "null"],
-            "description": "Name for the AIMModel resource. Required when enabled is true",
-            "default": null
-          },
-          "modelId": {
-            "type": ["string", "null"],
-            "description": "Model ID for the AIMModel resource. Required when enabled is true",
-            "default": null
-          },
-          "image": {
-            "type": ["string", "null"],
-            "description": "Container image to use for serving the model",
-            "default": "amdenterpriseai/aim-base:0.10"
           },
           "manifestApplierImage": {
             "type": "string",
             "description": "Image used for the sidecar that applies the AIMModel manifest",
             "default": "registry.k8s.io/kubectl:v1.31.0"
           },
-          "autoApply": {
-            "type": "boolean",
-            "description": "If true, automatically apply the AIMModel manifest after training",
-            "default": true
-          },
           "maxWait": {
             "type": "integer",
             "description": "Maximum time to wait for the training to finish before applying the manifest",
             "default": 172800
           },
-          "aimId": {
-            "type": ["string", "null"],
-            "description": "AIM ID for the AIMModel resource",
-            "default": null
-          },
-          "baseModel": {
+          "modelManifest": {
             "type": "object",
-            "description": "Base-image AIMModel the fine-tuned model derives its profiles from. Must exist in the same namespace the fine-tuned AIMModel is created in",
+            "description": "Configuration for creating an AIMModel manifest after successful training",
             "properties": {
-              "name": {
-                "type": "string",
-                "description": "Name of the base AIMModel to derive profiles from",
-                "default": "aim-base"
+              "enabled": {
+                "type": "boolean",
+                "description": "If true, create an AIMModel manifest after successful training. Requires either full parameter finetune (peft_type: NO_PEFT) or adapter merging (mergeAdapter: true)",
+                "default": false
               },
-              "scope": {
+              "autoApply": {
+                "type": "boolean",
+                "description": "If true, automatically apply the AIMModel manifest after training",
+                "default": true
+              },
+              "aimId": {
+                "type": ["string", "null"],
+                "description": "AIM ID for the AIMModel resource",
+                "default": null
+              },
+              "modelId": {
+                "type": ["string", "null"],
+                "description": "Model ID for the AIMModel resource. Required when enabled is true",
+                "default": null
+              },
+              "modelName": {
+                "type": ["string", "null"],
+                "description": "Name for the AIMModel resource. Required when enabled is true",
+                "default": null
+              },
+              "image": {
+                "type": ["string", "null"],
+                "description": "Container image to use for serving the model",
+                "default": "amdenterpriseai/aim-base:0.10"
+              },
+              "baseModel": {
+                "type": "object",
+                "description": "Base-image AIMModel the fine-tuned model derives its profiles from. Must exist in the same namespace the fine-tuned AIMModel is created in",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the base AIMModel to derive profiles from",
+                    "default": "aim-base"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Scope of the base AIMModel reference",
+                    "enum": ["Auto", "Namespace", "Cluster"],
+                    "default": "Namespace"
+                  }
+                }
+              },
+              "profilesRole": {
                 "type": "string",
-                "description": "Scope of the base AIMModel reference",
-                "enum": ["Auto", "Namespace", "Cluster"],
-                "default": "Namespace"
+                "description": "Role label to use for the profiles determining whether model-optimized or aim-base image is used for deriving profiles",
+                "enum": ["deployable", "base"],
+                "default": "deployable"
+              },
+              "labels": {
+                "type": "object",
+                "description": "Labels to add to the AIMModel resource",
+                "additionalProperties": true
+              },
+              "annotations": {
+                "type": "object",
+                "description": "Annotations to add to the AIMModel resource",
+                "additionalProperties": true
               }
             }
           },
-          "profilesRole": {
-            "type": "string",
-            "description": "Role label to use for the profiles determining whether model-optimized or aim-base image is used for deriving profiles",
-            "enum": ["deployable", "base"],
-            "default": "deployable"
-          },
-          "labels": {
+          "adapterManifest": {
             "type": "object",
-            "description": "Labels to add to the AIMModel resource",
-            "additionalProperties": true
+            "description": "Configuration for creating an AIMArtifact adapter manifest after successful training",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "If true, create an AIMArtifact adapter manifest after successful training",
+                "default": false
+              },
+              "autoApply": {
+                "type": "boolean",
+                "description": "If true, automatically apply the AIMArtifact manifest after training",
+                "default": true
+              },
+              "adapterName": {
+                "type": ["string", "null"],
+                "description": "Name for the AIMArtifact adapter resource. Required when enabled is true",
+                "default": null
+              },
+              "organisation": {
+                "type": ["string", "null"],
+                "description": "Organisation for the AIMArtifact adapter resource",
+                "default": null
+              },
+              "labels": {
+                "type": "object",
+                "description": "Extra labels to add to the AIMArtifact resource",
+                "additionalProperties": true
+              },
+              "annotations": {
+                "type": "object",
+                "description": "Extra annotations to add to the AIMArtifact resource",
+                "additionalProperties": true
+              },
+              "displayName": {
+                "type": "string",
+                "description": "Display name for the AIMArtifact adapter resource",
+                "default": ""
+              },
+              "description": {
+                "type": "string",
+                "description": "Description for the AIMArtifact adapter resource",
+                "default": ""
+              }
+            }
           }
         }
       },

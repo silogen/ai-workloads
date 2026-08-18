@@ -1,4 +1,5 @@
 metadata:
+  trainingType: "lora"
   hfTokenRequired: false
   compatibleAccelerators:
     # MI300X:

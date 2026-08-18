@@ -114,10 +114,16 @@ fi
 merge_adapter $merge_base ./checkpoints/checkpoint-final-adapter ./checkpoints/checkpoint-final
 {{- end }}
 {{- end }}
-{{- if .Values.aimManifest.enabled }}
+{{- if .Values.aimManifest.modelManifest.enabled }}
 # Copy AIMModel manifest to checkpoint directory for archival
 echo 'Copying AIMModel manifest to checkpoint directory...'
 cp /configs/aim-model-manifest.yaml /workdir/checkpoints/aim-model-manifest.yaml
+{{- end }}
+{{- if .Values.aimManifest.adapterManifest.enabled }}
+# Copy AIMArtifact manifest to checkpoint directory for archival
+echo 'Copying AIMArtifact manifest to checkpoint directory...'
+cp /configs/adapter-manifest.yaml /workdir/checkpoints/checkpoint-final-adapter/adapter-manifest.yaml
+cp /configs/adapter-cr-manifest.yaml /workdir/checkpoints/adapter-cr-manifest.yaml
 {{- end }}
 # Copy preprocessor config into final checkpoint if present in downloaded base model.
 # This keeps deployment artifacts self-contained without a separate processor job.

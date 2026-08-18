@@ -1,6 +1,7 @@
 ### General chart values ###
 finetuningImage: amdenterpriseai/aimft-aimfttk:0.2.2-0.1.2-rocmdefault
 mainBinaryName: "aimfttk"
+workingDir: "/workdir"
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:
@@ -45,11 +46,13 @@ mergeAdapter: true
 
 ### Model input and output, required args ###
 checkpointsRemote:  # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
-basemodel:  # Path to basemodel directory in the bucket storage
+basemodel:  # Path to basemodel directory in the bucket storage or HF model name if prefixed with "hf://", e.g. "hf://meta-llama/llama-3.1-8b-instruct"
 # Auxiliary model download args:
 model: "" # Canonical model name, e.g. "meta-llama/llama-3.1-8b-instruct" or "OdiaGenAI-LLM/qwen_1.5_odia_7b"
 metadata:
   hfTokenRequired: false # Whether the Hugging Face model download requires authentication. If true, also set hfTokenSecret.
+  trainingType: "full" # "full" | "lora"
+
 hfDownloadExcludeGlob: ""
 hfTokenSecret:
 # Example:
@@ -63,7 +66,6 @@ hfTokenSecret:
 # Also remember to set report_to: tensorboard in the finetuning_config.training_args section.
 runTensorboard: false
 logsRemote: # Path where to sync logs in bucket storage (defaults to <checkpointsRemote>/logs if not set), format: bucktetName/path/in/bucket
-
 
 ### Finetuning config section ###
 finetuning_config:
@@ -113,20 +115,32 @@ debug:
   skip_checkpoint_download: false # If true, skip the download of checkpoints from the bucket storage at the start of the run.
 
 aimManifest:
-  enabled: false
-  autoApply: true
   serviceAccountName: null  # Optional: use an existing ServiceAccount instead of creating one
   manifestApplierImage: ghcr.io/silogen/logistics:v0.3 # Image used for the sidecar that applies the AIMModel manifest
   maxWait: 172800  # 48 hours in seconds
-  # AIMModel manifest fields:
-  aimId: null
-  modelId: null
-  modelName: null
-  image: null
-  # Base-image AIMModel the fine-tuned model derives its profiles from. Must
-  # exist in the same namespace the fine-tuned AIMModel is created in.
-  baseModel:
-    name: aim-base
-    scope: Namespace
-  profilesRole: deployable
-  labels: {}
+  modelManifest:
+    enabled: false
+    autoApply: true
+    # AIMModel manifest fields:
+    aimId: null
+    modelId: null
+    modelName: null
+    image: null
+    # Base-image AIMModel the fine-tuned model derives its profiles from. Must
+    # exist in the same namespace the fine-tuned AIMModel is created in.
+    baseModel:
+      name: aim-base
+      scope: Namespace
+    profilesRole: deployable
+    labels: {} # Extra labels to add to the AIMModel resource
+    annotations: {} # Extra annotations to add to the AIMModel resource
+  adapterManifest:
+    enabled: false
+    autoApply: true
+    # Adapter manifest fields:
+    adapterName: null
+    organisation: null
+    labels: {} # Extra labels to add to the AIMArtifact resource
+    annotations: {} # Extra annotations to add to the AIMArtifact resource
+    displayName: ""
+    description: ""
