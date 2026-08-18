@@ -7,8 +7,6 @@ metadata:
     - "744b"  # W7900D
     - "744a"  # W7900 Dual Slot
 
-finetuningImage: ghcr.io/silogen/rocm7.2-silogen-finetuning-worker:v0.7.2-rocm7.2
-runAs: 1001
 
 # Canonical model name:
 model: "meta-llama/Llama-3.1-8B-Instruct"
