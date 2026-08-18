@@ -1,4 +1,4 @@
-{{- if and .Values.aimManifest.enabled (not .Values.aimManifest.serviceAccountName) .Values.aimManifest.autoApply }}
+{{- if or (and .Values.aimManifest.modelManifest.enabled (not .Values.aimManifest.serviceAccountName) .Values.aimManifest.modelManifest.autoApply) (and .Values.aimManifest.adapterManifest.enabled (not .Values.aimManifest.serviceAccountName) .Values.aimManifest.adapterManifest.autoApply) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -11,7 +11,7 @@ metadata:
   {{- end }}
 rules:
 - apiGroups: ["aim.eai.amd.com"]
-  resources: ["aimmodels"]
+  resources: ["aimmodels", "aimartifacts"]
   verbs: ["create", "get", "list", "patch", "update"]
 - apiGroups: [""]
   resources: ["pods"]

@@ -120,20 +120,26 @@ data:
       {{- toYaml .tracking | nindent 6 }}
     {{- end }}
     {{- end }}
-  {{- if .Values.aimManifest.enabled }}
+  {{- if .Values.aimManifest.modelManifest.enabled }}
   {{- $isPeft := ne .Values.finetuning_config.peft_conf.peft_type "NO_PEFT" }}
   {{- if and $isPeft (not .Values.mergeAdapter) }}
-    {{- fail "aimManifest.enabled requires either a full parameter finetune (peft_type: NO_PEFT) or adapter merging enabled (mergeAdapter: true). Currently using PEFT without merging, which produces only an adapter, not a complete model." }}
+    {{- fail "aimManifest.modelManifest.enabled requires either a full parameter finetune (peft_type: NO_PEFT) or adapter merging enabled (mergeAdapter: true). Currently using PEFT without merging, which produces only an adapter, not a complete model." }}
   {{- end }}
   aim-model-manifest.yaml: |
     apiVersion: aim.eai.amd.com/v1alpha2
     kind: AIMModel
     metadata:
-      name: {{ required "aimManifest.modelName is required when aimManifest.enabled is true!" .Values.aimManifest.modelName | quote }}
-      {{- include "validateResourceName" .Values.aimManifest.modelName }}
-      {{- if .Values.aimManifest.labels }}
+      name: {{ required "aimManifest.modelManifest.modelName is required when aimManifest.modelManifest.enabled is true!" .Values.aimManifest.modelManifest.modelName | quote }}
+      {{- include "validateResourceName" .Values.aimManifest.modelManifest.modelName }}
+      {{- if .Values.aimManifest.modelManifest.labels }}
       labels:
-        {{- range $key, $value := .Values.aimManifest.labels }}
+        {{- range $key, $value := .Values.aimManifest.modelManifest.labels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.aimManifest.modelManifest.annotations }}
+      annotations:
+        {{- range $key, $value := .Values.aimManifest.modelManifest.annotations }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
       {{- end }}
@@ -145,22 +151,22 @@ data:
       profiles:
         derivedFrom:
           selector:
-            role: {{ .Values.aimManifest.profilesRole | quote }}
+            role: {{ .Values.aimManifest.modelManifest.profilesRole | quote }}
             modelRef:
-              name: {{ .Values.aimManifest.baseModel.name | quote }}
-              scope: {{ .Values.aimManifest.baseModel.scope | quote }}
+              name: {{ .Values.aimManifest.modelManifest.baseModel.name | quote }}
+              scope: {{ .Values.aimManifest.modelManifest.baseModel.scope | quote }}
         versionPolicy: all
         overrides:
-          {{- if not .Values.aimManifest.aimId }}
-          {{- fail "aimManifest.aimId is required when aimManifest.enabled is true (v1alpha2 base derivation stamps identity via overrides)!" }}
+          {{- if not .Values.aimManifest.modelManifest.aimId }}
+          {{- fail "aimManifest.modelManifest.aimId is required when aimManifest.modelManifest.enabled is true (v1alpha2 base derivation stamps identity via overrides)!" }}
           {{- end }}
-          aimId: {{ .Values.aimManifest.aimId | quote }}
-          modelId: {{ required "aimManifest.modelId is required when aimManifest.enabled is true!" .Values.aimManifest.modelId | quote }}
-          {{- if .Values.aimManifest.image }}
-          image: {{ .Values.aimManifest.image | quote }}
+          aimId: {{ .Values.aimManifest.modelManifest.aimId | quote }}
+          modelId: {{ required "aimManifest.modelManifest.modelId is required when aimManifest.modelManifest.enabled is true!" .Values.aimManifest.modelManifest.modelId | quote }}
+          {{- if .Values.aimManifest.modelManifest.image }}
+          image: {{ .Values.aimManifest.modelManifest.image | quote }}
           {{- end }}
           modelSources:
-            - modelId: {{ .Values.aimManifest.modelId | quote }}
+            - modelId: {{ .Values.aimManifest.modelManifest.modelId | quote }}
               sourceUri: "s3://{{ .Values.checkpointsRemote }}/checkpoint-final"
               env:
                 - name: AWS_ACCESS_KEY_ID
@@ -175,4 +181,52 @@ data:
                       key: {{ .Values.bucketCredentialsSecret.secretKeyKey | quote }}
                 - name: AWS_ENDPOINT_URL
                   value: {{ .Values.bucketStorageHost | quote }}
+  {{- end }}
+  {{- if .Values.aimManifest.adapterManifest.enabled }}
+  {{- if eq .Values.finetuning_config.peft_conf.peft_type "NO_PEFT" }}
+    {{- fail "aimManifest.adapterManifest.enabled requires a PEFT/LoRA finetune (finetuning_config.peft_conf.peft_type must not be NO_PEFT). A full parameter finetune produces no adapter to deploy." }}
+  {{- end }}
+  adapter-cr-manifest.yaml: |
+    apiVersion: aim.eai.amd.com/v1alpha1
+    kind: AIMArtifact
+    metadata:
+      name: {{ required "aimManifest.adapterManifest.adapterName is required when aimManifest.adapterManifest.enabled is true!" .Values.aimManifest.adapterManifest.adapterName | quote }}
+      labels:
+        app.kubernetes.io/managed-by: fine-tuning
+        {{- range $key, $value := .Values.aimManifest.adapterManifest.labels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- if .Values.aimManifest.adapterManifest.annotations }}
+      annotations:
+        {{- range $key, $value := .Values.aimManifest.adapterManifest.annotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+    spec:
+      type: adapter
+      modelId: {{ required "aimManifest.adapterManifest.organisation is required when aimManifest.adapterManifest.enabled is true!" .Values.aimManifest.adapterManifest.organisation }}/{{ .Values.aimManifest.adapterManifest.adapterName }}
+      compatibleWith:
+        - {{ .Values.model | quote }}
+      sourceUri: "s3://{{ required "checkpointsRemote is required when aimManifest.adapterManifest.enabled is true!" .Values.checkpointsRemote }}/checkpoint-final-adapter"
+      rank: {{ required "finetuning_config.peft_conf.peft_kwargs.r is required when aimManifest.adapterManifest.enabled is true! Set the LoRA rank (r) in the training configuration." .Values.finetuning_config.peft_conf.peft_kwargs.r }}
+      env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bucketCredentialsSecret.name | quote }}
+              key: {{ .Values.bucketCredentialsSecret.accessKeyKey | quote }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bucketCredentialsSecret.name | quote }}
+              key: {{ .Values.bucketCredentialsSecret.secretKeyKey | quote }}
+        - name: AWS_ENDPOINT_URL
+          value: {{ .Values.bucketStorageHost | quote }}
+  adapter-manifest.yaml: |
+    modelId: {{ required "aimManifest.adapterManifest.organisation is required when aimManifest.adapterManifest.enabled is true!" .Values.aimManifest.adapterManifest.organisation }}/{{ .Values.aimManifest.adapterManifest.adapterName }}
+    compatibleWith:
+      - {{ .Values.model | quote }}
+    rank: {{ required "finetuning_config.peft_conf.peft_kwargs.r is required when aimManifest.adapterManifest.enabled is true! Set the LoRA rank (r) in the training configuration." .Values.finetuning_config.peft_conf.peft_kwargs.r }}
+    displayName: {{ .Values.aimManifest.adapterManifest.displayName | quote }}
+    description: {{ .Values.aimManifest.adapterManifest.description | quote }}
   {{- end }}

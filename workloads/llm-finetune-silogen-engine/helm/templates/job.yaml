@@ -16,7 +16,7 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      {{- if .Values.aimManifest.enabled }}
+      {{- if or (and .Values.aimManifest.modelManifest.enabled .Values.aimManifest.modelManifest.autoApply) (and .Values.aimManifest.adapterManifest.enabled .Values.aimManifest.adapterManifest.autoApply) }}
       serviceAccountName: {{ .Values.aimManifest.serviceAccountName | default (printf "%s-sa" .Release.Name) | quote }}
       {{- end }}
       {{- if .Values.imagePullSecrets }}
@@ -29,7 +29,7 @@ spec:
         - name: finetuning
           image: "{{ .Values.finetuningImage }}"
           imagePullPolicy: Always
-          workingDir: "/workdir"
+          workingDir: "{{ .Values.workingDir }}"
           env:
             # download
             {{- if .Values.hfTokenSecret }}
@@ -115,7 +115,7 @@ spec:
             capabilities:
               drop: ["ALL"]
         {{- end }}
-        {{- if and .Values.aimManifest.enabled .Values.aimManifest.autoApply }}
+        {{- if or (and .Values.aimManifest.modelManifest.enabled .Values.aimManifest.modelManifest.autoApply) (and .Values.aimManifest.adapterManifest.enabled .Values.aimManifest.adapterManifest.autoApply) }}
         - name: aimmodel-applier
           image: {{ .Values.aimManifest.manifestApplierImage | quote }}
           imagePullPolicy: IfNotPresent
@@ -142,8 +142,14 @@ spec:
                     -o jsonpath='{.status.containerStatuses[?(@.name=="finetuning")].state.terminated.exitCode}' || echo "")
 
                   if [ "$EXIT_CODE" = "0" ]; then
+                    {{- if and .Values.aimManifest.modelManifest.enabled .Values.aimManifest.modelManifest.autoApply }}
                     echo "Training completed successfully, applying AIMModel manifest..."
                     kubectl apply -f /configs/aim-model-manifest.yaml
+                    {{- end }}
+                    {{- if and .Values.aimManifest.adapterManifest.enabled .Values.aimManifest.adapterManifest.autoApply }}
+                    echo "Training completed successfully, applying AIMArtifact manifest..."
+                    kubectl apply -f /configs/adapter-cr-manifest.yaml
+                    {{- end }}
                     exit 0
                   else
                     echo "Training container failed with exit code $EXIT_CODE, skipping AIMModel creation"
