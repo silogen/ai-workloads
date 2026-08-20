@@ -54,7 +54,7 @@ startupProbe:
   httpGet:
     path: /queue
     port: http
-  failureThreshold: 60 # 60 x 10s => allow for 10 minutes startup time
+  failureThreshold: 240 # 240 x 10s => allow ~40 min for cold start: the container runs apt/pip (incl. torch nightly) + ComfyUI requirements + git clone at startup, which exceeds 10 min on a freshly-provisioned cluster and caused an endless crash-loop (never binds :8188). See EAI-8174; durable fix is to pre-bake ComfyUI into the image.
   periodSeconds: 10
 livenessProbe:
   httpGet:
