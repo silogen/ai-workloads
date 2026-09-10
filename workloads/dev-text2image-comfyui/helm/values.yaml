@@ -12,10 +12,14 @@ metadata:
 image: "rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0"
 comfyui_version: "v0.18.1"
 comfyui_manager_version: "3.39.3"
-model: Comfy-Org/flux1-dev
-tag: fp8
+# The checkpoint ComfyUI's stock workflow selects by name, so the workspace can
+# generate an image as soon as it opens, and the smallest of the options at 2GiB.
+# `tag` must identify a single model's file: it is matched as *tag*safetensors
+# both to pick what to download and to decide the workspace is ready.
+model: Comfy-Org/stable-diffusion-v1-5-archive
+tag: v1-5-pruned-emaonly-fp16
 
-imagePullPolicy: Always
+imagePullPolicy: IfNotPresent
 imagePullSecrets: []
 gpus: 1
 cpu_per_gpu: 16
@@ -60,10 +64,19 @@ livenessProbe:
   httpGet:
     path: /queue
     port: http
+# A configured model downloads in the background, so /queue answers before the
+# checkpoint is usable. Ask ComfyUI which checkpoints it can see and require the
+# one this release asked for, so a checkpoint left by a previous model cannot
+# report this one as ready. COMFYUI_CKPT_MATCH is empty when no model is
+# configured, which asks only that the server answers. Matched as a fixed
+# string: tags contain dots, which a regex would treat as any character.
 readinessProbe:
-  httpGet:
-    path: /queue
-    port: http
+  exec:
+    command:
+      - /bin/sh
+      - -c
+      - curl -sf "localhost:${COMFYUI_PORT}/models/checkpoints" | grep -qF -- "${COMFYUI_CKPT_MATCH}"
+  periodSeconds: 10
 
 # kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
 kaiwo:

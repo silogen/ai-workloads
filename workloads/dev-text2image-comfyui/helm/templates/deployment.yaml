@@ -1,4 +1,20 @@
 {{- define "deployment" -}}
+{{- /* Chart-owned variables: reject rather than let a duplicate entry win and
+       point the server at a different port than the Service targets. */}}
+{{- range $reserved := list "COMFYUI_PORT" "COMFYUI_CKPT_MATCH" }}
+{{- if hasKey (default dict $.Values.env_vars) $reserved }}
+{{- fail (printf "env_vars.%s is set by the chart from deployment.ports.http and model; remove it from env_vars" $reserved) }}
+{{- end }}
+{{- end }}
+{{- /* Readiness requires the checkpoint this release asked for, identified by
+       `tag`. Left empty when there is no Hugging Face model to wait for, which
+       readiness treats as "the server answering is enough": the s3 path has
+       already copied its model before the server starts, and a workspace with
+       no model gets one from the ComfyUI-Manager UI. */}}
+{{- $ckptMatch := "" }}
+{{- if and .Values.model .Values.tag (not (hasPrefix "s3://" (toString .Values.model))) }}
+{{- $ckptMatch = toString .Values.tag }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,10 +50,14 @@ spec:
           - |
             {{- include "entrypoint" . | nindent 12 }}
           command: ["sh", "-c"]
-          {{- if .Values.env_vars }}
           env:
+            - name: COMFYUI_PORT
+              value: {{ .Values.deployment.ports.http | quote }}
+            - name: COMFYUI_CKPT_MATCH
+              value: {{ $ckptMatch | quote }}
+            {{- if .Values.env_vars }}
             {{- include "container.env" . | nindent 12 }}
-          {{- end }}
+            {{- end }}
           image: {{ .Values.image | quote}}
           imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
           {{- if .Values.livenessProbe }}
