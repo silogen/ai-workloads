@@ -1,0 +1,41 @@
+metadata:
+  user_id: null
+
+image: ghcr.io/silogen/vlm-lora-finetune:0.2
+
+env:
+  HF_HOME: /workload/.hf_cache
+  TF_CPP_MIN_LOG_LEVEL: '3'  # These get rid of TF warnings, fine as we don't use TF in main script
+  TF_ENABLE_ONEDNN_OPTS: '0'
+
+gpus: 1
+memoryPerGpu: 64
+cpusPerGpu: 8
+
+imagePullSecrets:
+  name: ghcr-regcred
+
+storage:
+  ephemeral:
+    quantity: 100Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+ttlSecondsAfterFinished: 0
+
+# Run training and inference
+entrypoint:
+  - |
+    echo "Preparing custom example dataset..."
+    # exit on error in all commands
+    python /mounted-files/prepare_custom_dataset.py --config /mounted-files/bridge_train_config.yml && echo "Dataset preparation done" || { echo "Dataset preparation failed"; exit 1; }
+    echo "Starting python train script..."
+    python train.py --config /mounted-files/bridge_train_config.yml && echo "Training done" || { echo "Training failed"; exit 1; }
+    echo "Running example inference..."
+    python merge_and_infer.py --config /mounted-files/bridge_train_config.yml && echo "Inference done" || { echo "Inference failed"; exit 1; }
+    echo "Sleeping for 10 minutes in case user wants to copy results..."
+    sleep 600
+    echo "Script completed, exiting."

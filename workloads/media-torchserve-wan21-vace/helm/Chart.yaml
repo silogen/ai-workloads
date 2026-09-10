@@ -1,0 +1,4 @@
+apiVersion: v2
+name: vace-inference-torchserve
+description: A Helm chart for VACE inference using Torchserve
+version: 0.0.1

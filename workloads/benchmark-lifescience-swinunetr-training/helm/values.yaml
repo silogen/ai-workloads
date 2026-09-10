@@ -1,0 +1,69 @@
+metadata:
+  labels: {}
+
+image: rocm/pytorch:rocm6.4_ubuntu22.04_py3.10_pytorch_release_2.6.0
+imagePullPolicy: Always
+
+job:
+  restartPolicy: Never
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  resources:
+    cpu:
+      requests: "64"
+      limits: "64"
+    memory:
+      requests: "128Gi"
+      limits: "128Gi"
+
+ephemeral_storage: "128Gi"
+
+gpus: 1
+
+training:
+  args:
+    dataset_bucket_name: "default-bucket"
+    dataset_bucket_directory: "reference-models/datasets/NSCLC-Radiomics/"  # in minio
+    dataset_labels: "GTV-1"
+    val_every: 5  # change to 5 for testing, originally 20
+    in_channels: 1
+    out_channels: 1
+    warmup_epochs: 100
+    save_checkpoint: true
+    use_checkpoint: true
+    feature_size: 48
+    roi_x: 96
+    roi_y: 96
+    roi_z: 96
+    logdir: "exp123_outputs"
+    n_crops_val: 2
+    n_crops: 2
+    batch_size: 1
+    workers: 32
+    max_epochs: 10  # change to 10 for testing, originally 700
+    storage_bucket_name: "default-bucket"
+    storage_destination_directory: "reference-models/models/swinunetr"  # in minio
+
+env_vars:
+  BUCKET_STORAGE_HOST: "http://minio.minio-tenant-default.svc.cluster.local:80"
+  BUCKET_STORAGE_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_STORAGE_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  MIOPEN_FIND_MODE: 1
+  MIOPEN_FIND_ENFORCE: 3
+
+entrypoint: |
+  bash /workload/mount/entrypoint.sh
+
+storage:
+  dshm:
+    sizeLimit: 64Gi
+  workload_outputs:
+    sizeLimit: 128Gi
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

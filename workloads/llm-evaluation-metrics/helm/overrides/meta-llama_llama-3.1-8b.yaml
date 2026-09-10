@@ -1,0 +1,10 @@
+# Values file for running bertscore evaluation for Llama-3.1-8B on the CNN-Dailymail summarization dataset
+general:
+  job_name: evaluation-metrics-llama-3-1-8b
+model_inference_container:
+  gpu_count: 1
+  model: llama-3.1-8B
+  model_path: hf://meta-llama/Llama-3.1-8B
+evaluation_container:
+  image: ghcr.io/silogen/evaluation-workloads-metrics:v0.1
+  use_data_subset: 0 # Edit this for quick testing. Defines the number of documents used for evaluation. 0 means using the whole dataset

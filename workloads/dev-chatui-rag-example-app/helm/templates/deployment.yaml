@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rag-chat-app.fullname" . }}
+  labels:
+    app: {{ include "rag-chat-app.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "rag-chat-app.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "rag-chat-app.fullname" . }}
+    spec:
+      containers:
+        - name: rag-chat-app
+          image: {{ .Values.image | quote }}
+          imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
+          ports:
+            - containerPort: {{ .Values.app.port }}
+              name: http
+          env:
+            - name: INFINITY_HOST
+              value: "{{ .Values.infinity.host }}"
+            - name: INFINITY_PORT_EMBEDDINGS
+              value: "{{ .Values.infinity.port }}"
+            - name: VLLM_HOST
+              value: "{{ .Values.vllm.host }}"
+            - name: VLLM_PORT_GENERATION
+              value: "{{ .Values.vllm.port }}"
+            - name: MODEL_EMBEDDING
+              value: "{{ .Values.infinity.model }}"
+            - name: MODEL_GENERATION
+              value: "{{ .Values.vllm.model }}"
+            - name: GRADIO_PORT
+              value: "{{ .Values.app.port }}"
+          command: ["/bin/sh", "-c"]
+          args:
+            - set -x; ls -l /app; cat /app/requirements.txt; pip install --no-cache-dir -r /app/requirements.txt && python -u /app/main.py
+          volumeMounts:
+            - name: app-config
+              mountPath: /app/main.py
+              subPath: main.py
+            - name: app-config
+              mountPath: /app/requirements.txt
+              subPath: requirements.txt
+            - name: vector-db
+              mountPath: /app/vector_db
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: app-config
+          configMap:
+            name: {{ include "rag-chat-app.fullname" . }}-config
+        - name: vector-db
+          emptyDir: {}

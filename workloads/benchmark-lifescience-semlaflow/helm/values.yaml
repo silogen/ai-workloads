@@ -1,0 +1,65 @@
+metadata:
+  labels: {}
+
+image: rocm/pytorch:rocm7.0_ubuntu24.04_py3.12_pytorch_release_2.8.0
+imagePullPolicy: Always
+
+gpus: 1
+memory_per_gpu: 64
+cpu_per_gpu: 12
+
+init_args: |
+  chmod +x /workload/mount/entrypoint.sh.old
+
+  apt-get update -y
+  DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ca-certificates
+  apt-get autoremove -y
+  apt-get clean
+
+  pip install numpy==1.26.2 pandas==2.2.2 scipy==1.11.4 rdkit lightning torchmetrics openbabel-wheel typing_extensions wandb numba hiredis tqdm ipython certifi
+
+  # Move all the pip packages to a shared location
+  mkdir -p /workload/lib/bin
+  cp -r /opt/venv/bin/* /workload/lib/bin/
+  cp -r /opt/venv/lib/python3.12/site-packages/* /workload/lib/
+
+  cd /workload
+  git clone https://github.com/rssrwn/semla-flow.git
+
+  mkdir -p /workload/semla-flow/data/qm9/smol;
+  mkdir /workload/semla-flow/models;
+  wget -q 'https://drive.usercontent.google.com/download?id=1TaqaNebW4fs9swFkYyOfaLf7TNrs3I_g&export=download&confirm=t&uuid=150c3e68-f755-4573-9989-1c99d40e1a76' -O /workload/semla-flow/models/300epochs.ckpt;
+  wget -q 'https://drive.usercontent.google.com/download?id=1nUSR8c3K2qqp5Z6S6f_iL89bj5Hqmdo-&export=download&confirm=t&uuid=65137bab-648f-4b45-b906-0c6677b909cf' -O /workload/semla-flow/data/qm9/smol/train.smol;
+  wget -q 'https://drive.usercontent.google.com/download?id=1WSAZ7F_XwA7R0NMFAgT6lh8Y-GV_OHnJ&export=download&confirm=t&uuid=58f38167-f4ea-412c-afcb-482f65f42caf' -O /workload/semla-flow/data/qm9/smol/val.smol;
+  wget -q 'https://drive.usercontent.google.com/download?id=1FYBMPqVkevfKinc4EQUf_wfKzKx2HqEy&export=download&confirm=t&uuid=ccd41eb9-b44e-4ab8-b492-b60567a54162' -O /workload/semla-flow/data/qm9/smol/test.smol;
+
+  echo "Initialization completed successfully"
+
+
+entrypoint: |
+  # Include the exports here since $dynamic variables are not available in the k8s env definitions.
+  export PATH="/workload/lib/bin:$PATH"
+  export PYTHONPATH="/workload/lib:$PYTHONPATH"
+
+  cd /workload/semla-flow
+
+  START_TIME=$(date +%s)
+
+  # Run evaluation for the QM9 dataset
+  python -m semlaflow.evaluate --data_path data/qm9/smol --ckpt_path models/300epochs.ckpt --dataset qm9
+
+  END_TIME=$(date +%s)
+  DURATION=$((END_TIME - START_TIME))
+
+  echo "Benchmark completed at: $(date)"
+  echo "Total benchmark duration: ${DURATION} seconds ($(date -u -d @${DURATION} +%H:%M:%S))"
+
+storage:
+  ephemeral:
+    quantity: 128Gi
+    # Change the storageClassName to standard or other name
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi

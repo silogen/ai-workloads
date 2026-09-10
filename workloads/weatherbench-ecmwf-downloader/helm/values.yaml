@@ -1,0 +1,46 @@
+# Use to add labels to the metadata of the resources created by this workload.
+labels: {}
+
+# Image configuration.
+image: ghcr.io/silogen/weatherbench-preprocessor.dockerfile:latest
+
+# Container resources.
+resources:
+  cpu: 1
+  memory: "16Gi"
+  ephemeral_storage:
+    request: "200Gi"
+    limit: "300Gi"
+
+# Container command and entrypoint.
+settings:
+  # The following will be passed to the downloader script.
+  minio_bucket: "default-bucket" # Minio bucket name.
+  minio_prefix: "weatherbench-ecmwf/" # Minio bucket prefix.
+  start_date: "2023-01-01" # Starting date for data.
+  end_date: "2023-01-31" # Ending date for data (inclusive).
+  tods: "00:00 12:00" # Times of day for each day in the dataset.
+  surface_variables: [ '10m_u_component_of_wind', '10m_v_component_of_wind', '2m_temperature', 'mean_sea_level_pressure', 'total_precipitation' ] # Surface variables to download.
+  vertical_variables: [ 'geopotential', 'temperature', 'u_component_of_wind', 'v_component_of_wind', 'specific_humidity' ] # Vertically stratified variables to download.
+  pressure_levels: [ '50', '100', '150', '200', '250', '300', '400', '500', '600', '700', '850', '925', '1000' ] # Pressure levels to download.
+
+# Environment variable setup.
+env_vars:
+  MINIO_ENDPOINT: minio.minio-tenant-default.svc.cluster.local:80
+
+# Setup secrets given through environment variables.
+env_secrets:
+  MINIO_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  MINIO_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  # NOTE: User needs to provide if defined, otherwise needs to be left undefined!
+  #SSL_CERT_FILE: your-cert-file
+  CDSAPI_URL:
+    name: cds-api-secret
+    key: url
+  CDSAPI_KEY:
+    name: cds-api-secret
+    key: key

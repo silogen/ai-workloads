@@ -1,0 +1,72 @@
+{{- define "job_wrapped_with_kaiwoservice" -}}
+apiVersion: kaiwo.silogen.ai/v1alpha1
+kind: KaiwoService
+metadata:
+  name: {{ include "release.fullname" . }}
+  labels:
+    app: {{ include "release.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  deployment:
+    {{- include "job" . | nindent 6 }}
+{{- end -}}
+
+{{- define "job" -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "release.fullname" . }}
+  namespace: {{ .Values.namespace | quote }}
+  labels:
+    app: {{ include "release.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  backoffLimit: {{ .Values.job.backoffLimit | default 0 }}
+  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished | default 432000 }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "release.fullname" . }}
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- .Values.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              #!/bin/bash
+              bash {{ .Values.settings.mountdir }}/setup_env.sh && \
+              bash {{ .Values.settings.mountdir }}/run_model.sh{{- range $k, $v := .Values.settings }} --{{ $k }}={{ $v }}{{- end }}
+          {{- if .Values.env_vars }}
+          env:
+            {{- include "container.env" . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- include "container.resources" . | nindent 12 }}
+          volumeMounts:
+            {{- include "container.volumeMounts" . | nindent 12 }}
+      restartPolicy: {{ .Values.job.restartPolicy | default "Never" }}
+      volumes:
+        {{- include "container.volumes" . | nindent 8 }}
+{{- end }}
+
+{{- if .Values.kaiwo.enabled -}}
+{{- include "job_wrapped_with_kaiwoservice" . }}
+{{- else -}}
+{{- include "job" . }}
+{{- end -}}

@@ -1,0 +1,50 @@
+# Wan 2.2 5B LoRA Fine-tuning Configuration
+# Tutorial 07: Optimized configuration for multi-GPU LoRA training
+
+# Container resources - optimized for compilation and training performance
+resources:
+  cpu: 32 # High CPU count reduces PyTorch compilation time significantly
+  gpus: 4 # 4-GPU setup provides good balance of speed and resource efficiency
+  memory: 256Gi # Sufficient memory for model loading and training
+workspaceReservedSize: 50Gi # Space for DiffSynth framework and temporary files
+downloadsReservedSize: 32Gi # Space for model downloads (~32 GiB total)
+checkpointsReservedSize: 256Gi # Space for checkpoint storage and uploads
+
+# Model and dataset configuration
+basemodelId: Wan-AI/Wan2.2-TI2V-5B # 5B parameter text-to-video model
+datasetId: Disney-VideoGeneration-Dataset # Steamboat Willie -dataset for training
+
+# Fine-tuning parameters
+finetune_config:
+  # Dataset configuration
+  dataset_base_path: "/workspace/local_resources/data/Disney-VideoGeneration-Dataset"
+  dataset_metadata_path: "/workspace/local_resources/data/Disney-VideoGeneration-Dataset/metadata.csv"
+
+  # Video generation parameters
+  height: 480 # Video height in pixels
+  width: 832 # Video width in pixels
+  num_frames: 49 # Number of frames per video clip
+  dataset_repeat: 10 # Number of times to repeat dataset per epoch
+
+  # Model paths - references to downloaded model components
+  model_paths: "[[ \
+    \"models/Wan-AI/Wan2.2-TI2V-5B/diffusion_pytorch_model-00001-of-00003.safetensors\", \
+    \"models/Wan-AI/Wan2.2-TI2V-5B/diffusion_pytorch_model-00002-of-00003.safetensors\", \
+    \"models/Wan-AI/Wan2.2-TI2V-5B/diffusion_pytorch_model-00003-of-00003.safetensors\"], \
+    \"models/Wan-AI/Wan2.2-TI2V-5B/models_t5_umt5-xxl-enc-bf16.pth\", \
+    \"models/Wan-AI/Wan2.2-TI2V-5B/Wan2.2_VAE.pth\"]"
+
+  # Training hyperparameters
+  learning_rate: "1e-4" # Learning rate - balanced for LoRA training
+  num_epochs: 5 # Number of training epochs
+  remove_prefix_in_ckpt: "pipe.dit." # Prefix removal for checkpoint compatibility
+  output_path: "/workspace/checkpoints/Wan2.2-TI2V-5B_lora" # Local checkpoint output directory
+
+  # LoRA-specific parameters
+  lora_base_model: "dit" # Apply LoRA to DiT (Diffusion Transformer) layers
+  lora_target_modules: "q,k,v,o,ffn.0,ffn.2" # Target attention and feedforward modules
+  lora_rank: 32 # LoRA rank - balance between efficiency and quality
+  architecture: "lora" # Use LoRA fine-tuning (vs. full parameter training)
+
+# Run mode
+interactive: false # Automated training (set to true for manual exploration)

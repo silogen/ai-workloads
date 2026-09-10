@@ -1,0 +1,29 @@
+# This override is intended for docs/tutorials/tutorial-05-finetune-llama8b-custom-domain-data.md
+
+# Bucket storage inputs
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+# Bucket credentials from a secret:
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Resource configuration:
+finetuningGpus: 1
+storageClass: mlstorage
+
+### Model input and output, required args ###
+basemodel: "default-bucket/models/meta-llama/Llama-3.1-8B-Instruct"
+checkpointsRemote: "default-bucket/experiments/finetuning/llama-31-8B-lora-opi-1k"
+
+### Finetuning config section ###
+finetuning_config:
+  data_conf:
+    training_data:
+      datasets:
+        - path: "default-bucket/datasets/OPI_updated_160k.sample1000.jsonl"
+
+aimManifest:
+  modelName: "finetune-tutorial-llama-31-8B-lora-opi-1k"
+  modelId: "finetune-tutorial/llama-31-8B-lora-opi-1k"

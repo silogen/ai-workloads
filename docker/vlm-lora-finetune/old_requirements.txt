@@ -1,0 +1,10 @@
+accelerate==0.24.1
+bitsandbytes==0.41.1
+datasets[vision]
+open_clip_torch==2.23.0
+pandas==2.1.2
+peft
+scipy
+torch==2.1.0
+tqdm==4.66.1
+wandb==0.15.12

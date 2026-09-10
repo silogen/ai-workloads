@@ -1,0 +1,43 @@
+image:
+  name: "rocm/pytorch"
+  tag: "rocm6.4_ubuntu24.04_py3.12_pytorch_release_2.6.0"
+  pullPolicy: "Always"
+
+modelId: NX-AI/xLSTM-7b
+
+entrypoint: |
+  #!/bin/bash
+
+  python -m pip install xlstm mlstm_kernels
+  python -m pip uninstall -y transformers
+  python -m pip install --upgrade --force-reinstall --no-deps 'transformers @ git+https://github.com/NX-AI/transformers.git@integrate_xlstm'
+  python -m pip install pygit2==1.17.0
+  python -m pip install 'accelerate>=0.26.0'
+  python -m pip install --upgrade --force-reinstall "tokenizers<0.21"
+  python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/rocm6.4 --force-reinstall "triton==3.2.0" # triton installation already installed in correct path but not visible to python interpreter
+
+
+  # --- Python: Download and save model ---
+  python <<'PYCODE'
+  from transformers import AutoTokenizer, AutoModelForCausalLM
+  import os
+
+
+  print("Downloading model...")
+  tokenizer = AutoTokenizer.from_pretrained("{{ .Values.modelId }}")
+  model = AutoModelForCausalLM.from_pretrained("{{ .Values.modelId }}")
+  print("Model downloaded.")
+  print("Saving tokenizer and model...")
+  tokenizer.save_pretrained('./xlstm/tokenizer')
+  model.save_pretrained('./xlstm/model')
+
+  PYCODE
+
+  # --- Zip model directory ---
+  cd xlstm
+  zip -r ../model.zip *
+  cd ..
+  rm -rf xlstm
+
+  # Upload resources
+  mc cp model.zip minio-host/{{ .Values.bucketPath }}/{{ .Values.modelId }}/packaged/model.zip

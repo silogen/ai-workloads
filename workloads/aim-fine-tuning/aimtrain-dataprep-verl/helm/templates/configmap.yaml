@@ -1,0 +1,271 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "release.fullname" . }}-configs
+data:
+  entrypoint.sh: |
+    #!/bin/bash
+
+    # Copyright © Advanced Micro Devices, Inc., or its affiliates.
+    #
+    # SPDX-License-Identifier: MIT
+    set -euo pipefail
+
+    log() {
+      echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*"
+    }
+
+    WORKDIR=/workdir
+    DATASET_DIR="${WORKDIR}/datasets"
+    OUTPUT_DIR={{ .Values.preprocess.outputDir | default "/workdir/output" | quote }}
+    MC_BIN_DIR=/minio-binaries
+    PATH="${MC_BIN_DIR}:${PATH}"
+
+    DATASET_REMOTE={{ .Values.datasetRemote | quote }}
+    OUTPUT_REMOTE_PATH={{ .Values.outputRemotePath | quote }}
+    PREPROCESS_MODE={{ .Values.preprocess.mode | default "builtinScript" | quote }}
+    LOCAL_DATASET_PATH_OVERRIDE={{ .Values.preprocess.localDatasetPath | quote }}
+    PREPROCESS_EXTRA_ARGS={{ join " " .Values.preprocess.extraArgs | quote }}
+    HF_DATASET_NAME={{ .Values.preprocess.hfScriptArgs.dataset | quote }}
+    HF_DATASET_CONFIG={{ .Values.preprocess.hfScriptArgs.config | quote }}
+    HF_DATASET_SPLITS={{ join "," .Values.preprocess.hfScriptArgs.splits | quote }}
+    HF_SPLIT_PERCENTAGES={{ .Values.preprocess.hfScriptArgs.splitPercentages | default "" | quote }}
+    HF_SPLIT_NAMES={{ .Values.preprocess.hfScriptArgs.splitNames | default "" | quote }}
+    HF_SPLIT_RATIOS_JSON={{ default dict .Values.preprocess.hfScriptArgs.splitRatios | toJson | quote }}
+    HF_SPLIT_SOURCE={{ .Values.preprocess.hfScriptArgs.splitSource | default "" | quote }}
+    HF_SPLIT_SEED={{ .Values.preprocess.hfScriptArgs.splitSeed | default "" | quote }}
+    HF_PROMPT_FIELD={{ .Values.preprocess.hfScriptArgs.promptField | quote }}
+    HF_RESPONSE_FIELD={{ .Values.preprocess.hfScriptArgs.responseField | quote }}
+    HF_PROMPT_ALIAS={{ join "," .Values.preprocess.hfScriptArgs.promptAlias | quote }}
+    HF_RESPONSE_ALIAS={{ join "," .Values.preprocess.hfScriptArgs.responseAlias | quote }}
+    HF_CONVERSATION_FIELD={{ .Values.preprocess.hfScriptArgs.conversationField | quote }}
+    HF_SYSTEM_PROMPT={{ .Values.preprocess.hfScriptArgs.systemPrompt | quote }}
+    HF_SYSTEM_PROMPT_FIELD={{ .Values.preprocess.hfScriptArgs.systemPromptField | quote }}
+    HF_SYSTEM_PROMPT_ALIAS={{ join "," .Values.preprocess.hfScriptArgs.systemPromptAlias | quote }}
+    HF_SYSTEM_PROMPT_TEMPLATE={{ .Values.preprocess.hfScriptArgs.systemPromptTemplate | quote }}
+    HF_PROMPT_TEMPLATE={{ .Values.preprocess.hfScriptArgs.promptTemplate | quote }}
+    HF_DATA_SOURCE={{ .Values.preprocess.hfScriptArgs.dataSource | quote }}
+    HF_USER_ROLE={{ .Values.preprocess.hfScriptArgs.userRole | quote }}
+    HF_ASSISTANT_ROLE={{ .Values.preprocess.hfScriptArgs.assistantRole | quote }}
+    HF_SYSTEM_ROLE={{ .Values.preprocess.hfScriptArgs.systemRole | quote }}
+    HF_USER_ROLE_ALIAS={{ join "," .Values.preprocess.hfScriptArgs.userRoleAlias | quote }}
+    HF_ASSISTANT_ROLE_ALIAS={{ join "," .Values.preprocess.hfScriptArgs.assistantRoleAlias | quote }}
+    HF_SYSTEM_ROLE_ALIAS={{ join "," .Values.preprocess.hfScriptArgs.systemRoleAlias | quote }}
+    HF_PRESERVE_FIELDS={{ join "," .Values.preprocess.hfScriptArgs.preserveFields | quote }}
+    HF_MAX_ROWS={{ .Values.preprocess.hfScriptArgs.maxRows | default "" | quote }}
+    HF_PREVIEW_ROWS={{ .Values.preprocess.hfScriptArgs.previewRows | default "" | quote }}
+    HF_NUM_PROC={{ .Values.preprocess.hfScriptArgs.numProc | default "" | quote }}
+    PREPROCESS_SCRIPT={{- if and (eq .Values.preprocess.mode "customScript") (ne .Values.preprocess.customScript "") }}"/configs/custom_script.py"{{- else -}}{{- $script := .Values.preprocess.builtinScript -}}{{- $verlRoot := (.Values.preprocess.verlRootDir | default "/workspace/verl") -}}{{- if $script -}}{{- if hasPrefix "/" $script -}}"{{$script}}"{{- else -}}"{{ printf "%s/%s" $verlRoot $script }}"{{- end -}}{{- else -}}""{{- end -}}{{- end }}
+
+    mkdir -p "${DATASET_DIR}" "${OUTPUT_DIR}" "${MC_BIN_DIR}"
+
+    # Export for access within custom Python scripts
+    export OUTPUT_DIR
+
+    install_minio_client() {
+      if command -v mc >/dev/null 2>&1; then
+        return
+      fi
+      log "Installing MinIO client"
+      curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o "${MC_BIN_DIR}/mc"
+      chmod +x "${MC_BIN_DIR}/mc"
+    }
+
+    setup_minio_alias() {
+      install_minio_client
+      if [[ -z "${BUCKET_STORAGE_HOST:-}" || -z "${BUCKET_STORAGE_ACCESS_KEY:-}" || -z "${BUCKET_STORAGE_SECRET_KEY:-}" ]]; then
+        log "MinIO configuration is incomplete"
+        exit 1
+      fi
+      mc alias set minio-host "${BUCKET_STORAGE_HOST}" "${BUCKET_STORAGE_ACCESS_KEY}" "${BUCKET_STORAGE_SECRET_KEY}"
+    }
+
+    NEED_MINIO=false
+    if [[ -n "${DATASET_REMOTE}" || -n "${OUTPUT_REMOTE_PATH}" ]]; then
+      NEED_MINIO=true
+    fi
+
+    if [[ "${NEED_MINIO}" == "true" ]]; then
+      setup_minio_alias
+    fi
+
+    LOCAL_DATASET_PATH="${LOCAL_DATASET_PATH_OVERRIDE}"
+    if [[ -n "${DATASET_REMOTE}" ]]; then
+      if [[ -z "${BUCKET_STORAGE_HOST:-}" ]]; then
+        log "datasetRemote specified but bucketStorageHost is empty"
+        exit 1
+      fi
+      TARGET_DIR="${DATASET_DIR}/remote"
+      rm -rf "${TARGET_DIR}"
+      mkdir -p "${TARGET_DIR}"
+      REMOTE_PATH="${DATASET_REMOTE%/}"
+      log "Syncing dataset from MinIO path ${REMOTE_PATH}"
+      mc mirror --overwrite "minio-host/${REMOTE_PATH}" "${TARGET_DIR}"
+      LOCAL_DATASET_PATH="${TARGET_DIR}"
+    fi
+
+    # Export final resolved local dataset path for custom scripts
+    export LOCAL_DATASET_PATH
+
+    run_helper() {
+      if [[ -z "${HF_DATASET_NAME}" ]]; then
+        log "HF helper mode enabled but hf.dataset is empty"
+        exit 1
+      fi
+      CMD=(python3 /configs/hf_dataset_to_parquet.py
+           --dataset "${HF_DATASET_NAME}"
+           --output-dir "${OUTPUT_DIR}")
+
+      if [[ -n "${HF_SPLIT_RATIOS_JSON}" && "${HF_SPLIT_RATIOS_JSON}" != "{}" && "${HF_SPLIT_RATIOS_JSON}" != "null" ]]; then
+        CMD+=(--split-ratios "${HF_SPLIT_RATIOS_JSON}")
+      fi
+
+      if [[ -n "${HF_SPLIT_PERCENTAGES}" || -n "${HF_SPLIT_NAMES}" ]]; then
+        if [[ -n "${HF_SPLIT_PERCENTAGES}" ]]; then
+          CMD+=(--split-percentages "${HF_SPLIT_PERCENTAGES}")
+        fi
+        if [[ -n "${HF_SPLIT_NAMES}" ]]; then
+          CMD+=(--split-names "${HF_SPLIT_NAMES}")
+        fi
+        if [[ -n "${HF_SPLIT_SOURCE}" ]]; then
+          CMD+=(--split-source "${HF_SPLIT_SOURCE}")
+        fi
+        if [[ -n "${HF_SPLIT_SEED}" ]]; then
+          CMD+=(--split-seed "${HF_SPLIT_SEED}")
+        fi
+      else
+        CMD+=(--splits "${HF_DATASET_SPLITS}")
+      fi
+
+      if [[ -n "${HF_DATASET_CONFIG}" ]]; then
+        CMD+=(--config-name "${HF_DATASET_CONFIG}")
+      fi
+      if [[ -n "${HF_PROMPT_FIELD}" ]]; then
+        CMD+=(--prompt-field "${HF_PROMPT_FIELD}")
+      fi
+      if [[ -n "${HF_RESPONSE_FIELD}" ]]; then
+        CMD+=(--response-field "${HF_RESPONSE_FIELD}")
+      fi
+      if [[ -n "${HF_PROMPT_ALIAS}" ]]; then
+        CMD+=(--prompt-alias "${HF_PROMPT_ALIAS}")
+      fi
+      if [[ -n "${HF_RESPONSE_ALIAS}" ]]; then
+        CMD+=(--response-alias "${HF_RESPONSE_ALIAS}")
+      fi
+      if [[ -n "${HF_CONVERSATION_FIELD}" ]]; then
+        CMD+=(--conversation-field "${HF_CONVERSATION_FIELD}")
+      fi
+      if [[ -n "${HF_SYSTEM_PROMPT}" ]]; then
+        CMD+=(--system-prompt "${HF_SYSTEM_PROMPT}")
+      fi
+      if [[ -n "${HF_SYSTEM_PROMPT_FIELD}" ]]; then
+        CMD+=(--system-prompt-field "${HF_SYSTEM_PROMPT_FIELD}")
+      fi
+      if [[ -n "${HF_SYSTEM_PROMPT_ALIAS}" ]]; then
+        CMD+=(--system-prompt-alias "${HF_SYSTEM_PROMPT_ALIAS}")
+      fi
+      if [[ -n "${HF_SYSTEM_PROMPT_TEMPLATE}" ]]; then
+        CMD+=(--system-prompt-template "${HF_SYSTEM_PROMPT_TEMPLATE}")
+      fi
+      if [[ -n "${HF_PROMPT_TEMPLATE}" ]]; then
+        CMD+=(--prompt-template "${HF_PROMPT_TEMPLATE}")
+      fi
+      if [[ -n "${HF_DATA_SOURCE}" ]]; then
+        CMD+=(--data-source "${HF_DATA_SOURCE}")
+      fi
+      if [[ -n "${HF_USER_ROLE}" ]]; then
+        CMD+=(--user-role "${HF_USER_ROLE}")
+      fi
+      if [[ -n "${HF_ASSISTANT_ROLE}" ]]; then
+        CMD+=(--assistant-role "${HF_ASSISTANT_ROLE}")
+      fi
+      if [[ -n "${HF_SYSTEM_ROLE}" ]]; then
+        CMD+=(--system-role "${HF_SYSTEM_ROLE}")
+      fi
+      if [[ -n "${HF_USER_ROLE_ALIAS}" ]]; then
+        CMD+=(--user-role-alias "${HF_USER_ROLE_ALIAS}")
+      fi
+      if [[ -n "${HF_ASSISTANT_ROLE_ALIAS}" ]]; then
+        CMD+=(--assistant-role-alias "${HF_ASSISTANT_ROLE_ALIAS}")
+      fi
+      if [[ -n "${HF_SYSTEM_ROLE_ALIAS}" ]]; then
+        CMD+=(--system-role-alias "${HF_SYSTEM_ROLE_ALIAS}")
+      fi
+      if [[ -n "${HF_PRESERVE_FIELDS}" ]]; then
+        CMD+=(--preserve-fields "${HF_PRESERVE_FIELDS}")
+      fi
+      if [[ -n "${HF_MAX_ROWS}" ]]; then
+        CMD+=(--max-rows "${HF_MAX_ROWS}")
+      fi
+      if [[ -n "${HF_PREVIEW_ROWS}" ]]; then
+        CMD+=(--preview-rows "${HF_PREVIEW_ROWS}")
+      fi
+      if [[ -n "${HF_NUM_PROC}" ]]; then
+        CMD+=(--num-proc "${HF_NUM_PROC}")
+      fi
+
+      log "Running Hugging Face helper script"
+      "${CMD[@]}"
+    }
+
+    run_custom_script() {
+      if [[ -z "${PREPROCESS_SCRIPT}" ]]; then
+        log "No preprocessing script provided"
+        exit 1
+      fi
+      CMD=(python3 "${PREPROCESS_SCRIPT}" --local_save_dir "${OUTPUT_DIR}")
+      if [[ -n "${LOCAL_DATASET_PATH}" ]]; then
+        CMD+=(--local_dataset_path "${LOCAL_DATASET_PATH}")
+      fi
+      if [[ -n "${PREPROCESS_EXTRA_ARGS}" ]]; then
+        # shellcheck disable=SC2206
+        EXTRA_ARR=(${PREPROCESS_EXTRA_ARGS})
+        CMD+=("${EXTRA_ARR[@]}")
+      fi
+      log "Running custom preprocessing script ${PREPROCESS_SCRIPT}"
+      "${CMD[@]}"
+    }
+
+    case "${PREPROCESS_MODE}" in
+      hfScript)
+        run_helper
+        ;;
+      customScript)
+        run_custom_script
+        ;;
+      builtinScript)
+        run_custom_script
+        ;;
+      *)
+        log "Unknown PREPROCESS_MODE '${PREPROCESS_MODE}'"
+        exit 1
+        ;;
+    esac
+
+    if [[ -n "${OUTPUT_REMOTE_PATH}" ]]; then
+      if [[ -z "${BUCKET_STORAGE_HOST:-}" ]]; then
+        log "outputRemotePath specified but bucketStorageHost is empty"
+        exit 1
+      fi
+      REMOTE_OUTPUT="${OUTPUT_REMOTE_PATH%/}"
+      log "Uploading processed data to MinIO path ${REMOTE_OUTPUT}"
+      mc mirror --overwrite "${OUTPUT_DIR}" "minio-host/${REMOTE_OUTPUT}"
+    fi
+
+    log "Dataset preprocessing complete. Output directory: ${OUTPUT_DIR}"
+{{- $files := .Files }}
+{{- range $path, $_ := .Files.Glob "mount/*" }}
+  {{ $key := $path | trimPrefix "mount/" }}
+  {{- if ne $key "entrypoint.sh" }}
+  {{ $key }}: |
+{{ $files.Get $path | indent 4 }}
+  {{- end }}
+{{- end }}
+{{- if and (eq .Values.preprocess.mode "customScript") (ne .Values.preprocess.customScript "") }}
+  custom_script.py: |
+{{ .Values.preprocess.customScript | indent 4 }}
+{{- end }}

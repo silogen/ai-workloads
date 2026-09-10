@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "release.fullname" . }}
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
+  template:
+    spec:
+      {{- include "image.pull_secrets" . | trim | nindent 6 }}
+      restartPolicy: Never
+      containers:
+      - name: resource-delivery
+        image: {{ .Values.image }}
+        imagePullPolicy: Always
+        command:
+        - sh
+        - -e
+        - -u
+        - -c
+        args:
+        - |
+          cd /workdir/run
+          echo "Saving command into run.txt"
+          sed -i 's/cert_check=not no_cert/secure=not no_cert/' /workdir/python/minio_uploader.py
+          echo "bash ../weatherbench/preprocess_models.sh {{ .Values.settings.minio_bucket }} {{ .Values.settings.minio_prefix }} {{ .Values.settings.model_name }} {{ .Values.settings.output }} {{- range .Values.settings.inputs }} {{.}}{{ end }}" > run.txt
+          echo "Downloading, preprocessing and uploading data"
+          bash ../weatherbench/preprocess_models.sh {{ .Values.settings.minio_bucket }} {{ .Values.settings.minio_prefix }} {{ .Values.settings.model_name }} {{ .Values.settings.output }} {{- range .Values.settings.inputs }} {{.}}{{ end }}
+          echo "Done"
+          sleep 3600
+        resources:
+          {{- include "container.resources" . | trim | nindent 12 }}
+        env:
+          {{- include "container.env" . | trim | nindent 12 }}
+          {{- include "container.env_secrets" . | trim | nindent 12 }}

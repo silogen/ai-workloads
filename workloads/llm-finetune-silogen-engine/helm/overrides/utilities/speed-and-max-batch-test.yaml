@@ -1,0 +1,5 @@
+finetuning_config:
+  training_args:
+    include_num_input_tokens_seen: 'non_padding'
+  sft_args:
+    length_handling: "truncate"

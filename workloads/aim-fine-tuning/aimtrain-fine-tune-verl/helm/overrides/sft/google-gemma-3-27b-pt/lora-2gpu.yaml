@@ -1,0 +1,171 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+trainingMode: sft
+
+### Model ###
+modelName: "google/gemma-3-27b-pt"
+gpus: 2
+memoryPerGpu: 128
+cpusPerGpu: 8
+
+checkpointsReservedSize: 384Gi
+storageClass: mlstorage
+
+hfTokenSecret:
+    name: hf-token
+    key: hf-token
+
+tokenizerOverrides:
+    eos_token: "<end_of_turn>"
+    pad_token: "<pad>"
+
+transformersPatches:
+    patchPretrainedConfigVocabSize: true
+    patchAutoModelMappings: true
+    modelMappings:
+      - autoModelClass: "transformers.AutoModelForVision2Seq"
+        configClass: "transformers.models.gemma3.configuration_gemma3.Gemma3Config"
+        modelClass: "transformers.models.gemma3.modeling_gemma3.Gemma3ForConditionalGeneration"
+        fallbackModelClasses:
+          - "transformers.models.gemma3.modeling_gemma3.Gemma3ForCausalLM"
+
+copyProcessorToFinal: true
+
+checkpointsRemote: "default-bucket/experiments/gemma-3-27b-pt-mi300-lora"
+datasetRemote: "default-bucket/verl-sft/dolci-instruct-sft"
+
+verlConfig:
+
+    # =======================
+    # DATA
+    # =======================
+    data:
+        train_max_samples: 20480
+        val_max_samples: 2048
+
+        multiturn:
+            enable: true
+            messages_key: messages
+
+        max_length: 2048
+        truncation: right
+
+        apply_chat_template_kwargs:
+            chat_template: |
+                {{ bos_token }}
+                {%- if messages[0]['role'] == 'system' -%}
+                    {%- if messages[0]['content'] is string -%}
+                        {%- set first_user_prefix = messages[0]['content'] + '\n\n' -%}
+                    {%- else -%}
+                        {%- set first_user_prefix = messages[0]['content'][0]['text'] + '\n\n' -%}
+                    {%- endif -%}
+                    {%- set loop_messages = messages[1:] -%}
+                {%- else -%}
+                    {%- set first_user_prefix = "" -%}
+                    {%- set loop_messages = messages -%}
+                {%- endif -%}
+                {%- for message in loop_messages -%}
+                    {%- if (message['role'] == 'user') != (loop.index0 % 2 == 0) -%}
+                        {{ raise_exception("Conversation roles must alternate user/assistant/user/assistant/...") }}
+                    {%- endif -%}
+                    {%- if (message['role'] == 'assistant') -%}
+                        {%- set role = "model" -%}
+                    {%- else -%}
+                        {%- set role = message['role'] -%}
+                    {%- endif -%}
+                    {{ '<start_of_turn>' + role + '\n' + (first_user_prefix if loop.first else "") }}
+                    {%- if message['content'] is string -%}
+                        {{ message['content'] | trim }}
+                    {%- elif message['content'] is iterable -%}
+                        {%- for item in message['content'] -%}
+                            {%- if item['type'] == 'image' -%}
+                                {{ '<start_of_image>' }}
+                            {%- elif item['type'] == 'text' -%}
+                                {{ item['text'] | trim }}
+                            {%- endif -%}
+                        {%- endfor -%}
+                    {%- else -%}
+                        {{ raise_exception("Invalid content type") }}
+                    {%- endif -%}
+                    {{ '<end_of_turn>\n' }}
+                {%- endfor -%}
+                {%- if add_generation_prompt -%}
+                    {{'<start_of_turn>model\n'}}
+                {%- endif -%}
+
+    micro_batch_size_per_gpu: 16
+    train_batch_size: 32
+
+    # =======================
+    # MODEL
+    # =======================
+    model:
+        partial_pretrain: "google/gemma-3-27b-pt"
+        tokenizer_path: /workdir/tokenizer
+        trust_remote_code: true
+
+        strategy: fsdp2
+        fsdp_config:
+            model_dtype: bfloat16
+            forward_prefetch: true
+            wrap_policy:
+                transformer_layer_cls_to_wrap:
+                  - Gemma3DecoderLayer
+
+        enable_gradient_checkpointing: true
+
+        use_remove_padding: false
+
+        use_liger: false
+
+        # =======================
+        # LoRA CONFIG
+        # =======================
+        lora_rank: 32
+        lora_alpha: 64
+        lora_dropout: 0.0
+
+        target_modules:
+          - q_proj
+          - k_proj
+          - v_proj
+          - o_proj
+          - gate_proj
+          - up_proj
+          - down_proj
+          - lm_head
+          - embed_tokens
+
+    # =======================
+    # OPTIM
+    # =======================
+
+    optim:
+        lr: 2e-4
+        betas: [ 0.9, 0.95 ]
+        weight_decay: 0.01
+        lr_warmup_steps_ratio: 0.03
+        lr_scheduler: cosine
+        clip_grad: 1.0
+
+    # =======================
+    # TRAINER
+    # =======================
+    trainer:
+        project_name: gemma-3-27b-pt-lora
+        experiment_name: dolci-instruct-sft-01
+        total_epochs: 1
+        test_freq: 100
+        logger: [ "console" ]
+
+    # =======================
+    # DEPLOYMENT
+    # =======================
+    aimManifest:
+        extraEnv:
+          - name: AIM_ENGINE_ARGS
+            value: '{"dtype":"bfloat16"}'
+          - name: AIM_PRECISION
+            value: "fp16"

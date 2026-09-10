@@ -1,0 +1,57 @@
+# Container image configuration
+image:
+  name: "rocm/pytorch-training"
+  tag: "v25.2"
+  pullPolicy: "Always"
+
+# Setting job labels
+metadata:
+  labels:
+    kaiwo.silogen.ai/managed: "true"
+
+resources:
+  gpus: 1
+  memoryPerGpu: 64
+  cpuPerGpu: 4
+
+# Volume configurations
+storage:
+  ephemeral:
+    quantity: 200Gi
+    storageClassName: mlstorage
+    accessModes:
+    - ReadWriteOnce
+  dshm:
+    enabled: true
+    sizeLimit: "64Gi"
+
+entrypoint: "bash /workload/mount/entrypoint.sh"
+
+# Environment variables
+env_vars:
+  BUCKET_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+  BUCKET_STORAGE_HOST: "http://minio.minio-tenant-default.svc.cluster.local:80"
+  BUCKET_PATH: "default-bucket/models"
+  MODEL_ID: "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
+
+deployment:
+  ports:
+    http: 8080
+
+
+readinessProbe:
+  exec:
+    command:
+    - cat
+    - /workload/healthy
+  initialDelaySeconds: 60
+  periodSeconds: 10
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false

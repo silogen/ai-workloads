@@ -1,0 +1,143 @@
+diff --git a/megatron/core/dist_checkpointing/strategies/filesystem_async.py b/megatron/core/dist_checkpointing/strategies/filesystem_async.py
+index 47ab4d11..0c1b868d 100644
+--- a/megatron/core/dist_checkpointing/strategies/filesystem_async.py
++++ b/megatron/core/dist_checkpointing/strategies/filesystem_async.py
+@@ -20,6 +20,15 @@ from torch.distributed.checkpoint.planner import SavePlan, SavePlanner, WriteIte
+ from torch.distributed.checkpoint.storage import WriteResult
+ from torch.futures import Future
+ 
++try:
++    # This PR https://github.com/pytorch/pytorch/pull/143359 introduced breaking change to saving checkpoints
++    # in torch_dist format. This is a workaround to fix the issue.
++    from torch.distributed.checkpoint.filesystem import _StorageWriterTransforms
++    from functools import partial
++    _write_item = partial(_write_item, _StorageWriterTransforms())
++except ImportError:
++    pass
++
+ logger = logging.getLogger(__name__)
+ 
+ WriteBucket = Tuple[Path, str, Tuple[list, list]]  # represents writes to a single file
+diff --git a/megatron/training/checkpointing.py b/megatron/training/checkpointing.py
+index 92813050..dd771395 100644
+--- a/megatron/training/checkpointing.py
++++ b/megatron/training/checkpointing.py
+@@ -970,6 +970,9 @@ def load_args_from_checkpoint(
+     _set_arg('rotary_base', force=True)
+     _set_arg('rotary_percent', force=True)
+     _set_arg('rotary_interleaved', force=True)
++    _set_arg('rotary_seq_len_interpolation_factor', force=True)
++    _set_arg('use_rope_scaling', force=True)
++    _set_arg('norm_epsilon', force=True)
+     _set_arg('add_bias_linear', force=True)
+     _set_arg('add_qkv_bias', force=True)
+     _set_arg('squared_relu', force=True)
+diff --git a/pretrain_gpt.py b/pretrain_gpt.py
+index d31c0954..a850624a 100644
+--- a/pretrain_gpt.py
++++ b/pretrain_gpt.py
+@@ -125,7 +125,8 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, megat
+                 position_embedding_type=args.position_embedding_type,
+                 rotary_percent=args.rotary_percent,
+                 rotary_base=args.rotary_base,
+-                rope_scaling=args.use_rope_scaling
++                rope_scaling=args.use_rope_scaling,
++                seq_len_interpolation_factor=args.rotary_seq_len_interpolation_factor
+             )
+ 
+     return model
+diff --git a/tools/checkpoint/convert.py b/tools/checkpoint/convert.py
+index 935613b1..4a2297f6 100644
+--- a/tools/checkpoint/convert.py
++++ b/tools/checkpoint/convert.py
+@@ -151,4 +151,8 @@ def main():
+ 
+ 
+ if __name__ == '__main__':
++    try:
++        mp.set_start_method('spawn')
++    except RuntimeError:
++        pass
+     main()
+diff --git a/tools/checkpoint/loader_llama_mistral.py b/tools/checkpoint/loader_llama_mistral.py
+index b6697964..c96fec45 100644
+--- a/tools/checkpoint/loader_llama_mistral.py
++++ b/tools/checkpoint/loader_llama_mistral.py
+@@ -320,6 +320,13 @@ def load_args_from_checkpoint(args):
+     args.padded_vocab_size = model_args["vocab_size"]
+     args.ffn_hidden_size = model_args["intermediate_size"]
+ 
++    if "rope_theta" in model_args:
++        args.rotary_base = int(model_args["rope_theta"])
++    if "rope_scaling" in model_args and model_args["rope_scaling"].get("type", "") == "linear" and "factor" in model_args["rope_scaling"]:
++        args.rotary_seq_len_interpolation_factor = int(model_args["rope_scaling"]["factor"])
++    if "rope_scaling" in model_args and model_args["rope_scaling"].get("rope_type", "") == "llama3":
++        args.use_rope_scaling = True
++
+     if "num_key_value_heads" in model_args:
+         args.group_query_attention = True
+         args.num_query_groups = model_args["num_key_value_heads"]
+@@ -457,6 +464,7 @@ def _load_checkpoint(queue, args):
+                 '--no-save-rng',
+                 '--mock-data', # To pass the "blend data checks" in arguments.py
+                 '--no-initialization',
++                '--no-gradient-accumulation-fusion',
+                 '--load', args.load_dir,
+                 '--no-one-logger',
+                 ]
+@@ -560,6 +568,10 @@ def _load_checkpoint(queue, args):
+     md.checkpoint_args = margs
+     md.consumed_train_samples = 0
+     md.consumed_valid_samples = 0
++    md.norm_epsilon = margs.norm_epsilon
++    md.rotary_base = margs.rotary_base
++    md.rotary_seq_len_interpolation_factor = margs.rotary_seq_len_interpolation_factor
++    md.use_rope_scaling = margs.use_rope_scaling
+ 
+     margs.model_size = args.model_size
+ 
+diff --git a/tools/checkpoint/saver_mcore.py b/tools/checkpoint/saver_mcore.py
+index 2caf26a9..83c7951b 100644
+--- a/tools/checkpoint/saver_mcore.py
++++ b/tools/checkpoint/saver_mcore.py
+@@ -137,6 +137,15 @@ def save_checkpoint(queue, args):
+                 '--no-one-logger',
+                 ]
+ 
++    if md.norm_epsilon:
++        sys.argv.extend(['--norm-epsilon', str(md.norm_epsilon)])
++    if md.rotary_base:
++        sys.argv.extend(['--rotary-base', str(md.rotary_base)])
++    if md.rotary_seq_len_interpolation_factor:
++        sys.argv.extend(['--rotary-seq-len-interpolation-factor', str(md.rotary_seq_len_interpolation_factor)])
++    if md.use_rope_scaling:
++        sys.argv.append('--use-rope-scaling')
++
+     if md.make_vocab_size_divisible_by is not None:
+         sys.argv.extend(['--make-vocab-size-divisible-by', str(md.make_vocab_size_divisible_by)])
+     if md.params_dtype == torch.float16:
+@@ -188,8 +197,8 @@ def save_checkpoint(queue, args):
+     margs.apply_query_key_layer_scaling = md.checkpoint_args.apply_query_key_layer_scaling
+ 
+     # Sequence parallel is required if use both tensor-parallel and Moe.
+-    if margs.num_experts is not None and args.target_tensor_parallel_size is not None:
+-        if margs.num_experts > 1 and args.target_tensor_parallel_size > 1:
++    if args.target_tensor_parallel_size is not None:
++        if args.target_tensor_parallel_size > 1:
+             margs.sequence_parallel = True
+ 
+     validate_args(margs)
+diff --git a/tools/run_text_generation_server.py b/tools/run_text_generation_server.py
+index e5b3f08a..fd6688e2 100644
+--- a/tools/run_text_generation_server.py
++++ b/tools/run_text_generation_server.py
+@@ -84,7 +84,8 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, megat
+             position_embedding_type=args.position_embedding_type,
+             rotary_percent=args.rotary_percent,
+             rotary_base=args.rotary_base,
+-            rope_scaling=args.use_rope_scaling
++            rope_scaling=args.use_rope_scaling,
++            seq_len_interpolation_factor=args.rotary_seq_len_interpolation_factor
+         )
+ 
+     return model

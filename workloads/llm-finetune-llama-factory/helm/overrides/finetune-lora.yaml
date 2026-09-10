@@ -1,0 +1,54 @@
+### Model ###
+modelName: meta-llama/Llama-3.1-8B-Instruct
+
+### Data ###
+dataset: identity,alpaca_en_demo
+
+### Model output path ###
+checkpointsRemote: "default-bucket/experiments/llama3-8b-llama-factory-lora"
+
+# Resources:
+checkpointsReservedSize: 10Gi
+
+hfTokenSecret:
+  name: hf-token
+  key: hf-token
+
+### llama-factory config ###
+### this example from https://github.com/hiyouga/LLaMA-Factory/blob/main/examples/train_lora/llama3_lora_sft.yaml
+llamaFactoryConfig:
+  ### model
+  trust_remote_code: true
+
+  ### method
+  stage: sft
+  do_train: true
+  finetuning_type: lora
+  lora_rank: 8
+  lora_target: all
+
+  ### dataset
+  template: llama3
+  cutoff_len: 2048
+  max_samples: 1000
+  overwrite_cache: true
+  preprocessing_num_workers: 16
+  dataloader_num_workers: 4
+
+  ### output
+  logging_steps: 10
+  save_steps: 500
+  plot_loss: true
+  overwrite_output_dir: true
+  save_only_model: false
+  report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+  ### train
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 1.0e-4
+  num_train_epochs: 3.0
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.1
+  bf16: true
+  ddp_timeout: 180000000

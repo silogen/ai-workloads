@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dev-lifescience-swinunetr-training
+description: A Helm chart for training of the MONAI SwinUNETR model on the NSCLC-Radiomics dataset.
+version: 0.0.1

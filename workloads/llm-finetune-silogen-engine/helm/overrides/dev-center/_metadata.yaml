@@ -1,0 +1,15 @@
+name: "LLM Fine-tuning (Silogen)"
+slug: "llm-finetune-silogen-engine"
+shortDescription: "Fine-tune LLMs with Silogen Engine"
+longDescription: 'The Silogen Engine provides a powerful framework for fine-tuning Large Language Models (LLMs) on your custom datasets. This service enables you to adapt pre-trained models to your specific use cases and domains with advanced techniques like LoRA (Low-Rank Adaptation).'
+category: TRAINING
+tags: ["finetuning", "llm", "silogen", "training"]
+featuredImage: "https://media.licdn.com/dms/image/v2/D4D0BAQGoHeexJ8WD0Q/company-logo_200_200/company-logo_200_200/0/1737714832800/amdsiloai_logo?e=1752710400&v=beta"
+requiredResources:
+  gpuCount: 1
+  gpuMemory: 80
+  cpuCoreCount: 8
+  systemMemory: 512
+type: "FINE_TUNING"
+id: "llm-finetune-silogen-engine"
+externalUrl: "https://docs.silogen.ai/fine-tuning/"

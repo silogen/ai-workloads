@@ -1,0 +1,22 @@
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
+model: "deepseek-ai/DeepSeek-R1-Zero"
+served_model_name: "deepseek-ai/DeepSeek-R1-Zero"
+gpus: 8
+memory_per_gpu: 64 # Gi
+cpu_per_gpu: 4
+
+vllm_engine_args:
+  max-model-len: "32768"
+
+storage:
+  ephemeral:
+    quantity: 1024Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 64Gi

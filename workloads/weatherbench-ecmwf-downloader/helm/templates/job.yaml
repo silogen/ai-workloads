@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "release.fullname" . }}
+  {{- if .Values.labels }}
+  labels:
+    {{- range $label, $value := .Values.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
+  template:
+    spec:
+      {{- include "image.pull_secrets" . | trim | nindent 6 }}
+      restartPolicy: Never
+      containers:
+      - name: resource-delivery
+        image: {{ .Values.image }}
+        imagePullPolicy: Always
+        command:
+        - sh
+        - -e
+        - -u
+        - -c
+        args:
+        - |
+          cd /workdir/run
+          ######### SETUP ENVIRONMENT VARIABLES FOR DOWNLOADER #########
+          export WB_SURFACE_VARIABLES="{{- range .Values.settings.surface_variables}} {{.}}{{ end }}"
+          export WB_VERTICAL_VARIABLES="{{- range .Values.settings.vertical_variables}} {{.}}{{ end }}"
+          export WB_PRESSURE_LEVELS="{{- range .Values.settings.pressure_levels}} {{.}}{{ end }}"
+          ######### RUN DOWNLOADER #########
+          echo "Downloading, preprocessing and uploading data"
+          sed -i 's/cert_check=not no_cert/secure=not no_cert/' /workdir/python/minio_uploader.py
+          bash ../weatherbench/download_and_preprocess.sh {{ .Values.settings.minio_bucket }} {{ .Values.settings.minio_prefix }} {{ .Values.settings.start_date }} {{ .Values.settings.end_date }} {{ .Values.settings.tods }}
+          echo "Done"
+        resources:
+          {{- include "container.resources" . | trim | nindent 12 }}
+        env:
+          {{- include "container.env" . | trim | nindent 12 }}
+          {{- include "container.env_secrets" . | trim | nindent 12 }}

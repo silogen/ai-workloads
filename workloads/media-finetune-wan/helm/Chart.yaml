@@ -1,0 +1,6 @@
+apiVersion: v2
+name: finetune-wan
+description: Job for fine-tuning Wan2.2 with DiffSynth framework.
+type: application
+version: 0.0.1
+appVersion: "0.0.1"

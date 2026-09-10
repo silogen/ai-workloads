@@ -1,0 +1,95 @@
+# This override is intended for workloads/media-finetune-wan/README.md
+
+# Use to add labels to the metadata of the resources created by this workload.
+labels:
+  kaiwo.silogen.ai/managed: "true"
+
+# Data download and preprocess script:
+dataScript: |
+    from huggingface_hub import snapshot_download
+    import pandas as pd
+    import os
+
+    def create_metadata_csv(videos_file_path, captions_file_path, output_csv_path):
+        """
+        Create a metadata.csv file combining video filenames with their corresponding captions.
+
+        Args:
+            videos_file_path: Path to the videos.txt file containing video filenames
+            captions_file_path: Path to the prompt.txt file containing captions
+            output_csv_path: Path where the metadata.csv file will be saved
+        """
+
+        # Read video filenames and remove "videos/" prefix
+        with open(videos_file_path, 'r', encoding='utf-8') as f:
+            video_filenames = [line.strip() for line in f if line.strip()]
+
+        # Read captions
+        with open(captions_file_path, 'r', encoding='utf-8') as f:
+            captions = [line.strip() for line in f if line.strip()]
+
+        # Verify that we have the same number of videos and captions
+        if len(video_filenames) != len(captions):
+            print(f"Warning: Number of video files ({len(video_filenames)}) doesn't match number of captions ({len(captions)})")
+            min_length = min(len(video_filenames), len(captions))
+            video_filenames = video_filenames[:min_length]
+            captions = captions[:min_length]
+            print(f'Using first {min_length} entries for both')
+
+        # Create DataFrame
+        metadata_df = pd.DataFrame({
+            'video': video_filenames,
+            'prompt': captions
+        })
+
+        # Save to CSV
+        metadata_df.to_csv(output_csv_path, index=False, encoding='utf-8')
+
+        print(f'Created metadata.csv with {len(metadata_df)} entries')
+        print(f'Saved to: {output_csv_path}')
+
+        # Display first few entries
+        print('\nFirst 5 entries:')
+        print(metadata_df.head())
+
+        return metadata_df
+
+    # Define dataset
+    repo_id = 'Wild-Heart/Disney-VideoGeneration-Dataset'
+
+    # Define paths
+    output_dir = '/downloads/datasets'
+
+    # Define file names
+    videos_file = 'videos.txt'
+    captions_file = 'prompt.txt'
+    output_csv = 'metadata.csv'
+
+    videos_file = os.path.join(output_dir, 'videos.txt')
+    captions_file = os.path.join(output_dir, 'prompt.txt')
+    output_csv = os.path.join(output_dir, 'metadata.csv')
+
+    # Download the dataset
+    snapshot_download(
+        repo_id=repo_id,
+        repo_type='dataset',
+        local_dir=output_dir)
+    print('Dataset downloaded successfully.')
+
+    # Process the dataset (create a metadata.csv file)
+    metadata_df = create_metadata_csv(videos_file, captions_file, output_csv)
+    print('Metadata CSV created successfully.')
+
+# Where the resources should be stored:
+bucketDataDir: default-bucket/datasets/Disney-VideoGeneration-Dataset
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+# Bucket credentials from a secret:
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Storage configuration:
+storageClass: mlstorage
+storageQuantity: "32Mi"
