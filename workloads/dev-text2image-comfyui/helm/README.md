@@ -17,8 +17,8 @@ You can configure the following parameters in the `values.yaml` file or override
 | `image`                      | Container image repository and tag                                    | `rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0` |
 | `imagePullSecrets`           | List of Kubernetes secrets for pulling images from private registries | `[]`                                       |
 | `gpus`                       | Number of GPUs to allocate                                            | `1`                                        |
-| `model`                      | Hugging Face model path (e.g., `Comfy-Org/flux1-dev`)                  | Not set                                    |
-| `tag`                        | Specific model binaries (**\*tag\*.safetensors**)  to download (optional) | Clone the repo when not set            |
+| `model`                      | Hugging Face model path (e.g., `Comfy-Org/flux1-dev`). Set to `""` to start with no checkpoint | `Comfy-Org/stable-diffusion-v1-5-archive` |
+| `tag`                        | Identifies one model's binaries (**\*tag\*safetensors**) to download. Without it the whole repository is downloaded | `v1-5-pruned-emaonly-fp16` |
 | `storage.ephemeral.quantity` | Ephemeral storage size                                                | `200Gi`                                    |
 | `kaiwo.enabled`              | Enable Kaiwo operator management                                      | `false`                                    |
 ## Using Private Container Registries
@@ -55,6 +55,26 @@ The following environment variables are configured for MinIO/S3 integration:
 
 ## Model Configuration
 
+The default deployment pre-loads `v1-5-pruned-emaonly-fp16.safetensors` (2 GiB),
+which is the checkpoint ComfyUI's stock workflow selects by name, so the
+workspace can generate an image as soon as it opens. The workspace reports
+itself ready only once that checkpoint is on disk.
+
+`tag` must identify a single model's file. It is matched as `*tag*safetensors`
+both to choose what to download and to decide the workspace is ready, so a
+fragment shared by several models (`fp8`, say) would let a checkpoint left by a
+previously configured model pass for the current one.
+
+Other ways to get a model:
+
+- **A different checkpoint at deploy time**, by setting `model` and `tag`, or by
+  using one of the overrides in `overrides/models/`. Larger models take
+  proportionally longer before the workspace becomes ready, and the stock
+  workflow will need its checkpoint re-selected.
+- **At runtime from the UI**, using the ComfyUI-Manager model manager. Set
+  `model: ""` to skip the pre-load entirely, in which case the workspace becomes
+  ready as soon as the server answers and starts with an empty checkpoint list.
+
 ### Using Hugging Face Models
 
 Configure models from Hugging Face by setting the `model` parameter:
@@ -64,6 +84,10 @@ Configure models from Hugging Face by setting the `model` parameter:
 model: "Comfy-Org/flux1-dev"
 tag: "flux1-dev-fp8"
 ```
+
+The example above appears in ComfyUI as `flux1-dev-fp8.safetensors`. Note the
+tag is the full `flux1-dev-fp8` rather than `fp8`, which `Comfy-Org/flux1-schnell`
+also matches.
 
 ### Using S3/MinIO Models
 
@@ -106,10 +130,11 @@ helm template flux . -f overrides/models/comfy-org_flux1-dev-fp8.yaml | kubectl 
 
 ### Custom Deployment
 
-To deploy with custom parameters:
+To deploy with custom parameters. Set `tag` whenever you change `model`, so that
+it identifies a file the new repository actually contains:
 
 ```bash
-helm template flux . --set model="Comfy-Org/flux1-dev" | kubectl apply -f -
+helm template flux . --set model="Comfy-Org/flux1-dev" --set tag="flux1-dev-fp8" | kubectl apply -f -
 ```
 
 ## Accessing the Workload
@@ -167,4 +192,10 @@ The workload includes comprehensive health monitoring:
 
 - **Startup Probe**: Allows up to 10 minutes for ComfyUI to start (checks `/queue` endpoint)
 - **Liveness Probe**: Monitors if ComfyUI is running properly
-- **Readiness Probe**: Ensures ComfyUI is ready to serve requests
+- **Readiness Probe**: Asks ComfyUI which checkpoints it can see (`/models/checkpoints`). When `model` is set, it requires that model's checkpoint, so the workload only receives traffic once it is usable. With no `model`, the server answering is enough
+
+A configured checkpoint is downloaded in the background so that a large model
+cannot delay the server bind past the startup probe budget. ComfyUI therefore
+serves `/queue` before the model is on disk, and the pod only becomes Ready once
+the checkpoint appears. A download that fails or stalls restarts the container,
+which resumes the transfer, rather than leaving a modelless workload running.

@@ -23,7 +23,9 @@ mc cp --recursive {{$minioModel}} {{$localModel}} || { echo "Model copy from Min
 echo '--------------------------------------------'
 echo 'Setting up ComfyUI environment'
 echo '--------------------------------------------'
-apt-get update && apt-get install -y git
+if ! command -v git >/dev/null 2>&1; then
+    apt-get update && apt-get install -y git
+fi
 pip install huggingface_hub[hf_transfer] hiredis $PIP_DEPS
 
 COMFYUI_VERSION="{{ default "v0.18.1" .Values.comfyui_version }}"
@@ -72,7 +74,34 @@ echo '--------------------------------------------'
 echo '--------------------------------------------'
 echo 'Downloading model from HuggingFace: {{ .Values.model }}'
 echo '--------------------------------------------'
-hf download {{ .Values.model }} --local-dir "$COMFYUI_PATH/models/checkpoints" {{- if .Values.tag }} --include *{{ .Values.tag }}*safetensors{{- end }}
+# Checkpoints stay directly in models/checkpoints so their names match what
+# ComfyUI's stock workflows reference. `tag` therefore has to identify one
+# model's file, not a fragment several models share.
+CHECKPOINT_DIR="$COMFYUI_PATH/models/checkpoints"
+mkdir -p "$CHECKPOINT_DIR"
+# Let hf decide what still needs fetching rather than skipping on a local match;
+# it leaves complete files alone, so a warm volume only costs a metadata check.
+#
+# Run it in the background so the checkpoint size does not delay the server
+# bind: a multi-GB fetch on a cold cluster can exceed the startupProbe budget
+# and get the container killed mid-download.
+(
+    # hf download exits 0 when the repo cannot be accessed (it falls back to
+    # returning the existing local_dir), so a gated repo or a stale token would
+    # otherwise look like success. Confirm this model's checkpoint landed. The
+    # cap stops a stalled fetch from holding a GPU indefinitely; the restart
+    # resumes from the partial file.
+    if timeout 2h hf download {{ .Values.model }} --local-dir "$CHECKPOINT_DIR" {{- if .Values.tag }} --include *{{ .Values.tag }}*safetensors{{- end }} \
+        && ls "$CHECKPOINT_DIR/"{{ if .Values.tag }}*{{ .Values.tag }}{{ end }}*safetensors >/dev/null 2>&1; then
+        echo 'Model checkpoint ready'
+    else
+        # Stop the server so the container restarts and retries. The pattern is
+        # anchored because PID 1's command line contains this script, and
+        # signalling PID 1 from inside the container is a no-op.
+        echo 'Model download failed or timed out; restarting container to retry' >&2
+        until pkill -f '^python main\.py'; do sleep 5; done
+    fi
+) &
 
 {{- end }}
 {{- end }}
@@ -90,7 +119,7 @@ else
     env -C "$COMFYUI_PATH/models/checkpoints/" curl -LO "${MODEL_BIN_URL}" || { echo "Model download failed"; exit 1; }
 fi
 
-cd "$COMFYUI_PATH" && python main.py --listen 0.0.0.0
+cd "$COMFYUI_PATH" && python main.py --listen 0.0.0.0 --port "$COMFYUI_PORT"
 {{- end }}
 
 {{ define "entrypoint" }}
