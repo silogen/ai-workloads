@@ -236,6 +236,11 @@
                     "description": "Scope of the base AIMModel reference",
                     "enum": ["Auto", "Namespace", "Cluster"],
                     "default": "Namespace"
+                  },
+                  "modelId": {
+                    "type": ["string", "null"],
+                    "description": "Optional model ID used to select source profiles built from matching weights",
+                    "default": null
                   }
                 }
               },

@@ -152,6 +152,9 @@ data:
         derivedFrom:
           selector:
             role: {{ .Values.aimManifest.modelManifest.profilesRole | quote }}
+            {{- with .Values.aimManifest.modelManifest.baseModel.modelId }}
+            modelId: {{ . | quote }}
+            {{- end }}
             modelRef:
               name: {{ .Values.aimManifest.modelManifest.baseModel.name | quote }}
               scope: {{ .Values.aimManifest.modelManifest.baseModel.scope | quote }}

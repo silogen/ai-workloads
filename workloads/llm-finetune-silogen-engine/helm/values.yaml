@@ -131,6 +131,7 @@ aimManifest:
     baseModel:
       name: aim-base
       scope: Namespace
+      modelId: null
     profilesRole: deployable
     labels: {} # Extra labels to add to the AIMModel resource
     annotations: {} # Extra annotations to add to the AIMModel resource
