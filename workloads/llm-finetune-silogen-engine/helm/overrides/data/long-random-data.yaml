@@ -1,0 +1,6 @@
+# This works for default path in the corresponding data download override
+finetuning_config:
+  data_conf:
+    training_data:
+      datasets:
+        - path: default-bucket/datasets/long-random-data.jsonl

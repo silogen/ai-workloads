@@ -1,0 +1,83 @@
+# Container image configuration
+image:
+  name: "rocm/pytorch-training"
+  tag: "v25.2"
+  pullPolicy: "Always"
+
+# Setting job labels
+metadata:
+  labels:
+    kaiwo.silogen.ai/managed: "true"
+
+resources:
+  gpus: 1
+  memoryPerGpu: 64
+  cpuPerGpu: 4
+
+# Volume configurations
+storage:
+  ephemeral:
+    quantity: 200Gi
+    storageClassName: mlstorage
+    accessModes:
+    - ReadWriteOnce
+  dshm:
+    enabled: true
+    sizeLimit: "32Gi"
+
+modelId: Wan-AI/Wan2.1-T2V-1.3B-Diffusers
+bucketPath: default-bucket/models
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+entrypoint: |
+  #!/bin/bash
+
+  pip install --upgrade pip
+  pip install "diffusers>=0.33" ftfy accelerate
+
+  # --- Python: Download and save model ---
+  python <<'EOF'
+  import torch
+  from diffusers import AutoencoderKLWan, WanPipeline
+  from diffusers.schedulers.scheduling_unipc_multistep import UniPCMultistepScheduler
+
+  flow_shift = 3.0  # 5.0 for 720P, 3.0 for 480P
+
+  scheduler = UniPCMultistepScheduler(
+      prediction_type="flow_prediction",
+      use_flow_sigmas=True,
+      num_train_timesteps=1000,
+      flow_shift=flow_shift,
+  )
+
+  vae = AutoencoderKLWan.from_pretrained("{{ .Values.modelId }}", subfolder="vae", torch_dtype=torch.float32)
+  pipe = WanPipeline.from_pretrained("{{ .Values.modelId }}", vae=vae, torch_dtype=torch.bfloat16)
+  pipe.scheduler = scheduler
+  pipe.save_pretrained("./Diffusion_model")
+  EOF
+
+  # --- Zip model directory ---
+  cd Diffusion_model
+  zip -r ../model.zip *
+  cd ..
+
+  # Upload resources
+  mc cp model.zip minio-host/{{ .Values.bucketPath }}/{{ .Values.modelId }}/packaged/model.zip
+
+# Environment variables
+env_vars:
+  BUCKET_ACCESS_KEY:
+    name: minio-credentials
+    key: minio-access-key
+  BUCKET_SECRET_KEY:
+    name: minio-credentials
+    key: minio-secret-key
+
+# Job restart and timeout settings
+job:
+  restartPolicy: "Never"
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 432000
+
+kaiwo:
+  enabled: false

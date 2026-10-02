@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "release.fullname" . }}
+  labels:
+    app: {{ include "release.fullname" . }}
+    {{- range $key, $value := .Values.metadata.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  activeDeadlineSeconds: 86400 # 24 hours timeout
+  template:
+    metadata:
+      labels:
+        app: {{ include "release.fullname" . }}
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- .Values.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image | quote}}
+          imagePullPolicy: {{ default "Always" .Values.imagePullPolicy | quote }}
+          {{- if .Values.entrypoint }}
+          command: ["/bin/bash", "-c"]
+          args:
+          - |
+            {{- .Values.entrypoint | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- include "container.resources" . | nindent 12 }}
+          volumeMounts:
+            {{- include "container.volumeMounts" . | nindent 12 }}
+          env:
+          - name: TORCH_HOME
+            value: "/workload"
+
+      restartPolicy: Never
+      volumes:
+        {{- include "container.volumes" . | nindent 8 }}

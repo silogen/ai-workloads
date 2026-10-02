@@ -1,0 +1,99 @@
+metadata:
+  labels: {}
+
+image: rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0
+imagePullPolicy: Always
+
+gpus: 1
+memory_per_gpu: 64
+cpu_per_gpu: 12
+
+
+init_args: |
+  rocminfo && echo "ROCm is working!" || echo "ROCm is not working!"
+
+  # Copy files from readonly ConfigMap to writable location
+  cp /workload/mount/* /workload/
+  chmod +x /workload/benchmark.sh
+  cd /workload
+
+  apt-get update && apt-get install -y git
+  apt-get install -y libopencv-dev
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+  # Build OpenSplat
+  git clone https://github.com/pierotofy/OpenSplat
+  cd /workload/OpenSplat
+  git checkout 86d2500d3f50de3fee933525a1217c06634f791f
+
+  source activate py_3.10
+  mkdir build
+  cd build
+  cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DGPU_RUNTIME=HIP \
+    -DHIP_ROOT_DIR=/opt/rocm \
+    -DOPENSPLAT_BUILD_SIMPLE_TRAINER=ON \
+    -DCMAKE_PREFIX_PATH=/opt/conda/envs/py_3.10/lib/python3.10/site-packages/torch \
+    -DCMAKE_INSTALL_PREFIX=/code/install
+  make
+
+  # Install gdown for downloading data
+  pip install --upgrade gdown
+
+  # download data
+  cd /workload
+  if [ ! -f /workload/banana.zip ]; then
+      echo "Download banana data"
+      gdown --id 1mUUZFDo2swd6CE5vwPPkjN63Hyf4XyEv --no-check-certificate -O banana.zip
+      unzip banana.zip
+      rm banana.zip
+  fi
+
+  if [ ! -f /workload/truck.zip ]; then
+      echo "Download truck data"
+      gdown --id 1WWXo-GKo6d-yf-K1T1CswIdkdZrBNZ_e --no-check-certificate -O truck.zip
+      unzip truck.zip
+      rm truck.zip
+  fi
+
+  echo "Setup completed successfully"
+
+
+entrypoint: |
+  echo "Starting OpenSplat operations..."
+
+  cd /workload
+
+  # Run benchmark and capture all output
+  # The benchmark will most likely fail at some point. Once it fails, we will capture all the logs and reformat it.
+  ./benchmark.sh /workload/OpenSplat/build 2>&1 | tee opensplat.log
+  BENCHMARK_EXIT_CODE=${PIPESTATUS[0]}
+
+  # Now check the captured exit code
+  if [ $BENCHMARK_EXIT_CODE -eq 0 ]; then
+    echo "Benchmark completed at $(date) with exit code: $BENCHMARK_EXIT_CODE"
+  else
+    echo "Benchmark failed at $(date) with exit code: $BENCHMARK_EXIT_CODE"
+  fi
+
+  # Process logs
+  echo "Continuing to process logs..."
+  python3 /workload/mount/reformat_log.py
+  echo "Log processing completed"
+
+  # Print the two outputs from the reformat_log.py script.
+  cat output_table1.txt
+  cat output_table2.txt
+
+  echo "Job completed at $(date)"
+
+storage:
+  ephemeral:
+    quantity: 128Gi
+    # Change the storageClassName to standard or other name
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi

@@ -1,0 +1,16 @@
+metadata:
+  labels:
+    pipeline_tag: "image-text-to-text"
+    chat: "true"
+
+model: "mistralai/Mistral-Small-3.1-24B-Instruct-2503"
+served_model_name: "mistralai/Mistral-Small-3.1-24B-Instruct-2503"
+
+vllm_engine_args:
+  max-model-len: "32768"
+
+env_vars:
+  HF_TOKEN:
+    key: hf-token
+    name: hf-token
+  VLLM_USE_TRITON_FLASH_ATTN: "0"

@@ -1,0 +1,4 @@
+apiVersion: v2
+name: benchmark-robotics-gsplat
+description: A Helm chart for gsplat inference
+version: 0.0.1

@@ -1,0 +1,223 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Metadata for the job",
+      "properties": {
+        "labels": {
+          "type": "object",
+          "description": "Labels to apply to the job",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["labels"]
+    },
+    "image": {
+      "type": "string",
+      "description": "Docker image to use for the job"
+    },
+    "imagePullPolicy": {
+      "type": "string",
+      "description": "Image pull policy",
+      "enum": ["Always", "IfNotPresent", "Never"]
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "Image pull secrets for private registries"
+    },
+    "entrypoint": {
+      "type": "string",
+      "description": "Entrypoint for the container"
+    },
+    "gpus": {
+      "type": "integer",
+      "description": "Number of GPUs to allocate",
+      "minimum": 1
+    },
+    "cpu": {
+      "type": "object",
+      "description": "CPU resource requests and limits for the container.",
+      "properties": {
+        "requests": {
+          "type": "string",
+          "description": "The amount of CPU to request for the container. e.g., '500m' or '1'."
+        },
+        "limits": {
+          "type": "string",
+          "description": "The maximum amount of CPU the container can use. e.g., '1000m' or '2'."
+        }
+      }
+    },
+    "ephemeral_storage": {
+      "type": "string",
+      "description": "Ephemeral storage space written with as <value>Gi",
+      "minimum": 1
+    },
+    "vllm_engine_args": {
+      "type": "object",
+      "description": "Arguments for the vllm engine",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "env_vars": {
+      "type": "object",
+      "description": "Environment variables for the deployment",
+      "properties": {
+        "BUCKET_STORAGE_HOST": {
+          "type": "string",
+          "description": "Bucket storage host URL",
+          "format": "uri"
+        },
+        "BUCKET_STORAGE_ACCESS_KEY": {
+          "type": "object",
+          "description": "Access key for bucket storage",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the secret containing the access key"
+            },
+            "key": {
+              "type": "string",
+              "description": "Key in the secret containing the access key"
+            }
+          },
+          "required": ["name", "key"]
+        },
+        "BUCKET_STORAGE_SECRET_KEY": {
+          "type": "object",
+          "description": "Secret key for bucket storage",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the secret containing the secret key"
+            },
+            "key": {
+              "type": "string",
+              "description": "Key in the secret containing the secret key"
+            }
+          },
+          "required": ["name", "key"]
+        }
+      },
+      "required": ["BUCKET_STORAGE_HOST", "BUCKET_STORAGE_ACCESS_KEY", "BUCKET_STORAGE_SECRET_KEY"]
+    },
+    "storage": {
+      "type": "object",
+      "description": "Storage configuration",
+      "properties": {
+        "dshm": {
+          "type": "object",
+          "description": "Shared memory configuration",
+          "properties": {
+            "sizeLimit": {
+              "type": "string",
+              "description": "Size limit for shared memory"
+            }
+          },
+          "required": ["sizeLimit"]
+        }
+      },
+      "required": ["dshm"]
+    },
+    "training": {
+      "type": "object",
+      "description": "Configuration for the training script.",
+      "properties": {
+        "args": {
+          "type": "object",
+          "description": "Arguments to be passed to the main training script. These will be converted into command-line flags.",
+          "additionalProperties": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "number" },
+              { "type": "boolean" }
+            ]
+          }
+        }
+      }
+    },
+    "volumes": {
+      "type": "array",
+      "description": "Custom volumes to mount from secrets or configmaps.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "mountPath": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "object",
+            "properties": {
+              "secretName": {
+                "type": "string"
+              }
+            },
+            "required": ["secretName"]
+          }
+        },
+        "required": ["name", "mountPath"]
+      }
+    },
+    "nodeSelector": {
+      "type": "object",
+      "properties": {
+        "dev": {
+          "type": "string",
+          "description": "If true, use the dev node selector"
+        }
+      }
+    },
+    "kaiwo": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If true, use Kaiwo CRDs to have Kaiwo operator manage the workload"
+        }
+      }
+    },
+    "job": {
+      "type": "object",
+      "description": "Configuration specific to the Job resource.",
+      "properties": {
+        "restartPolicy": {
+          "type": "string",
+          "description": "Restart policy for the pod in the Job. Can be 'OnFailure' or 'Never'.",
+          "enum": ["OnFailure", "Never"],
+          "default": "OnFailure"
+        },
+        "backoffLimit": {
+          "type": "integer",
+          "description": "Number of retries before marking a Job as failed.",
+          "minimum": 0
+        },
+        "completions": {
+          "type": "integer",
+          "description": "The desired number of successfully finished pods the job should run to.",
+          "minimum": 1
+        },
+        "parallelism": {
+          "type": "integer",
+          "description": "The maximum number of pods that can run in parallel.",
+          "minimum": 1
+        },
+        "ttlSecondsAfterFinished": {
+          "type": "integer",
+          "description": "The lifetime (in seconds) of a Job after it has finished execution, for automatic cleanup.",
+          "minimum": 0
+        }
+      },
+      "required": ["restartPolicy"]
+    }
+  },
+  "required": ["metadata", "image", "imagePullPolicy", "gpus", "ephemeral_storage", "storage", "kaiwo", "job"],
+  "additionalProperties": false
+}

@@ -1,0 +1,122 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+trainingMode: sft
+
+### Model ###
+modelName: "meta-llama/Llama-3.1-70B"
+gpus: 2
+memoryPerGpu: 128
+cpusPerGpu: 8
+
+checkpointsReservedSize: 512Gi
+storageClass: mlstorage
+
+hfTokenSecret:
+  name: hf-token
+  key: hf-token
+
+tokenizerOverrides:
+  eos_token: "<|eot_id|>"
+  pad_token: "<|finetune_right_pad_id|>"
+
+checkpointsRemote: "default-bucket/experiments/llama31-70b-mi300-lora"
+datasetRemote: "default-bucket/verl-sft/dolci-instruct-sft"
+
+mlflowTrackingUri: ""
+
+verlConfig:
+
+  # =======================
+  # DATA
+  # =======================
+  data:
+    train_max_samples: 20480
+    val_max_samples: 2048
+
+    multiturn:
+      enable: true
+      messages_key: messages
+
+    max_length: 2048
+    truncation: right
+
+    apply_chat_template_kwargs:
+      chat_template: |
+        {{ bos_token }}
+        {% if messages[0]['role'] == 'system' %}
+        <|start_header_id|>system<|end_header_id|>
+
+        {{ messages[0]['content'] | trim }}<|eot_id|>
+        {% set messages = messages[1:] %}
+        {% endif %}
+        {% for m in messages %}
+        <|start_header_id|>{{ m['role'] }}<|end_header_id|>
+
+        {{ m['content'] | trim }}<|eot_id|>
+        {% endfor %}
+        {% if add_generation_prompt %}
+        <|start_header_id|>assistant<|end_header_id|>
+
+        {% endif %}
+    micro_batch_size_per_gpu: 16
+    train_batch_size: 32
+
+  # =======================
+  # MODEL
+  # =======================
+  model:
+    partial_pretrain: "meta-llama/Llama-3.1-70B"
+    tokenizer_path: /workdir/tokenizer
+    trust_remote_code: false
+
+    strategy: fsdp2
+    fsdp_config:
+      model_dtype: bfloat16
+
+      wrap_policy:
+        # don't wrap every tiny module
+        min_num_params: 1e+7
+
+    enable_gradient_checkpointing: true
+    use_remove_padding: false
+    use_liger: true
+
+    # =======================
+    # LoRA CONFIG
+    # =======================
+    lora_rank: 32
+    lora_alpha: 128
+
+    target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+    - embed_tokens
+    - lm_head
+
+  # =======================
+  # OPTIM
+  # =======================
+  optim:
+    lr: 2e-4
+    betas: [ 0.9, 0.95 ]
+    weight_decay: 0.0
+    lr_warmup_steps_ratio: 0.10
+    lr_scheduler: cosine
+    clip_grad: 0.5
+
+  # =======================
+  # TRAINER
+  # =======================
+  trainer:
+    project_name: llama31-70b-lora
+    experiment_name: dolci-instruct-sft-01
+    total_epochs: 1
+    test_freq: 100
+    logger: [ "console"]

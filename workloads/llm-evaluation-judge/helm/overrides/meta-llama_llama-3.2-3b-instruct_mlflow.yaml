@@ -1,0 +1,19 @@
+# Overrides file for running judge evaluation, using Llama-3.2-3B-Instruct to judge Llama-3.2-3B-Instruct on the default CNN-Dailymail summarization dataset
+# Publishes results (incl. score distributions) to MLflow.
+# Note that an up and running MLFlow service needs to be set up by the user.
+general:
+  job_name: judge-job-s3-llama-3-2-3b-instruct-mlflow
+model_inference_container:
+  model: Llama-3.2-3B-Instruct
+  model_path: hf://meta-llama/Llama-3.2-3B-Instruct
+judge_inference_container:
+  model: Llama-3.2-3B-Instruct
+  model_path: hf://meta-llama/Llama-3.2-3B-Instruct
+judge_evaluation_container:
+  image: ghcr.io/silogen/evaluation-workloads-metrics:v0.1
+  use_data_subset: 0
+storage:
+  mlflow:
+    server_uri: http://xxx.xxx.xxx.xxx:<port>  # Replace with your MLflow server URI
+    experiment_name: llm-as-a-judge
+    run_name: judge-llama-3-2-3b-instruct

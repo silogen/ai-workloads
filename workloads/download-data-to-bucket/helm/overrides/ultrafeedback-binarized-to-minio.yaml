@@ -1,0 +1,33 @@
+
+# Data download and preprocess script:
+dataScript: |
+  import datasets
+  def dpo_formatter(example, idx):
+      return {
+          "dataset": "ultrafeedback-binarized",
+          "id": f"ultrafeedback-binarized_{idx}",
+          "prompt_messages": example["messages"][0:1],
+          "chosen_messages": example["chosen"][1:2],
+          "rejected_messages": example["rejected"][1:2],
+      }
+  hf_id="HuggingFaceH4/ultrafeedback_binarized"
+  dataset = datasets.load_dataset(hf_id, split="train_prefs")
+  def equal_score_filter(datapoint):
+      return datapoint["score_chosen"] == datapoint["score_rejected"]
+  dataset = dataset.filter(equal_score_filter)
+  dataset = dataset.map(dpo_formatter, with_indices=True, remove_columns=dataset.column_names)
+  dataset.to_json("/downloads/datasets/ultrafeedback-binarized.jsonl") # Need to save any data files in this specific directory to be uploaded.
+
+# Where the resources should be stored:
+bucketDataDir: default-bucket/datasets/
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+# Bucket credentials from a secret:
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Storage configuration:
+storageClass: mlstorage
+storageQuantity: "128Mi"

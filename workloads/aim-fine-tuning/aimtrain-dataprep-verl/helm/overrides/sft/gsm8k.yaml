@@ -1,0 +1,20 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+outputRemotePath: default-bucket/verl-sft/gsm8k
+preprocess:
+  mode: builtinScript
+  builtinScript: examples/data_preprocess/gsm8k.py
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+resources:
+  requests:
+    cpu: "8"
+    memory: 64Gi
+  limits:
+    cpu: "16"
+    memory: 64Gi

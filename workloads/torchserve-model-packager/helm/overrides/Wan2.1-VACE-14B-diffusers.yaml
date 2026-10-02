@@ -1,0 +1,42 @@
+modelId: Wan-AI/Wan2.1-VACE-14B-diffusers
+
+entrypoint: |
+  #!/bin/bash
+
+  pip install --upgrade pip
+  pip install "diffusers>=0.33" ftfy accelerate
+
+  # --- Python: Download and save model ---
+  python <<'EOF'
+  import torch
+  from diffusers import AutoencoderKLWan, WanVACEPipeline
+  from diffusers.schedulers.scheduling_unipc_multistep import UniPCMultistepScheduler
+
+  flow_shift = 5.0  # 5.0 for 720P, 3.0 for 480P
+
+  vae = AutoencoderKLWan.from_pretrained(
+      "{{ .Values.modelId }}",
+      subfolder="vae",
+      torch_dtype=torch.float32,
+  )
+  pipe = WanVACEPipeline.from_pretrained(
+      "{{ .Values.modelId }}",
+      vae=vae,
+      torch_dtype=torch.bfloat16,
+  )
+
+  pipe.scheduler = UniPCMultistepScheduler.from_config(
+      pipe.scheduler.config,
+      flow_shift=flow_shift,
+  )
+
+  pipe.save_pretrained("./Diffusion_model")
+  EOF
+
+  # --- Zip model directory ---
+  cd Diffusion_model
+  zip -r ../model.zip *
+  cd ..
+
+  # Upload resources
+  mc cp model.zip minio-host/{{ .Values.bucketPath }}/{{ .Values.modelId }}/packaged/model.zip

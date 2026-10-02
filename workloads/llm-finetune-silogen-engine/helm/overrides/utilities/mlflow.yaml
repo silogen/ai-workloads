@@ -1,0 +1,11 @@
+# This is an example configuration for MLflow tracking.
+# Note that to use both MLFlow and Tensorboard, report_to should include bot, because simply using
+# both override files will end up with just one of the two enabled due to YAML list override rules.
+finetuning_config:
+  tracking:
+    mlflow_server_uri: http://dev-tracking-mlflow-shared
+    experiment_name: my_experiment
+  training_args:
+    report_to:
+      - mlflow
+    logging_first_step: true

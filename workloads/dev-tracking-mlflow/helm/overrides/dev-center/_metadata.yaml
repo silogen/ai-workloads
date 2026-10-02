@@ -1,0 +1,15 @@
+name: "MLflow Tracking Server"
+slug: "mlflow"
+shortDescription: "ML experiment tracking and model management"
+longDescription: 'MLflow is an open-source platform for managing the machine learning lifecycle, including experimentation, reproducibility, deployment, and a central model registry. This deployment provides a centralized MLflow tracking server for logging metrics, parameters, and artifacts from machine learning experiments.'
+category: MLOPS
+tags: ["mlflow", "experiment-tracking", "model-management"]
+featuredImage: "https://avatars.githubusercontent.com/u/39938107"
+requiredResources:
+  gpuCount: 0
+  gpuMemory: 0
+  cpuCoreCount: 1
+  systemMemory: 20
+type: "WORKSPACE"
+id: "dev-tracking-mlflow"
+externalUrl: "https://mlflow.org/"

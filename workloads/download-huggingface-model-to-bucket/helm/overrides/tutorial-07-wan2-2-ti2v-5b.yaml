@@ -1,0 +1,26 @@
+# Tutorial 07: Download Wan 2.2 5B Model Configuration
+# Downloads the Wan 2.2 TI2V 5B parameter model for video generation fine-tuning
+
+# Use to add labels to the metadata of the resources created by this workload.
+labels: {}
+
+# Which model to download
+modelID: Wan-AI/Wan2.2-TI2V-5B
+
+# Where the resources should be stored:
+bucketPath: default-bucket/models/Wan-AI/Wan2.2-TI2V-5B
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+# Download & Upload configuration:
+downloadExcludeGlob: "original/*" # Exclude things from the HuggingFace download with this
+allowOverwrite: false
+
+# Bucket credentials from a secret:
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Storage configuration:
+storageClass: mlstorage
+storageQuantity: "50Gi"

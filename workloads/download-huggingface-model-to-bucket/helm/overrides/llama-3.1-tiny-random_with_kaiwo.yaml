@@ -1,0 +1,13 @@
+# Use kaiwo:
+kaiwo:
+  enabled: true
+
+# Bucket storage setup:
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+
+# Inputs:
+modelId: "yujiepan/llama-3.1-tiny-random"
+bucketPath: "default-bucket/models/yujiepan/llama-3.1-tiny-random"
+storageQuantity: 5Gi
+storageClass: mlstorage
+allowOverwrite: true

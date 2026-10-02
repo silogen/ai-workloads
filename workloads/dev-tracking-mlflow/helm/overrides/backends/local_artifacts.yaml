@@ -1,0 +1,9 @@
+env_vars:
+  MLFLOW_ARTIFACTS_DESTINATION: "/workload/mlflow/artifacts"
+
+storage:
+  ephemeral:
+    quantity: 512Gi
+    storageClassName: mlstorage
+    accessModes:
+      - ReadWriteOnce

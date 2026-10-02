@@ -1,0 +1,6 @@
+apiVersion: v2
+name: weatherbench-ecmwf-downloader
+description: Runs a script to download ECMWF CDS data, preprocesses it for Weatherbench and uploads to Minio.
+type: application
+version: 0.0.1
+appVersion: "0.0.1"
