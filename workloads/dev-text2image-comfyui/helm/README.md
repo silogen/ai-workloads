@@ -14,7 +14,7 @@ You can configure the following parameters in the `values.yaml` file or override
 
 | Parameter                    | Description                                                           | Default                                    |
 |------------------------------|-----------------------------------------------------------------------|--------------------------------------------|
-| `image`                      | Container image repository and tag                                    | `rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0` |
+| `image`                      | Container image repository and tag                                    | `rocm/pytorch:rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.13.0` |
 | `imagePullSecrets`           | List of Kubernetes secrets for pulling images from private registries | `[]`                                       |
 | `gpus`                       | Number of GPUs to allocate                                            | `1`                                        |
 | `model`                      | Hugging Face model path (e.g., `Comfy-Org/flux1-dev`). Set to `""` to start with no checkpoint | `Comfy-Org/stable-diffusion-v1-5-archive` |

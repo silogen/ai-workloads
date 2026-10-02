@@ -9,7 +9,7 @@ metadata:
   user_id: user
   workload_id: # defaults to the release name
 
-image: "rocm/pytorch:rocm7.1.1_ubuntu24.04_py3.12_pytorch_release_2.8.0"
+image: "rocm/pytorch:rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.13.0"
 comfyui_version: "v0.18.1"
 comfyui_manager_version: "3.39.3"
 # The checkpoint ComfyUI's stock workflow selects by name, so the workspace can
