@@ -1,0 +1,5 @@
+bucketStorageHost: http://filer-s3.seaweedfs-instance.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key

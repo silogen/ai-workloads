@@ -1,9 +1,9 @@
 # aim_fine_tune recipe: recipes/aimfttk/sft/mistralai/mistral-small-24b-instruct-2501.yaml
-finetuningImage: "docker.io/amdenterpriseai/aimfttk:0.2.5-rocm7.14"
+finetuningImage: "amdenterpriseai/aimfttk:0.2.8-rocm7.14"
 
 metadata:
-  trainingType: "lora"
-  hfTokenRequired: true
+  trainingType: lora
+  hfTokenRequired: false
   compatibleAccelerators:
     # MI350P:
     - "0x75a8"
@@ -19,7 +19,7 @@ memoryPerGpu: 192
 cpusPerGpu: 8
 
 # Runtime configuration:
-distributedType: "auto-single-process"
+distributedType: auto-single-process
 mergeAdapter: false
 
 ### Finetuning config section ###
@@ -31,13 +31,13 @@ finetuning_config:
     validation_data:
       type: AUTO_SPLIT
       ratio: 0.1
-    chat_template_name: "keep-original"
-    missing_pad_token_strategy: "bos-repurpose"
+    chat_template_name: keep-original
+    missing_pad_token_strategy: bos-repurpose
   training_args:
     learning_rate: 0.000005
     max_grad_norm: 1.0
     weight_decay: 0.000001
-    optim: "adamw_torch"
+    optim: adamw_torch
     num_train_epochs: 1
     lr_scheduler_type: cosine
     warmup_steps: 100
@@ -56,13 +56,13 @@ finetuning_config:
     eval_steps: 1000
     eval_strategy: steps
     eval_on_start: true
-    metric_for_best_model: "loss"
+    metric_for_best_model: loss
     greater_is_better: false
   batchsize_conf:
     max_per_device_train_batch_size: 1
   peft_conf:
-    peft_type: "LORA"
-    task_type: "CAUSAL_LM"
+    peft_type: LORA
+    task_type: CAUSAL_LM
     peft_kwargs:
       r: 64
       lora_alpha: 16.0
@@ -78,12 +78,12 @@ finetuning_config:
   run_conf:
     model_args:
       torch_dtype: bfloat16
-      attn_implementation: "sdpa"
+      attn_implementation: sdpa
     tokenizer_args:
-      chat_template_name: "keep-original"
-      tokenizer_type: "mistral"
+      chat_template_name: keep-original
+      tokenizer_type: mistral
       tokenizer_extra_args:
-        mode: "finetuning"
+        mode: finetuning
     resume_from_checkpoint: auto
   sft_args:
     max_seq_length: 8192
