@@ -1353,6 +1353,11 @@
             "title": "Use Fast Tokenizer",
             "type": "boolean"
           },
+          "tokenizer_args": {
+            "additionalProperties": true,
+            "description": "Tokenizer settings. Includes chat_template_name, missing_pad_token_strategy, tokenizer_type, and tokenizer_extra_args.",
+            "type": "object"
+          },
           "resume_from_checkpoint": {
             "anyOf": [
               {
