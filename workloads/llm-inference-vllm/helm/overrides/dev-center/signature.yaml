@@ -1,0 +1,14 @@
+model:
+gpus: 1
+memory_per_gpu: 64 # Gi
+cpu_per_gpu: 4
+replicas: 1
+
+kaiwo:
+  enabled: true
+
+http_route:
+  enabled: true
+
+ingress:
+  enabled: true

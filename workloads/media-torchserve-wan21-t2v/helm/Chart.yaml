@@ -1,0 +1,4 @@
+apiVersion: v2
+name: wan21-torchserve
+description: A Helm chart for Wan2.1 serving via torchserve
+version: 0.1.0

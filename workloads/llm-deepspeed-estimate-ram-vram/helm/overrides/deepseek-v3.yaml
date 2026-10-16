@@ -1,0 +1,4 @@
+# This override shows how to estimate the requirements for DeepSeek-V3, which needs some special configurations:
+modelPath: deepseek-ai/DeepSeek-V3
+trustRemoteCode: true
+memoryForPod: 100Gi

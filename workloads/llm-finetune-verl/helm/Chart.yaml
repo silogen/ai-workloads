@@ -1,0 +1,4 @@
+apiVersion: v2
+name: llm-finetune-verl-example
+description: VeRL finetuning on SiloGen stack
+version: 0.0.1

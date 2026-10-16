@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dev-lifescience-swinunetr-inference
+description: A Helm chart for SwinUNETR inference
+version: 0.0.1

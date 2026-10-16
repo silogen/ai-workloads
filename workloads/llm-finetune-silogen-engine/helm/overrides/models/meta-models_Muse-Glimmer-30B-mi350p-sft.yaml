@@ -1,0 +1,84 @@
+# aim_fine_tune recipe: recipes/aimfttk/sft/meta-models/muse-glimmer-30b.yaml
+finetuningImage: "amdenterpriseai/aimfttk:0.2.8-rocm7.14"
+
+metadata:
+  trainingType: lora
+  hfTokenRequired: false
+  compatibleAccelerators:
+    # MI350P:
+    - "0x75a8"
+
+# Canonical model name:
+model: "meta-models/Muse-Glimmer-30B"
+
+# Resources:
+downloadsReservedSize: 80Gi
+checkpointsReservedSize: 160Gi
+finetuningGpus: 1
+memoryPerGpu: 192
+cpusPerGpu: 8
+
+# Runtime configuration:
+distributedType: auto-single-process
+mergeAdapter: false
+
+### Finetuning config section ###
+finetuning_config:
+  method: sft
+  data_conf:
+    training_data:
+      type: CONCATENATION
+    validation_data:
+      type: AUTO_SPLIT
+      ratio: 0.1
+    chat_template_name: keep-original
+    missing_pad_token_strategy: bos-repurpose
+  training_args:
+    learning_rate: 0.000005
+    max_grad_norm: 1.0
+    weight_decay: 0.000001
+    optim: adamw_torch
+    num_train_epochs: 1
+    lr_scheduler_type: cosine
+    warmup_steps: 100
+    logging_strategy: steps
+    logging_steps: 25
+    save_strategy: steps
+    save_steps: 500
+    seed: 42
+    bf16: true
+    report_to:
+      - none
+    push_to_hub: false
+    gradient_checkpointing: true
+    gradient_checkpointing_kwargs:
+      use_reentrant: false
+    eval_steps: 1000
+    eval_strategy: steps
+    eval_on_start: true
+    metric_for_best_model: loss
+    greater_is_better: false
+  batchsize_conf:
+    max_per_device_train_batch_size: 1
+  peft_conf:
+    peft_type: LORA
+    task_type: CAUSAL_LM
+    peft_kwargs:
+      r: 64
+      lora_alpha: 16.0
+      lora_dropout: 0.05
+      target_modules: ".*\\.language_model.*\\.(q_proj|k_proj|v_proj|o_proj|up_proj|down_proj|gate_proj)"
+  run_conf:
+    model_args:
+      model_class: AutoModelForImageTextToText
+      torch_dtype: bfloat16
+      attn_implementation: sdpa
+    resume_from_checkpoint: auto
+  sft_args:
+    max_seq_length: 8192
+    length_handling: truncate
+
+basemodel: hf://meta-models/Muse-Glimmer-30B
+aimManifest:
+  modelId: "meta-models/Muse-Glimmer-30B"
+  aimId: "meta-models/Muse-Glimmer-30B"

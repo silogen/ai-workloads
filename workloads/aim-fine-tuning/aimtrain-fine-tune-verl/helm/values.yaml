@@ -1,0 +1,104 @@
+# Copyright © Advanced Micro Devices, Inc., or its affiliates.
+#
+# SPDX-License-Identifier: MIT
+
+### General chart values ###
+image: rocm/verl:verl-0.6.0.amd0_rocm7.0_vllm0.11.0.dev
+trainingMode: sft # Supported modes: ppo, sft
+
+fullnameOverride: ""
+
+### Model ###
+# either modelRemote OR modelName must be set
+# to use a base model directly from Hugging Face, set modelName to the model identifier (e.g., "meta-llama/Llama-3.1-8B-Instruct")
+modelName: ""
+# for remote models to be loaded from MinIO, specify the path to the model in the remote bucket as modelRemote
+modelRemote: ""
+
+### Data ###
+# either dataset OR datasetRemote must be set
+# to use one of the pre-existing datasets, set dataset to the dataset identifier (e.g., "gsm8k")
+# available datasets: "full_hh_rlhf", "geo3k", "gsm8k", "hellaswag", "math_dataset"
+dataset: ""
+# for remote datasets to be loaded from MinIO, specify the path to the model in the remote bucket as datasetRemote
+# Note: the dataset should be processed and stored in a format compatible with VeRL (train.parquet, test.parquet)
+datasetRemote: ""
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
+
+# Use to add labels to the metadata of the resources created by this workload.
+labels: {}
+
+# Extra annotations such as an imagePullSecrets
+imagePullSecrets: []
+  # Example:
+  # imagePullSecrets:
+  #   - "regcred"
+
+# Configure these to match the credentials in your cluster:
+bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+bucketCredentialsSecret:
+  name: minio-credentials
+  accessKeyKey: minio-access-key
+  secretKeyKey: minio-secret-key
+
+# Resources:
+checkpointsReservedSize: 512Gi
+storageClass: mlstorage # set this to use a specific storageClass for the storage.
+gpus: 1
+memoryPerGpu: 64
+cpusPerGpu: 8
+shmSize: 12Gi
+
+## MLFLow
+mlflowTrackingUri: ""
+
+### Model output path ###
+checkpointsRemote: "" # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket
+resumeFromCheckpoint: false # Set to true to resume from the last checkpoint in checkpointsRemote (if available)
+mergeAdapter: true # If doing adapter training, merge the adapter at the end. If not adapter training, this has no effect.
+copyProcessorToFinal: false # If true, saves AutoProcessor artifacts into checkpoint-final before upload.
+processorSourceModel: "" # Optional source for AutoProcessor.from_pretrained(); defaults to modelName, then MODEL_PATH when empty.
+
+hfTokenSecret: {} # Optional secret reference that contains the HuggingFace token
+# Example:
+# hfTokenSecret:
+#   name: hf-token
+#   key: hf-token
+
+# Optional tokenizer overrides (applied only if set and verlConfig.data.tokenizer is empty)
+# Example:
+# tokenizerOverrides:
+#   eos_token: "<|eot_id|>"
+#   pad_token: "<|finetune_right_pad_id|>"
+tokenizerOverrides: {}
+
+# Optional runtime Transformers patches (disabled by default).
+# These are mostly useful for multimodal models with older Transformers builds.
+transformersPatches:
+  patchPretrainedConfigVocabSize: false
+  patchAutoModelMappings: false
+  modelMappings: []
+  # Example:
+  # modelMappings:
+  #   - autoModelClass: "transformers.AutoModelForVision2Seq"
+  #     configClass: "transformers.models.gemma3.configuration_gemma3.Gemma3Config"
+  #     modelClass: "transformers.models.gemma3.modeling_gemma3.Gemma3ForConditionalGeneration"
+  #     fallbackModelClasses:
+  #       - "transformers.models.gemma3.modeling_gemma3.Gemma3ForCausalLM"
+
+verlConfig:
+  trainer:
+    logger: [ 'console' ]
+
+aimManifest:
+  modelName: "{{ required \"verlConfig.trainer.project_name is needed to use default aimManifest.modelName\" .Values.verlConfig.trainer.project_name}}-{{ required \"verlConfig.trainer.experiment_name is needed to use default aimManifest.modelName\" .Values.verlConfig.trainer.experiment_name}}"
+  modelId: "{{ required \"verlConfig.trainer.project_name is needed to use default aimManifest.modelId\" .Values.verlConfig.trainer.project_name}}/{{ required \"verlConfig.trainer.experiment_name is needed to use default aimManifest.modelId\" .Values.verlConfig.trainer.experiment_name}}"
+  image: amdenterpriseai/aim-base:0.10
+  customTemplates:
+  - hardware:
+      gpu:
+        requests: 1
+  extraEnv: []

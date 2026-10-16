@@ -1,0 +1,35 @@
+model_name: "ViT-L-14"
+pretrained: "datacomp_xl_s13b_b90k"
+compile: False
+seed: 1337
+
+device: "cuda"
+output_dir: "./output"
+
+wandb: True
+wandb_project: test-clipora
+
+train_dataset: "awilliamson/fashion-train"
+eval_dataset: "awilliamson/fashion-eval"
+datatype: "hf"
+csv_separator: "\t"
+image_col: "image"
+text_col: "text"
+shuffle: True
+
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.0
+
+batch_size: 32
+gradient_accumulation_steps: 1
+gradient_checkpointing: False
+
+use_8bit_adam: False
+
+learning_rate: 1e-4
+epochs: 3
+warmup: 0.01
+save_interval: 1000
+eval_interval: 100
+eval_steps: 100

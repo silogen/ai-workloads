@@ -1,0 +1,59 @@
+{{- define "job" -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "release.fullname" . }}
+  {{- if .Values.metadata.labels }}
+  labels:
+    {{- range $label, $value := .Values.metadata.labels }}
+    {{ $label }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  backoffLimit: {{ .Values.job.backoffLimit | default 0 }}
+  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished | default 3600 }}
+  template:
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.entrypoint }}
+          command: ["bash", "-c"]
+          args:
+          - |
+            set -e
+
+            # --- Install dependencies ---
+            apt-get update -qq && \
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq zip curl
+
+            # Download MinIO client binary to custom directory (no root access needed)
+            echo 'Installing MinIO client'
+            curl -s https://dl.min.io/client/mc/release/linux-amd64/mc \
+                --create-dirs \
+                -o /minio-binaries/mc
+            chmod +x /minio-binaries/mc
+            export PATH="${PATH}:/minio-binaries/"
+
+            # Configure MinIO client
+            mc alias set minio-host {{ .Values.bucketStorageHost }} $BUCKET_ACCESS_KEY $BUCKET_SECRET_KEY
+
+            cd /workload
+            {{- .Values.entrypoint | replace "{{ .Values.modelId }}" .Values.modelId | replace "{{ .Values.bucketPath }}" .Values.bucketPath | nindent 12}}
+            echo "Job Done"
+          {{- end }}
+          {{- if .Values.env_vars }}
+          env:
+            {{- include "container.env" . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- include "container.resources" . | nindent 12 }}
+          volumeMounts:
+            {{- include "container.volumeMounts" . | nindent 12 }}
+      restartPolicy: {{ .Values.job.restartPolicy | default "Never" }}
+      volumes:
+        {{- include "container.volumes" . | nindent 8 }}
+{{- end }}
+
+{{- include "job" . }}

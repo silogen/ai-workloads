@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vlm-lora-finetuning-job-{{ required "metadata.user_id is required and must be set" .Values.metadata.user_id }}
+spec:
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+        - name: vlm-lora-finetuning-container-{{ .Values.metadata.user_id }}
+          image: {{ .Values.image }}
+          {{- if .Values.env }}
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          command: ["/bin/sh", "-c"]
+          args: {{ .Values.entrypoint | toYaml | nindent 10 }}
+          resources:
+            {{- include "container.resources" . | nindent 12 }}
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+            - mountPath: /workload/
+              name: lora-finetune-storage-{{ .Values.metadata.user_id }}
+            - mountPath: /mounted-files/
+              name: lora-finetune-configmap-{{ .Values.metadata.user_id }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets.name }}
+      {{- end }}
+      restartPolicy: Never
+      volumes:
+        - ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: {{ .Values.storage.ephemeral.accessModes }}
+                resources:
+                  requests:
+                    storage: {{ .Values.storage.ephemeral.quantity }}
+                storageClassName: {{ .Values.storage.ephemeral.storageClassName }}
+          name: lora-finetune-storage-{{ .Values.metadata.user_id }}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
+        - name: lora-finetune-configmap-{{ .Values.metadata.user_id }}
+          configMap:
+            name: lora-finetune-configmap-{{ .Values.metadata.user_id }}

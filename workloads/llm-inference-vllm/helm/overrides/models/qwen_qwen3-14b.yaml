@@ -1,0 +1,7 @@
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
+model: "Qwen/Qwen3-14B"
+served_model_name: "Qwen/Qwen3-14B"

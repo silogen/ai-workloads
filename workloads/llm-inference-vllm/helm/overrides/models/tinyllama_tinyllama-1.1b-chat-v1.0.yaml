@@ -1,0 +1,7 @@
+metadata:
+  labels:
+    pipeline_tag: "text-generation"
+    chat: "true"
+
+model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+served_model_name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"

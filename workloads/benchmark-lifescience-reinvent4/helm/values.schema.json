@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Metadata for the deployment",
+      "properties": {
+        "labels": {
+          "type": "object",
+          "description": "Labels to apply to the deployment",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["labels"]
+    },
+    "image": {
+      "type": "string",
+      "description": "Docker image to use for the deployment"
+    },
+    "imagePullPolicy": {
+      "type": "string",
+      "description": "Image pull policy",
+      "enum": ["Always", "IfNotPresent", "Never"]
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "Image pull secrets for private registries"
+    },
+    "entrypoint": {
+      "type": "string",
+      "description": "Entrypoint for the container"
+    },
+    "init_args": {
+      "type": "string",
+      "description": "Commands for the initContainer"
+    },
+    "gpus": {
+      "type": "integer",
+      "description": "Number of GPUs to allocate",
+      "minimum": 1
+    },
+    "memory_per_gpu": {
+      "type": "integer",
+      "description": "Memory per GPU in Gi",
+      "minimum": 1
+    },
+    "cpu_per_gpu": {
+      "type": "integer",
+      "description": "CPU cores per GPU",
+      "minimum": 1
+    },
+    "vllm_engine_args": {
+      "type": "object",
+      "description": "Arguments for the vllm engine",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "env_vars": {
+      "type": "object",
+      "description": "Environment variables for the deployment"
+    },
+    "storage": {
+      "type": "object",
+      "description": "Storage configuration",
+      "properties": {
+        "ephemeral": {
+          "type": "object",
+          "description": "Ephemeral storage configuration",
+          "properties": {
+            "quantity": {
+              "type": "string",
+              "description": "Quantity of ephemeral storage"
+            },
+            "storageClassName": {
+              "type": "string",
+              "description": "Storage class name for ephemeral storage"
+            },
+            "accessModes": {
+              "type": "array",
+              "description": "Access modes for ephemeral storage",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["quantity", "storageClassName", "accessModes"]
+        },
+        "dshm": {
+          "type": "object",
+          "description": "Shared memory configuration",
+          "properties": {
+            "sizeLimit": {
+              "type": "string",
+              "description": "Size limit for shared memory"
+            }
+          },
+          "required": ["sizeLimit"]
+        }
+      },
+      "required": ["ephemeral", "dshm"]
+    },
+    "nodeSelector": {
+      "type": "object",
+      "properties": {
+        "dev": {
+          "type": "string",
+          "description": "If true, use the dev node selector"
+        }
+      }
+    },
+    "startupProbe": {
+      "type": ["object"],
+      "additionalProperties": true,
+      "description": "Startup probe configuration for the container"
+    },
+    "livenessProbe": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Liveness probe configuration for the container"
+    },
+    "readinessProbe": {
+      "type": ["object"],
+      "additionalProperties": true,
+      "description": "Readiness probe configuration for the container"
+    }
+  },
+  "required": ["metadata", "image", "imagePullPolicy", "gpus", "memory_per_gpu", "cpu_per_gpu", "storage"],
+  "additionalProperties": false
+}

@@ -1,0 +1,72 @@
+### General chart values ###
+mainWorkloadImage: rocm/megatron-lm:v25.4
+
+remoteBaseModelPath: default-bucket/megatron-models/meta-llama/Llama-3.1-8B/
+remoteCheckpointsPath: default-bucket/experiments/megatron-lm/llama-3.1-8b-cpt-test/
+remoteDataDirPath: default-bucket/datasets/fineweb-edu
+remoteDataNamePrefix: fineweb-edu-train_text_document
+remoteTokenizerPath: default-bucket/tokenizers/NousResearch/Meta-Llama-3.1-8B
+
+# Enable job recovery number of times
+# backOffLimit: 3
+
+# Resources of main workload container
+resources:
+  gpu: 1 # 1 or 8, values in between are not robust at the moment
+  cpu: 8
+  memory: 100Gi
+
+storage:
+  ephemeral:
+    quantity: 100Gi
+    storageClassName: mlstorage
+    accessModes:
+    - ReadWriteOnce
+  dshm:
+    sizeLimit: 32Gi
+
+# Setting job labels
+metadata:
+  labels: {}
+
+# Logistics (IO) container setup
+logistics:
+  image: ghcr.io/silogen/logistics:v0.1r
+  # ghcr.io/silogen/logistics:v0.1r
+  # Remote storage settings. Configure these to match the credentials in your cluster:
+  envVars:
+    BUCKET_STORAGE_HOST: http://minio.minio-tenant-default.svc.cluster.local:80
+    BUCKET_STORAGE_ACCESS_KEY:
+      name: minio-credentials
+      key: minio-access-key
+    BUCKET_STORAGE_SECRET_KEY:
+      name: minio-credentials
+      key: minio-secret-key
+
+pretrainingScript: train-cpt.sh
+
+pretrainingSettings:
+  MOCK_DATA: 0
+  SEQ_LENGTH: 2048
+  SEQ_PARALLEL: 0
+  TP: 1
+  PP: 1
+  BS: 16
+  MBS: 2
+  GEMM_TUNING: 0
+  TE_FP8: 0
+  OPTIMIZER: adam
+  TOTAL_ITERS: 20
+  SAVE_INTERVAL: 20
+  EVAL_INTERVAL: 10
+  EVAL_ITERS: 10
+
+# These can be any of the megatron native arguments from the list
+# https://github.com/ROCm/Megatron-LM/blob/rocm_dev/megatron/training/arguments.py
+megatronArguments:
+- "--lr 1e-5"
+- "--min-lr 1e-6"
+
+# kaiwo settings (if enabled, use kaiwo CRDs to have kaiwo operator manage the workload)
+kaiwo:
+  enabled: false
