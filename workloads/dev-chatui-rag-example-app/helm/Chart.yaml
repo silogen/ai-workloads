@@ -1,4 +1,0 @@
-apiVersion: v2
-name: rag-chat-app
-description: A Helm chart for deploying RAG Chat Application (Infinity + VLLM)
-version: 0.1.0

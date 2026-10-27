@@ -1,4 +1,8 @@
 apiVersion: v2
-name: dev-text2image-comfyui
+name: aiworkload-dev-text2image-comfyui
 description: ComfyUI
-version: 0.0.1
+version: 1.0.0
+type: application
+maintainers:
+- name: AMD
+  url: https://www.amd.com/

@@ -1,4 +1,4 @@
-# This works for default path in the corresponding data download override
+# Expects the dataset already present at this bucket path.
 finetuning_config:
   data_conf:
     training_data:

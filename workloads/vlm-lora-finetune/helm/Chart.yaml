@@ -1,4 +1,0 @@
-apiVersion: v2
-name: vlm-lora-finetune
-description: A Helm chart for training LORA adapters for an openCLIP model
-version: 0.0.1
