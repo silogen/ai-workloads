@@ -2,7 +2,7 @@
 
 This document describes the structure of the SFT fine-tuning configuration, and the parameters and values that can be defined there.
 
-See the fine-tuning config section [this config file](overrides/llama-31-tiny-random-deepspeed-values.yaml) for an example of a valid configuration.
+See the fine-tuning config section of [this config file](overrides/models/meta-llama_llama-3.2-1b-instruct.yaml) for an example of a valid configuration.
 See the various sub-configs for their options. Additional properties are not allowed.
 
 **Top-level properties:**

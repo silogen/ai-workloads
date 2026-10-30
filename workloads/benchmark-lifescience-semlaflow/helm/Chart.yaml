@@ -1,4 +1,0 @@
-apiVersion: v2
-name: benchmark-lifescience-semlaflow
-description: A Helm chart for SemlaFlow inference
-version: 0.0.1

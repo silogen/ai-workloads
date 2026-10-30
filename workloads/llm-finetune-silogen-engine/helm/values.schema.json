@@ -22,6 +22,12 @@
         "type": "string",
         "description": "The cloud storage host URL"
       },
+      "bucketStorageClient": {
+        "type": "string",
+        "enum": ["mc", "aws"],
+        "default": "mc",
+        "description": "Client used to download inputs and upload checkpoints. \"mc\" uses the MinIO client, including mirror --watch. \"aws\" uses the AWS CLI; watch-style uploads are a loop of aws s3 sync."
+      },
       "bucketCredentialsSecret": {
         "type": "object",
         "description": "Bucket storage credential secret values, required to have the secret already setup in the cluster (e.g. via external secrets)",

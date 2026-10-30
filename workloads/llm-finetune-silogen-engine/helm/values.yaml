@@ -18,6 +18,13 @@ imagePullSecrets: []
 
 # Configure these to match the credentials in your cluster:
 bucketStorageHost: http://minio.minio-tenant-default.svc.cluster.local:80
+# Client used to download inputs and upload checkpoints.
+# "mc" (default) uses the MinIO client, including `mc mirror --watch`.
+# "aws" uses the AWS CLI. It cannot mirror --watch, so uploads repeat `aws s3 sync`
+# every BUCKET_STORAGE_SYNC_INTERVAL seconds (default 30). Set that env var via `env`
+# to change the interval. Images that ship the AWS CLI instead of mc, such as
+# amdenterpriseai/aimfttk:0.2.9-rocm7.14, set this to "aws".
+bucketStorageClient: mc
 bucketCredentialsSecret:
   name: minio-credentials
   accessKeyKey: minio-access-key

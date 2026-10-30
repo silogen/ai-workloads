@@ -1,4 +1,8 @@
 apiVersion: v2
-name: llm-finetune-silogen-engine
-description: A Helm chart for fine-tuning the Silogen engine
-version: 0.0.1
+name: aiworkload-llm-finetune-silogen-engine
+description: A Helm chart for fine-tuning LLMs using the Silogen engine
+version: 1.1.0
+type: application
+maintainers:
+- name: AMD
+  url: https://www.amd.com/

@@ -4,23 +4,23 @@ This workload deploys a basic Visual Studio Code environment on top of any image
 
 ## Persistent Settings
 
-By default, this workload is configured to persist VSCode settings, extensions, and workspace configurations across pod restarts using a Persistent Volume Claim (PVC). This means:
+Persistent storage is **off** by default. With the default values, VS Code settings, extensions, and workspace data live on ephemeral storage and are lost when the pod restarts.
 
-- **Settings**: Your VSCode settings, themes, and preferences are preserved
-- **Extensions**: Installed extensions persist and don't need to be reinstalled
-- **Workspace**: Your workspace configurations and project settings are maintained
-- **User Data**: All user customizations and data are stored persistently
-
-The persistent configuration is stored in `/workload/{user_id}/.vscode-server/` on the PVC.
-
-### Disabling Persistence
-
-If you prefer ephemeral storage (settings reset on pod restart), you can disable persistence by setting:
+To keep that data across restarts, enable a Persistent Volume Claim (PVC):
 
 ```yaml
 persistent_storage:
-  enabled: false
+  enabled: true
 ```
+
+When enabled:
+
+- **Settings**: VS Code settings, themes, and preferences are preserved
+- **Extensions**: Installed extensions persist and don't need to be reinstalled
+- **Workspace**: Workspace configurations and project settings are maintained
+- **User Data**: User customizations are stored on the PVC
+
+The persistent configuration is stored in `/workload/{user_id}/.vscode-server/` on the PVC.
 
 ## Configuration Parameters
 

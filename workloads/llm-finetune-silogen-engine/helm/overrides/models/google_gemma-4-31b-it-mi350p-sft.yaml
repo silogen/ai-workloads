@@ -1,5 +1,6 @@
 # aim_fine_tune recipe: recipes/aimfttk/sft/google/gemma-4-31b-it.yaml
-finetuningImage: "amdenterpriseai/aimfttk:0.2.8-rocm7.14"
+finetuningImage: "amdenterpriseai/aimfttk:0.2.9-rocm7.14"
+bucketStorageClient: aws
 
 metadata:
   trainingType: lora

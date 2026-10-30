@@ -1,5 +1,4 @@
-# This file specifies the data downloaded by the workloads/download-data-to-bucket/helm chart
-# with the override file workloads/download-data-to-bucket/helm/overrides/ultrafeedback-binarized-to-minio.yaml
+# Expects the dataset already present at this bucket path.
 finetuning_config:
   data_conf:
     training_data:

@@ -1,0 +1,12 @@
+# Minimal set of values for the required keys which have no default in values.yaml.
+# Only used to satisfy values.schema.json when running helm lint, not a usable recipe.
+checkpointsRemote: "default-bucket/experiments/lint"
+basemodel: "hf://TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+
+finetuning_config:
+  data_conf:
+    training_data:
+      datasets:
+        - path: default-bucket/datasets/lint.json
+  batchsize_conf:
+    total_train_batch_size: 1

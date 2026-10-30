@@ -1,4 +1,0 @@
-apiVersion: v2
-name: benchmark-robotics-opensplat
-description: A Helm chart for OpenSplat inference
-version: 0.0.1
