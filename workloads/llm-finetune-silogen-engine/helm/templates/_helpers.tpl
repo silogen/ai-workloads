@@ -272,7 +272,11 @@ merge_base=/local_resources/basemodel
 if [ -d ./checkpoints/checkpoint-new-basemodel ]; then
   merge_base=./checkpoints/checkpoint-new-basemodel
 fi
-merge_adapter $merge_base ./checkpoints/checkpoint-final-adapter ./checkpoints/checkpoint-final
+merge_adapter \
+{{- if .Values.mergeAdapterTrainingConfig }}
+  --training-config /configs/finetuning_config.yaml \
+{{- end }}
+  "$merge_base" ./checkpoints/checkpoint-final-adapter ./checkpoints/checkpoint-final
 {{- end }}
 {{- end }}
 {{- if .Values.aimManifest.modelManifest.enabled }}

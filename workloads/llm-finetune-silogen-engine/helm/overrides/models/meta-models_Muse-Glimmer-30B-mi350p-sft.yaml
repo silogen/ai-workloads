@@ -1,5 +1,5 @@
 # aim_fine_tune recipe: recipes/aimfttk/sft/meta-models/muse-glimmer-30b.yaml
-finetuningImage: "amdenterpriseai/aimfttk:0.2.9-rocm7.14"
+finetuningImage: "amdenterpriseai/aimfttk:0.2.10-rocm7.14"
 bucketStorageClient: aws
 
 metadata:
@@ -22,6 +22,7 @@ cpusPerGpu: 8
 # Runtime configuration:
 distributedType: auto-single-process
 mergeAdapter: false
+mergeAdapterTrainingConfig: true
 
 ### Finetuning config section ###
 finetuning_config:

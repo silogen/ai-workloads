@@ -82,6 +82,11 @@
         "description": "Whether to merge the adapter at the end of training or not.",
         "default": false
       },
+      "mergeAdapterTrainingConfig": {
+        "type": "boolean",
+        "description": "When merging an adapter, pass the experiment config to merge_adapter (--training-config) so aimfttk reads run_conf.model_args.model_class. Requires aimfttk 0.2.10 or newer. Leave false for older images, which reject the flag.",
+        "default": false
+      },
       "checkpointsRemote": {
         "type": "string",
         "description": "Path in bucket storage where to store the checkpoints."
