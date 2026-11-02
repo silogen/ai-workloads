@@ -50,6 +50,10 @@ cpusPerGpu: 8
 distributedType: "auto-deepspeed-stage1"  # Alternatives: "auto-deepspeed-stage3", "auto-ddp", "auto-single-process", "custom-accelerate-config"
 customAccelerateConfig:  # Can contain an accelerate config in YAML format, used with distributed_type: "custom-accelerate-config".
 mergeAdapter: true
+# Pass the experiment config to merge_adapter (--training-config). aimfttk reads
+# run_conf.model_args.model_class from it. Requires aimfttk 0.2.10 or newer.
+# Older images reject the flag.
+mergeAdapterTrainingConfig: false
 
 ### Model input and output, required args ###
 checkpointsRemote:  # Path where to sync checkpoints in bucket storage, format: bucketName/path/in/bucket)
